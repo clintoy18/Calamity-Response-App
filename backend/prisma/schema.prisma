@@ -13,6 +13,7 @@ model Emergency {
   id              String   @id @default(uuid())
   latitude        Float
   longitude       Float
+  placename         String?
   accuracy        Float
   timestamp       DateTime
   needs           String[] // Array of strings: ["food", "water"]
