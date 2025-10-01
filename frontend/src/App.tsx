@@ -390,13 +390,15 @@ export default function EmergencyApp() {
         body: JSON.stringify({
           latitude: location.latitude,
           longitude: location.longitude,
+          placename: placeName,
+          contactno: contactNo,
           accuracy: location.accuracy,
           needs: selectedNeeds,
           numberOfPeople,
           urgencyLevel: urgencyLevel.toUpperCase(),
           additionalNotes: additionalNotes || null,
-          placeName, // Send place name to backend
-          contactNo, 
+          // placeName, // Send place name to backend
+          // contactNo, 
         }),
       });
 
