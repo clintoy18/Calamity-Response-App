@@ -203,6 +203,17 @@ export default function EmergencyApp() {
     }
   };
 
+  useEffect(() => {
+    fetchEmergencies();
+    
+    // Poll for new emergencies every 10 seconds
+    const pollInterval = setInterval(() => {
+      fetchEmergencies();
+    }, 10000);
+
+    return () => clearInterval(pollInterval);
+  }, []);
+
   const addEmergencyMarker = (lat: number, lng: number, accuracy: number, id: string, emergencyData?: EmergencyRecord): boolean => {
     if (!mapInstanceRef.current) return false;
 
