@@ -2,7 +2,6 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
-/// <reference types="node" />
 
 
 const app = express();
