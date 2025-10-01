@@ -155,53 +155,6 @@ export default function EmergencyApp() {
     }
   };
 
-  // Fetch all emergencies on mount
-  useEffect(() => {
-    fetchEmergencies();
-  }, []);
-
-  const fetchEmergencies = async (): Promise<void> => {
-    setIsLoadingEmergencies(true);
-    try {
-      const response = await fetch(`${API_URL}/emergencies`);
-      const data = await response.json();
-      
-      if (data.success && data.data) {
-        const formattedEmergencies = data.data.map((emergency: any) => ({
-          id: emergency.id,
-          latitude: emergency.latitude,
-          longitude: emergency.longitude,
-          accuracy: emergency.accuracy,
-          timestamp: emergency.timestamp || emergency.createdAt,
-          needs: emergency.needs,
-          numberOfPeople: emergency.numberOfPeople,
-          urgencyLevel: emergency.urgencyLevel.toLowerCase() as 'low' | 'medium' | 'high' | 'critical',
-          additionalNotes: emergency.additionalNotes || '',
-          status: emergency.status?.toLowerCase() as 'pending' | 'responded' | 'resolved',
-          createdAt: emergency.createdAt,
-          updatedAt: emergency.updatedAt
-        }));
-
-        setEmergencies(formattedEmergencies);
-
-        // Add markers for all emergencies
-        formattedEmergencies.forEach((emergency: EmergencyRecord) => {
-          addEmergencyMarker(
-            emergency.latitude,
-            emergency.longitude,
-            emergency.accuracy,
-            emergency.id,
-            emergency
-          );
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching emergencies:', error);
-    } finally {
-      setIsLoadingEmergencies(false);
-    }
-  };
-
   const addEmergencyMarker = (lat: number, lng: number, accuracy: number, id: string, emergencyData?: EmergencyRecord): boolean => {
     if (!mapInstanceRef.current) return false;
 
