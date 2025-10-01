@@ -17,6 +17,8 @@ type NeedType = 'food' | 'water' | 'medical' | 'shelter' | 'clothing' | 'other';
 interface EmergencyRequestBody {
   latitude: number;
   longitude: number;
+  placename: string;
+  contactno: string;
   accuracy: number;
   needs: NeedType[];
   numberOfPeople: number;
@@ -101,12 +103,16 @@ app.post('/api/emergencies', async (req: Request, res: Response) => {
     const {
       latitude,
       longitude,
+      placename,
+      contactno,
       accuracy,
       needs,
       numberOfPeople,
       urgencyLevel,
       additionalNotes
     }: EmergencyRequestBody = req.body;
+
+    console.log(placename)
 
     // Validation
     if (!latitude || !longitude) {
@@ -138,6 +144,8 @@ app.post('/api/emergencies', async (req: Request, res: Response) => {
       data: {
         latitude,
         longitude,
+        placename,
+        contactno,  
         accuracy: accuracy || 0,
         timestamp: new Date(),
         needs: needs, // PostgreSQL supports arrays directly
