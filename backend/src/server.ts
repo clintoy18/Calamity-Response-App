@@ -1,9 +1,8 @@
-// server.ts with Prisma PostgreSQL
+// server.ts with Prisma PostgreSQL - Fixed route ordering
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import { EventEmitter } from 'events';
-
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -12,10 +11,9 @@ const emergencyEmitter = new EventEmitter();
 
 app.use(cors({
   origin: 'http://localhost:5173', // Your React dev server port
-  methods: ['GET', 'POST', 'DELETE'],
+  methods: ['GET', 'POST', 'DELETE', 'PATCH'],
   credentials: true,
 }));
-
 
 interface Emergency {
   id: string;
@@ -32,10 +30,7 @@ interface Emergency {
   createdAt: string;
 }
 
-let emergencies: Emergency[] = [];
-
 // Middleware
-app.use(cors());
 app.use(express.json());
 
 // Types
@@ -96,7 +91,72 @@ app.get('/api/emergencies', async (req: Request, res: Response) => {
   }
 });
 
-// Get single emergency by ID
+// SSE stream endpoint - MOVED BEFORE /:id route
+app.get('/api/emergencies/stream', (req: Request, res: Response) => {
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+  });
+
+  const sendEmergency = (emergency: any) => {
+    res.write(`data: ${JSON.stringify(emergency)}\n\n`);
+  };
+
+  emergencyEmitter.on('new', sendEmergency);
+
+  req.on('close', () => {
+    emergencyEmitter.off('new', sendEmergency);
+  });
+});
+
+// Get emergencies by urgency - SPECIFIC route before /:id
+app.get('/api/emergencies/urgency/:level', async (req: Request, res: Response) => {
+  try {
+    const { level } = req.params;
+    const filtered = await prisma.emergency.findMany({
+      where: { urgencyLevel: level },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({
+      success: true,
+      count: filtered.length,
+      data: filtered
+    });
+  } catch (error) {
+    console.error('Error fetching emergencies by urgency:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
+    });
+  }
+});
+
+// Get emergencies by status - SPECIFIC route before /:id
+app.get('/api/emergencies/status/:status', async (req: Request, res: Response) => {
+  try {
+    const { status } = req.params;
+    const filtered = await prisma.emergency.findMany({
+      where: { status },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({
+      success: true,
+      count: filtered.length,
+      data: filtered
+    });
+  } catch (error) {
+    console.error('Error fetching emergencies by status:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
+    });
+  }
+});
+
+// Get single emergency by ID - MOVED AFTER specific routes
 app.get('/api/emergencies/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -139,7 +199,8 @@ app.post('/api/emergencies', async (req: Request, res: Response) => {
       additionalNotes
     }: EmergencyRequestBody = req.body;
 
-    console.log(placename)
+    console.log('Received placename:', placename);
+    console.log('Received contactno:', contactno);
 
     // Validation
     if (!latitude || !longitude) {
@@ -171,8 +232,8 @@ app.post('/api/emergencies', async (req: Request, res: Response) => {
       data: {
         latitude,
         longitude,
-        placename,
-        contactno,  
+        placename: placename || '',
+        contactno: contactno || '',  
         accuracy: accuracy || 0,
         timestamp: new Date(),
         needs: needs, // PostgreSQL supports arrays directly
@@ -183,6 +244,7 @@ app.post('/api/emergencies', async (req: Request, res: Response) => {
       }
     });
 
+    // Emit to SSE clients
     emergencyEmitter.emit('new', newEmergency);
 
     res.status(201).json({
@@ -197,24 +259,6 @@ app.post('/api/emergencies', async (req: Request, res: Response) => {
       message: 'Server error'
     });
   }
-});
-
-app.get('/emergencies/stream', (req, res) => {
-  res.set({
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-  });
-
-  const sendEmergency = (emergency: Emergency) => {
-    res.write(`data: ${JSON.stringify(emergency)}\n\n`);
-  };
-
-  emergencyEmitter.on('new', sendEmergency);
-
-  req.on('close', () => {
-    emergencyEmitter.off('new', sendEmergency);
-  });
 });
 
 // Update emergency status
@@ -290,57 +334,12 @@ app.delete('/api/emergencies', async (req: Request, res: Response) => {
   }
 });
 
-// Get emergencies by urgency
-app.get('/api/emergencies/urgency/:level', async (req: Request, res: Response) => {
-  try {
-    const { level } = req.params;
-    const filtered = await prisma.emergency.findMany({
-      where: { urgencyLevel: level },
-      orderBy: { createdAt: 'desc' }
-    });
-    
-    res.json({
-      success: true,
-      count: filtered.length,
-      data: filtered
-    });
-  } catch (error) {
-    console.error('Error fetching emergencies by urgency:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error' 
-    });
-  }
-});
-
-// Get emergencies by status
-app.get('/api/emergencies/status/:status', async (req: Request, res: Response) => {
-  try {
-    const { status } = req.params;
-    const filtered = await prisma.emergency.findMany({
-      where: { status },
-      orderBy: { createdAt: 'desc' }
-    });
-    
-    res.json({
-      success: true,
-      count: filtered.length,
-      data: filtered
-    });
-  } catch (error) {
-    console.error('Error fetching emergencies by status:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error' 
-    });
-  }
-});
-
 // Start server
 app.listen(PORT, () => {
   console.log(`\n🚀 Server running on http://localhost:${PORT}`);
   console.log(`📍 Emergency Relief API with PostgreSQL is ready`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health\n`);
+  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`📡 SSE stream: http://localhost:${PORT}/api/emergencies/stream\n`);
 });
 
 // Cleanup on exit
