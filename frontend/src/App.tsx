@@ -534,7 +534,7 @@ export default function EmergencyApp() {
       )}
 
       {status === 'idle' && (
-        <div className="absolute bottom-6 left-4 right-4 z-10">
+        <div className="absolute bottom-12 left-4 right-4 z-10">
           <div className="max-w-md mx-auto space-y-2">
             <button
               onClick={handleEmergency}
