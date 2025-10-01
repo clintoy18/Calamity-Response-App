@@ -45,8 +45,8 @@ export default function EmergencyApp() {
   // Cebu City center coordinates
   const CEBU_CENTER: L.LatLngExpression = [10.3157, 123.8854];
   const CEBU_BOUNDS: L.LatLngBoundsExpression = [
-    [9.8, 123.3],
-    [10.8, 124.4]
+    [9.4, 123.1],
+   [11.4, 124.1]   
   ];
 
   const needOptions: Array<{ value: NeedType; label: string; icon: React.ReactNode }> = [
@@ -69,14 +69,14 @@ export default function EmergencyApp() {
     if (!mapRef.current || mapInstanceRef.current) return;
 
     const map = L.map(mapRef.current, {
-      center: CEBU_CENTER,
-      zoom: 12,
-      maxBounds: CEBU_BOUNDS,
-      maxBoundsViscosity: 1.0,
-      minZoom: 10,
-      maxZoom: 18,
-      zoomControl: true
-    });
+    center: CEBU_CENTER,
+    zoom: 12,
+    maxBounds: CEBU_BOUNDS,
+    maxBoundsViscosity: 1.0,
+    minZoom: 10,     // allow zooming out to see full Cebu
+    maxZoom: 18,
+    zoomControl: true
+  });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap',
