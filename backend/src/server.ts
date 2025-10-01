@@ -1,78 +1,91 @@
-// server.ts
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import { v4 as uuidv4 } from 'uuid';
+import { PrismaClient } from '@prisma/client';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const prisma = new PrismaClient();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // Types
-interface Location {
+type NeedType = 'food' | 'water' | 'medical' | 'shelter' | 'clothing' | 'other';
+
+interface EmergencyRequestBody {
   latitude: number;
   longitude: number;
   accuracy: number;
-  timestamp: string;
-}
-
-type NeedType = 'food' | 'water' | 'medical' | 'shelter' | 'clothing' | 'other';
-
-interface EmergencyRequest {
   needs: NeedType[];
   numberOfPeople: number;
-  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
-  additionalNotes: string;
+  urgencyLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  additionalNotes?: string;
 }
-
-interface EmergencyRecord extends Location, EmergencyRequest {
-  id: string;
-  status: 'pending' | 'responded' | 'resolved';
-  createdAt: string;
-  updatedAt: string;
-}
-
-// In-memory database (replace with real database in production)
-let emergencies: EmergencyRecord[] = [];
 
 // Routes
 
 // Health check
-app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+app.get('/api/health', async (req: Request, res: Response) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', message: 'Server and database are running' });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: 'Database connection failed' });
+  }
 });
 
 // Get all emergencies
-app.get('/api/emergencies', (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    count: emergencies.length,
-    data: emergencies
-  });
+app.get('/api/emergencies', async (req: Request, res: Response) => {
+  try {
+    const emergencies = await prisma.emergency.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({
+      success: true,
+      count: emergencies.length,
+      data: emergencies
+    });
+  } catch (error) {
+    console.error('Error fetching emergencies:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch emergencies'
+    });
+  }
 });
 
 // Get single emergency by ID
-app.get('/api/emergencies/:id', (req: Request, res: Response) => {
-  const { id } = req.params;
-  const emergency = emergencies.find(e => e.id === id);
-  
-  if (!emergency) {
-    return res.status(404).json({
+app.get('/api/emergencies/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const emergency = await prisma.emergency.findUnique({
+      where: { id }
+    });
+    
+    if (!emergency) {
+      return res.status(404).json({
+        success: false,
+        message: 'Emergency request not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: emergency
+    });
+  } catch (error) {
+    console.error('Error fetching emergency:', error);
+    res.status(500).json({
       success: false,
-      message: 'Emergency request not found'
+      message: 'Failed to fetch emergency'
     });
   }
-  
-  res.json({
-    success: true,
-    data: emergency
-  });
 });
 
 // Create new emergency request
-app.post('/api/emergencies', (req: Request, res: Response) => {
+app.post('/api/emergencies', async (req: Request, res: Response) => {
   try {
     const {
       latitude,
@@ -82,7 +95,7 @@ app.post('/api/emergencies', (req: Request, res: Response) => {
       numberOfPeople,
       urgencyLevel,
       additionalNotes
-    } = req.body;
+    }: EmergencyRequestBody = req.body;
 
     // Validation
     if (!latitude || !longitude) {
@@ -110,22 +123,17 @@ app.post('/api/emergencies', (req: Request, res: Response) => {
       });
     }
 
-    const newEmergency: EmergencyRecord = {
-      id: 'EMG-' + uuidv4(),
-      latitude,
-      longitude,
-      accuracy: accuracy || 0,
-      timestamp: new Date().toISOString(),
-      needs,
-      numberOfPeople: numberOfPeople || 1,
-      urgencyLevel: urgencyLevel || 'medium',
-      additionalNotes: additionalNotes || '',
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    emergencies.push(newEmergency);
+    const newEmergency = await prisma.emergency.create({
+      data: {
+        latitude,
+        longitude,
+        accuracy: accuracy || 0,
+        needs,
+        numberOfPeople: numberOfPeople || 1,
+        urgencyLevel: urgencyLevel || 'MEDIUM',
+        additionalNotes: additionalNotes || null
+      }
+    });
 
     res.status(201).json({
       success: true,
@@ -142,91 +150,141 @@ app.post('/api/emergencies', (req: Request, res: Response) => {
 });
 
 // Update emergency status
-app.patch('/api/emergencies/:id/status', (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { status } = req.body;
+app.patch('/api/emergencies/:id/status', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
 
-  if (!['pending', 'responded', 'resolved'].includes(status)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid status. Must be: pending, responded, or resolved'
+    if (!['PENDING', 'RESPONDED', 'RESOLVED'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be: PENDING, RESPONDED, or RESOLVED'
+      });
+    }
+
+    const emergency = await prisma.emergency.update({
+      where: { id },
+      data: { status }
     });
-  }
 
-  const emergencyIndex = emergencies.findIndex(e => e.id === id);
-  
-  if (emergencyIndex === -1) {
-    return res.status(404).json({
+    res.json({
+      success: true,
+      message: 'Emergency status updated',
+      data: emergency
+    });
+  } catch (error) {
+    console.error('Error updating emergency:', error);
+    res.status(404).json({
       success: false,
       message: 'Emergency request not found'
     });
   }
-
-  emergencies[emergencyIndex].status = status;
-  emergencies[emergencyIndex].updatedAt = new Date().toISOString();
-
-  res.json({
-    success: true,
-    message: 'Emergency status updated',
-    data: emergencies[emergencyIndex]
-  });
 });
 
 // Delete emergency
-app.delete('/api/emergencies/:id', (req: Request, res: Response) => {
-  const { id } = req.params;
-  const emergencyIndex = emergencies.findIndex(e => e.id === id);
-  
-  if (emergencyIndex === -1) {
-    return res.status(404).json({
+app.delete('/api/emergencies/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    await prisma.emergency.delete({
+      where: { id }
+    });
+
+    res.json({
+      success: true,
+      message: 'Emergency request deleted'
+    });
+  } catch (error) {
+    console.error('Error deleting emergency:', error);
+    res.status(404).json({
       success: false,
       message: 'Emergency request not found'
     });
   }
-
-  emergencies.splice(emergencyIndex, 1);
-
-  res.json({
-    success: true,
-    message: 'Emergency request deleted'
-  });
 });
 
 // Delete all emergencies (for testing)
-app.delete('/api/emergencies', (req: Request, res: Response) => {
-  emergencies = [];
-  res.json({
-    success: true,
-    message: 'All emergency requests cleared'
-  });
+app.delete('/api/emergencies', async (req: Request, res: Response) => {
+  try {
+    await prisma.emergency.deleteMany();
+    
+    res.json({
+      success: true,
+      message: 'All emergency requests cleared'
+    });
+  } catch (error) {
+    console.error('Error clearing emergencies:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to clear emergencies'
+    });
+  }
 });
 
 // Get emergencies by urgency
-app.get('/api/emergencies/urgency/:level', (req: Request, res: Response) => {
-  const { level } = req.params;
-  const filtered = emergencies.filter(e => e.urgencyLevel === level);
-  
-  res.json({
-    success: true,
-    count: filtered.length,
-    data: filtered
-  });
+app.get('/api/emergencies/urgency/:level', async (req: Request, res: Response) => {
+  try {
+    const { level } = req.params;
+    const urgencyLevel = level.toUpperCase();
+    
+    const emergencies = await prisma.emergency.findMany({
+      where: { urgencyLevel: urgencyLevel as any },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({
+      success: true,
+      count: emergencies.length,
+      data: emergencies
+    });
+  } catch (error) {
+    console.error('Error fetching emergencies by urgency:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch emergencies'
+    });
+  }
 });
 
 // Get emergencies by status
-app.get('/api/emergencies/status/:status', (req: Request, res: Response) => {
-  const { status } = req.params;
-  const filtered = emergencies.filter(e => e.status === status);
-  
-  res.json({
-    success: true,
-    count: filtered.length,
-    data: filtered
-  });
+app.get('/api/emergencies/status/:status', async (req: Request, res: Response) => {
+  try {
+    const { status } = req.params;
+    const statusValue = status.toUpperCase();
+    
+    const emergencies = await prisma.emergency.findMany({
+      where: { status: statusValue as any },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json({
+      success: true,
+      count: emergencies.length,
+      data: emergencies
+    });
+  } catch (error) {
+    console.error('Error fetching emergencies by status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch emergencies'
+    });
+  }
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  await prisma.$disconnect();
+  process.exit(0);
 });
 
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📍 Emergency Relief API is ready`);
+  console.log(`🗄️  Database connected`);
 });
