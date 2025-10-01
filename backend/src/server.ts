@@ -10,6 +10,13 @@ const PORT = process.env.PORT || 5000;
 const prisma = new PrismaClient();
 const emergencyEmitter = new EventEmitter();
 
+app.use(cors({
+  origin: 'http://localhost:5173', // Your React dev server port
+  methods: ['GET', 'POST', 'DELETE'],
+  credentials: true,
+}));
+
+
 interface Emergency {
   id: string;
   latitude: number;
