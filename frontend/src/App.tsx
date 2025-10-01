@@ -108,6 +108,7 @@ export default function EmergencyApp() {
     };
   }, []);
 
+
   // Fetch all emergencies on mount
   useEffect(() => {
     fetchEmergencies();
