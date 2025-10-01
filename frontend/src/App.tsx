@@ -24,6 +24,7 @@ interface EmergencyRequest {
   numberOfPeople: number;
   urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
   additionalNotes: string;
+  contactNo?: string;
 }
 
 interface EmergencyRecord extends Location, EmergencyRequest {
@@ -32,6 +33,7 @@ interface EmergencyRecord extends Location, EmergencyRequest {
   createdAt?: string;
   updatedAt?: string;
   placeName?: string;
+  contactNo?: string;
 }
 
 export default function EmergencyApp() {
@@ -42,7 +44,8 @@ export default function EmergencyApp() {
   const [emergencyId, setEmergencyId] = useState<string | null>(null);
   const [emergencies, setEmergencies] = useState<EmergencyRecord[]>([]);
   const [isLoadingEmergencies, setIsLoadingEmergencies] = useState<boolean>(false);
-  
+  const [contactNo, setContactNo] = useState<string>('');
+
   const [selectedNeeds, setSelectedNeeds] = useState<NeedType[]>([]);
   const [numberOfPeople, setNumberOfPeople] = useState<number>(1);
   const [urgencyLevel, setUrgencyLevel] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
@@ -393,6 +396,7 @@ export default function EmergencyApp() {
           urgencyLevel: urgencyLevel.toUpperCase(),
           additionalNotes: additionalNotes || null,
           placeName, // Send place name to backend
+          contactNo, 
         }),
       });
 
@@ -616,6 +620,17 @@ export default function EmergencyApp() {
                     ))}
                   </div>
                 </div>
+
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Contact No *</label>
+                <input
+                  type="tel"
+                  value={contactNo}
+                  onChange={(e) => setContactNo(e.target.value)}
+                  placeholder="e.g., 09171234567"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                />
+              </div>
 
                 <div className="mb-5">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
