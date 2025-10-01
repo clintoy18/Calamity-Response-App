@@ -2,10 +2,30 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
+import { EventEmitter } from 'events';
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const prisma = new PrismaClient();
+const emergencyEmitter = new EventEmitter();
+
+interface Emergency {
+  id: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  needs: string[];
+  numberOfPeople: number;
+  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
+  placeName?: string;
+  contactNo?: string;
+  additionalNotes?: string;
+  status?: 'pending' | 'responded' | 'resolved';
+  createdAt: string;
+}
+
+let emergencies: Emergency[] = [];
 
 // Middleware
 app.use(cors());
@@ -156,6 +176,8 @@ app.post('/api/emergencies', async (req: Request, res: Response) => {
       }
     });
 
+    emergencyEmitter.emit('new', newEmergency);
+
     res.status(201).json({
       success: true,
       message: 'Emergency request created successfully',
@@ -168,6 +190,24 @@ app.post('/api/emergencies', async (req: Request, res: Response) => {
       message: 'Server error'
     });
   }
+});
+
+app.get('/emergencies/stream', (req, res) => {
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+  });
+
+  const sendEmergency = (emergency: Emergency) => {
+    res.write(`data: ${JSON.stringify(emergency)}\n\n`);
+  };
+
+  emergencyEmitter.on('new', sendEmergency);
+
+  req.on('close', () => {
+    emergencyEmitter.off('new', sendEmergency);
+  });
 });
 
 // Update emergency status

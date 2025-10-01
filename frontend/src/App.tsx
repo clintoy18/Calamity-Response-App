@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AlertCircle, MapPin, CheckCircle, Loader, Package, Users, Droplet, Home, Heart, X } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -41,7 +41,6 @@ export default function EmergencyApp() {
   const [location, setLocation] = useState<Location | null>(null);
   const [placeName, setPlaceName] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [emergencyId, setEmergencyId] = useState<string | null>(null);
   const [emergencies, setEmergencies] = useState<EmergencyRecord[]>([]);
   const [isLoadingEmergencies, setIsLoadingEmergencies] = useState<boolean>(false);
   const [contactNo, setContactNo] = useState<string>('');
@@ -98,6 +97,46 @@ export default function EmergencyApp() {
       return 'Unknown location';
     }
   };
+
+  useEffect(() => {
+  const eventSource = new EventSource(`${API_URL}/emergencies/stream`);
+
+  eventSource.onmessage = async (event) => {
+    const emergency: EmergencyRecord = JSON.parse(event.data);
+
+    // Reverse geocode if placeName is missing
+    if (!emergency.placeName) {
+      emergency.placeName = await getPlaceName(emergency.latitude, emergency.longitude);
+    }
+
+    // Add marker to map
+    addEmergencyMarker(
+      emergency.latitude,
+      emergency.longitude,
+      emergency.accuracy,
+      emergency.id,
+      emergency
+    );
+
+    // Update state
+    setEmergencies(prev => {
+      // Avoid duplicates
+      if (!prev.find(e => e.id === emergency.id)) {
+        return [...prev, emergency];
+      }
+      return prev;
+    });
+  };
+
+  eventSource.onerror = (err) => {
+    console.error('SSE error:', err);
+    eventSource.close();
+  };
+
+  return () => {
+    eventSource.close();
+  };
+}, []);
 
   // Initialize map with globe animation
   useEffect(() => {
@@ -163,7 +202,7 @@ export default function EmergencyApp() {
       
       if (data.success && data.data) {
         const formattedEmergencies = await Promise.all(
-          data.data.map(async (emergency: any) => {
+          data.data.map(async (emergency: any ) => {
             const placeName = emergency.placeName || await getPlaceName(emergency.latitude, emergency.longitude);
             return {
               id: emergency.id,
@@ -350,7 +389,6 @@ export default function EmergencyApp() {
         const name = await getPlaceName(coords.latitude, coords.longitude);
         setPlaceName(name);
         setLocation(coords);
-        setEmergencyId(newEmergencyId);
         setStatus('form');
       },
       (error: GeolocationPositionError) => {
@@ -468,7 +506,6 @@ export default function EmergencyApp() {
     setStatus('idle');
     setLocation(null);
     setPlaceName('');
-    setEmergencyId(null);
     setSelectedNeeds([]);
     setNumberOfPeople(1);
     setUrgencyLevel('medium');
@@ -592,9 +629,9 @@ export default function EmergencyApp() {
                     {needOptions.map((option) => (
                       <button
                         key={option.value}
-                        onClick={() => toggleNeed(option.value)}
+                        onClick={() => toggleNeed(option.value as NeedType)}
                         className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all ${
-                          selectedNeeds.includes(option.value)
+                          selectedNeeds.includes(option.value as NeedType)
                             ? 'border-red-500 bg-red-50 text-red-700'
                             : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                         }`}
