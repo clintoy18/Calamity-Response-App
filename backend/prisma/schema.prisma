@@ -1,12 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema file for PostgreSQL
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -15,35 +10,16 @@ datasource db {
 }
 
 model Emergency {
-  id              String   @id @default(cuid())
+  id              String   @id @default(uuid())
   latitude        Float
   longitude       Float
   accuracy        Float
-  timestamp       DateTime @default(now())
-  
-  needs           String[]
-  numberOfPeople  Int      @default(1)
-  urgencyLevel    UrgencyLevel @default(MEDIUM)
+  timestamp       DateTime
+  needs           String[] // Array of strings: ["food", "water"]
+  numberOfPeople  Int
+  urgencyLevel    String   // low, medium, high, critical
   additionalNotes String?
-  
-  status          Status   @default(PENDING)
+  status          String   @default("pending") // pending, responded, resolved
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-
-  @@index([status])
-  @@index([urgencyLevel])
-  @@index([createdAt])
-}
-
-enum UrgencyLevel {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
-
-enum Status {
-  PENDING
-  RESPONDED
-  RESOLVED
 }

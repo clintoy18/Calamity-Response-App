@@ -1,3 +1,4 @@
+// server.ts with Prisma PostgreSQL
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
@@ -19,7 +20,7 @@ interface EmergencyRequestBody {
   accuracy: number;
   needs: NeedType[];
   numberOfPeople: number;
-  urgencyLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
   additionalNotes?: string;
 }
 
@@ -28,10 +29,20 @@ interface EmergencyRequestBody {
 // Health check
 app.get('/api/health', async (req: Request, res: Response) => {
   try {
+    // Test database connection
     await prisma.$queryRaw`SELECT 1`;
-    res.json({ status: 'ok', message: 'Server and database are running' });
+    res.json({ 
+      status: 'ok', 
+      message: 'Emergency Relief API with PostgreSQL is running',
+      database: 'connected',
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Database connection failed' });
+    res.status(500).json({
+      status: 'error',
+      message: 'Database connection failed',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -41,7 +52,7 @@ app.get('/api/emergencies', async (req: Request, res: Response) => {
     const emergencies = await prisma.emergency.findMany({
       orderBy: { createdAt: 'desc' }
     });
-    
+
     res.json({
       success: true,
       count: emergencies.length,
@@ -49,9 +60,9 @@ app.get('/api/emergencies', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching emergencies:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch emergencies'
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
     });
   }
 });
@@ -77,9 +88,9 @@ app.get('/api/emergencies/:id', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching emergency:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch emergency'
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
     });
   }
 });
@@ -128,10 +139,12 @@ app.post('/api/emergencies', async (req: Request, res: Response) => {
         latitude,
         longitude,
         accuracy: accuracy || 0,
-        needs,
+        timestamp: new Date(),
+        needs: needs, // PostgreSQL supports arrays directly
         numberOfPeople: numberOfPeople || 1,
-        urgencyLevel: urgencyLevel || 'MEDIUM',
-        additionalNotes: additionalNotes || null
+        urgencyLevel: urgencyLevel || 'medium',
+        additionalNotes: additionalNotes || '',
+        status: 'pending'
       }
     });
 
@@ -155,16 +168,19 @@ app.patch('/api/emergencies/:id/status', async (req: Request, res: Response) => 
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!['PENDING', 'RESPONDED', 'RESOLVED'].includes(status)) {
+    if (!['pending', 'responded', 'resolved'].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid status. Must be: PENDING, RESPONDED, or RESOLVED'
+        message: 'Invalid status. Must be: pending, responded, or resolved'
       });
     }
 
     const emergency = await prisma.emergency.update({
       where: { id },
-      data: { status }
+      data: { 
+        status, 
+        updatedAt: new Date() 
+      }
     });
 
     res.json({
@@ -185,7 +201,6 @@ app.patch('/api/emergencies/:id/status', async (req: Request, res: Response) => 
 app.delete('/api/emergencies/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
     await prisma.emergency.delete({
       where: { id }
     });
@@ -207,16 +222,15 @@ app.delete('/api/emergencies/:id', async (req: Request, res: Response) => {
 app.delete('/api/emergencies', async (req: Request, res: Response) => {
   try {
     await prisma.emergency.deleteMany();
-    
     res.json({
       success: true,
       message: 'All emergency requests cleared'
     });
   } catch (error) {
     console.error('Error clearing emergencies:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to clear emergencies'
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
     });
   }
 });
@@ -225,23 +239,21 @@ app.delete('/api/emergencies', async (req: Request, res: Response) => {
 app.get('/api/emergencies/urgency/:level', async (req: Request, res: Response) => {
   try {
     const { level } = req.params;
-    const urgencyLevel = level.toUpperCase();
-    
-    const emergencies = await prisma.emergency.findMany({
-      where: { urgencyLevel: urgencyLevel as any },
+    const filtered = await prisma.emergency.findMany({
+      where: { urgencyLevel: level },
       orderBy: { createdAt: 'desc' }
     });
     
     res.json({
       success: true,
-      count: emergencies.length,
-      data: emergencies
+      count: filtered.length,
+      data: filtered
     });
   } catch (error) {
     console.error('Error fetching emergencies by urgency:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch emergencies'
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
     });
   }
 });
@@ -250,41 +262,33 @@ app.get('/api/emergencies/urgency/:level', async (req: Request, res: Response) =
 app.get('/api/emergencies/status/:status', async (req: Request, res: Response) => {
   try {
     const { status } = req.params;
-    const statusValue = status.toUpperCase();
-    
-    const emergencies = await prisma.emergency.findMany({
-      where: { status: statusValue as any },
+    const filtered = await prisma.emergency.findMany({
+      where: { status },
       orderBy: { createdAt: 'desc' }
     });
     
     res.json({
       success: true,
-      count: emergencies.length,
-      data: emergencies
+      count: filtered.length,
+      data: filtered
     });
   } catch (error) {
     console.error('Error fetching emergencies by status:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch emergencies'
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
     });
   }
 });
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📍 Emergency Relief API is ready`);
-  console.log(`🗄️  Database connected`);
+  console.log(`\n🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📍 Emergency Relief API with PostgreSQL is ready`);
+  console.log(`📊 Health check: http://localhost:${PORT}/api/health\n`);
+});
+
+// Cleanup on exit
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
 });
