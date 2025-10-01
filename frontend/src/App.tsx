@@ -66,32 +66,36 @@ export default function EmergencyApp() {
   };
 
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+  if (!mapRef.current || mapInstanceRef.current) return;
 
-    const map = L.map(mapRef.current, {
-    center: CEBU_CENTER,
-    zoom: 12,
-    maxBounds: CEBU_BOUNDS,
-    maxBoundsViscosity: 1.0,
-    minZoom: 10,     // allow zooming out to see full Cebu
-    maxZoom: 18,
+  const map = L.map(mapRef.current, {
+    center: [20, 0], // start zoomed out (world view)
+    zoom: 2,         // very far zoom
     zoomControl: true
   });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap',
-      maxZoom: 19
-    }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 19
+  }).addTo(map);
 
-    mapInstanceRef.current = map;
+  mapInstanceRef.current = map;
 
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, []);
+  // 🚀 Animate fly to Cebu after 2 seconds
+  setTimeout(() => {
+    map.flyTo(CEBU_CENTER, 12, {
+      animate: true,
+      duration: 3 // seconds
+    });
+  }, 2000);
+
+  return () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+    }
+  };
+}, []);
 
   const addEmergencyMarker = (lat: number, lng: number, accuracy: number, id: string, emergencyData?: EmergencyRecord): boolean => {
     if (!mapInstanceRef.current) return false;
