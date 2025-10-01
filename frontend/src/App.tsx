@@ -5,6 +5,9 @@ import 'leaflet/dist/leaflet.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+// Simple in-memory cache for place names
+const placeNameCache = new Map<string, string>();
+
 interface Location {
   latitude: number;
   longitude: number;
@@ -28,17 +31,18 @@ interface EmergencyRecord extends Location, EmergencyRequest {
   status?: 'pending' | 'responded' | 'resolved';
   createdAt?: string;
   updatedAt?: string;
+  placeName?: string;
 }
 
 export default function EmergencyApp() {
   const [status, setStatus] = useState<Status>('idle');
   const [location, setLocation] = useState<Location | null>(null);
+  const [placeName, setPlaceName] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [emergencyId, setEmergencyId] = useState<string | null>(null);
   const [emergencies, setEmergencies] = useState<EmergencyRecord[]>([]);
   const [isLoadingEmergencies, setIsLoadingEmergencies] = useState<boolean>(false);
   
-  // Form states
   const [selectedNeeds, setSelectedNeeds] = useState<NeedType[]>([]);
   const [numberOfPeople, setNumberOfPeople] = useState<number>(1);
   const [urgencyLevel, setUrgencyLevel] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
@@ -48,14 +52,10 @@ export default function EmergencyApp() {
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Array<{ marker: L.Marker; circle: L.Circle; data: EmergencyRecord }>>([]);
 
-  // Cebu City center coordinates
   const CEBU_CENTER: L.LatLngExpression = [10.3157, 123.8854];
-  const CEBU_BOUNDS: L.LatLngBoundsExpression = [
-    [9.4, 123.1],
-    [11.4, 124.1]   
-  ];
+  const CEBU_BOUNDS: L.LatLngBoundsExpression = [[9.4, 123.1], [11.4, 124.1]];
 
-  const needOptions: Array<{ value: NeedType; label: string; icon: React.ReactNode }> = [
+  const needOptions = [
     { value: 'food', label: 'Food', icon: <Package className="w-5 h-5" /> },
     { value: 'water', label: 'Water', icon: <Droplet className="w-5 h-5" /> },
     { value: 'medical', label: 'Medical', icon: <Heart className="w-5 h-5" /> },
@@ -68,37 +68,76 @@ export default function EmergencyApp() {
     low: { bg: '#10b981', text: 'Low', light: '#d1fae5' },
     medium: { bg: '#f59e0b', text: 'Medium', light: '#fef3c7' },
     high: { bg: '#f97316', text: 'High', light: '#ffedd5' },
-    critical: { bg: '#ef4444', text: 'Critical', light: '#fee2e2' }
+    critical: { bg: '#ef4444', text: 'Critical', light: '#fee2e2' },
   };
 
-  // Initialize map
+  // Reverse geocoding function with caching
+  const getPlaceName = async (lat: number, lon: number): Promise<string> => {
+    const cacheKey = `${lat.toFixed(4)}:${lon.toFixed(4)}`;
+    if (placeNameCache.has(cacheKey)) {
+      return placeNameCache.get(cacheKey)!;
+    }
+
+    try {
+      // Delay to respect Nominatim's 1 request/sec limit
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
+        { headers: { 'User-Agent': 'EmergencyReliefApp/1.0' } }
+      );
+      if (!response.ok) throw new Error(`Nominatim API error: ${response.status}`);
+      const data = await response.json();
+      const name = data.display_name || 'Unknown location';
+      placeNameCache.set(cacheKey, name);
+      return name;
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+      return 'Unknown location';
+    }
+  };
+
+  // Initialize map with globe animation
   useEffect(() => {
-  if (!mapRef.current || mapInstanceRef.current) return;
+    if (!mapRef.current || mapInstanceRef.current) return;
 
     const map = L.map(mapRef.current, {
-      center: CEBU_CENTER,
-      zoom: 12,
+      center: [0, 0], // Start at world view
+      zoom: 1,
       maxBounds: CEBU_BOUNDS,
       maxBoundsViscosity: 1.0,
       minZoom: 10,
       maxZoom: 18,
-      zoomControl: true
+      zoomControl: true,
+      worldCopyJump: true,
     });
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap',
-    maxZoom: 19
-  }).addTo(map);
+    const blueMarbleLayer = L.tileLayer(
+      'https://map1.vis.earthdata.nasa.gov/wmts-webmerc/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg',
+      {
+        attribution: '&copy; NASA Blue Marble, OpenStreetMap',
+        maxZoom: 8,
+        tileSize: 512,
+      }
+    ).addTo(map);
 
-  mapInstanceRef.current = map;
-
-  // 🚀 Animate fly to Cebu after 2 seconds
-  setTimeout(() => {
-    map.flyTo(CEBU_CENTER, 12, {
-      animate: true,
-      duration: 3 // seconds
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 19,
     });
-  }, 2000);
+
+    mapInstanceRef.current = map;
+
+    // Animate to Cebu after 1.5 seconds
+    setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(blueMarbleLayer);
+        osmLayer.addTo(mapInstanceRef.current);
+        mapInstanceRef.current.flyTo(CEBU_CENTER, 12, {
+          duration: 4,
+          easeLinearity: 0.2,
+        });
+      }
+    }, 1500);
 
     return () => {
       if (mapInstanceRef.current) {
@@ -107,7 +146,6 @@ export default function EmergencyApp() {
       }
     };
   }, []);
-
 
   // Fetch all emergencies on mount
   useEffect(() => {
@@ -121,24 +159,29 @@ export default function EmergencyApp() {
       const data = await response.json();
       
       if (data.success && data.data) {
-        const formattedEmergencies = data.data.map((emergency: any) => ({
-          id: emergency.id,
-          latitude: emergency.latitude,
-          longitude: emergency.longitude,
-          accuracy: emergency.accuracy,
-          timestamp: emergency.timestamp || emergency.createdAt,
-          needs: emergency.needs,
-          numberOfPeople: emergency.numberOfPeople,
-          urgencyLevel: emergency.urgencyLevel.toLowerCase() as 'low' | 'medium' | 'high' | 'critical',
-          additionalNotes: emergency.additionalNotes || '',
-          status: emergency.status?.toLowerCase() as 'pending' | 'responded' | 'resolved',
-          createdAt: emergency.createdAt,
-          updatedAt: emergency.updatedAt
-        }));
+        const formattedEmergencies = await Promise.all(
+          data.data.map(async (emergency: any) => {
+            const placeName = emergency.placeName || await getPlaceName(emergency.latitude, emergency.longitude);
+            return {
+              id: emergency.id,
+              latitude: emergency.latitude,
+              longitude: emergency.longitude,
+              accuracy: emergency.accuracy,
+              timestamp: emergency.timestamp || emergency.createdAt,
+              needs: emergency.needs,
+              numberOfPeople: emergency.numberOfPeople,
+              urgencyLevel: emergency.urgencyLevel.toLowerCase() as 'low' | 'medium' | 'high' | 'critical',
+              additionalNotes: emergency.additionalNotes || '',
+              status: emergency.status?.toLowerCase() as 'pending' | 'responded' | 'resolved',
+              createdAt: emergency.createdAt,
+              updatedAt: emergency.updatedAt,
+              placeName,
+            };
+          })
+        );
 
         setEmergencies(formattedEmergencies);
 
-        // Add markers for all emergencies
         formattedEmergencies.forEach((emergency: EmergencyRecord) => {
           addEmergencyMarker(
             emergency.latitude,
@@ -168,7 +211,6 @@ export default function EmergencyApp() {
       return false;
     }
 
-    // Choose color based on urgency if emergency data is provided
     const color = emergencyData ? urgencyColors[emergencyData.urgencyLevel].bg : '#6366f1';
 
     const userIcon = L.divIcon({
@@ -178,16 +220,16 @@ export default function EmergencyApp() {
       iconSize: [32, 32],
       iconAnchor: [16, 16],
       popupAnchor: [0, -16],
-      className: ''
+      className: '',
     });
 
-    // Build popup content
     let popupContent = `
       <div style="min-width: 200px;">
         <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #1f2937;">Emergency Request</div>
         <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">
           <strong>ID:</strong> ${id}<br>
-          <strong>Location:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}
+          <strong>Location:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}<br>
+          ${emergencyData?.placeName ? `<strong>Place:</strong> ${emergencyData.placeName}<br>` : ''}
         </div>
     `;
 
@@ -242,13 +284,12 @@ export default function EmergencyApp() {
       color: color,
       fillColor: color,
       fillOpacity: 0.1,
-      weight: 2
+      weight: 2,
     }).addTo(map);
 
     const markerData = { marker, circle: accuracyCircle, data: emergencyData || {} as EmergencyRecord };
     markersRef.current.push(markerData);
-    
-    // Only pan to location if it's a new emergency request
+
     if (!emergencyData?.createdAt) {
       map.setView([lat, lng], 15, { animate: true });
     }
@@ -256,7 +297,7 @@ export default function EmergencyApp() {
     return true;
   };
 
-  const handleEmergency = (): void => {
+  const handleEmergency = async (): Promise<void> => {
     setStatus('loading');
     setErrorMessage('');
 
@@ -267,12 +308,12 @@ export default function EmergencyApp() {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position: GeolocationPosition) => {
+      async (position: GeolocationPosition) => {
         const coords: Location = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         };
 
         const newEmergencyId = 'EMG-TEMP-' + Date.now();
@@ -288,6 +329,9 @@ export default function EmergencyApp() {
           return;
         }
 
+        // Get place name
+        const name = await getPlaceName(coords.latitude, coords.longitude);
+        setPlaceName(name);
         setLocation(coords);
         setEmergencyId(newEmergencyId);
         setStatus('form');
@@ -311,7 +355,7 @@ export default function EmergencyApp() {
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 0
+        maximumAge: 0,
       }
     );
   };
@@ -347,8 +391,9 @@ export default function EmergencyApp() {
           needs: selectedNeeds,
           numberOfPeople,
           urgencyLevel: urgencyLevel.toUpperCase(),
-          additionalNotes: additionalNotes || null
-        })
+          additionalNotes: additionalNotes || null,
+          placeName, // Send place name to backend
+        }),
       });
 
       const data = await response.json();
@@ -366,10 +411,10 @@ export default function EmergencyApp() {
         additionalNotes,
         status: 'pending',
         createdAt: data.data.createdAt,
-        updatedAt: data.data.updatedAt
+        updatedAt: data.data.updatedAt,
+        placeName: data.data.placeName || placeName,
       };
 
-      // Remove the temporary marker
       if (markersRef.current.length > 0) {
         const tempMarkerIndex = markersRef.current.findIndex(m => m.data.id?.includes('TEMP'));
         if (tempMarkerIndex !== -1) {
@@ -382,7 +427,6 @@ export default function EmergencyApp() {
         }
       }
 
-      // Add new marker with full emergency data
       addEmergencyMarker(
         location.latitude,
         location.longitude,
@@ -403,6 +447,7 @@ export default function EmergencyApp() {
   const handleReset = (): void => {
     setStatus('idle');
     setLocation(null);
+    setPlaceName('');
     setEmergencyId(null);
     setSelectedNeeds([]);
     setNumberOfPeople(1);
@@ -427,7 +472,6 @@ export default function EmergencyApp() {
         throw new Error(data.message || 'Failed to clear emergencies');
       }
 
-      // Clear all markers from map
       if (mapInstanceRef.current) {
         markersRef.current.forEach(({ marker, circle }) => {
           mapInstanceRef.current?.removeLayer(marker);
@@ -447,10 +491,8 @@ export default function EmergencyApp() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Full Screen Map */}
       <div ref={mapRef} className="absolute inset-0 w-full h-full z-0"></div>
 
-      {/* Minimal Header */}
       <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
         <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg">
           <span className="text-sm font-semibold text-gray-800">Emergency Relief - Cebu</span>
@@ -462,7 +504,6 @@ export default function EmergencyApp() {
         )}
       </div>
 
-      {/* Loading Indicator */}
       {isLoadingEmergencies && (
         <div className="absolute top-20 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg z-10">
           <div className="flex items-center gap-2">
@@ -472,7 +513,6 @@ export default function EmergencyApp() {
         </div>
       )}
 
-      {/* Bottom Action Button */}
       {status === 'idle' && (
         <div className="absolute bottom-6 left-4 right-4 z-10">
           <div className="max-w-md mx-auto space-y-2">
@@ -495,12 +535,9 @@ export default function EmergencyApp() {
         </div>
       )}
 
-      {/* Modal Overlay */}
       {(status === 'loading' || status === 'form' || status === 'success' || status === 'error') && (
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-20 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-y-auto">
-            
-            {/* Loading Modal */}
             {status === 'loading' && (
               <div className="p-10 text-center">
                 <Loader className="w-12 h-12 text-red-500 animate-spin mx-auto mb-4" />
@@ -510,7 +547,6 @@ export default function EmergencyApp() {
               </div>
             )}
 
-            {/* Form Modal */}
             {status === 'form' && location && (
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -519,16 +555,17 @@ export default function EmergencyApp() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                
-                {/* Location Info */}
+
                 <div className="mb-5 p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <MapPin className="w-4 h-4" />
-                    <span>Location: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}</span>
+                    <span>
+                      {placeName ? placeName : 'Fetching location name...'}<br />
+                      ({location.latitude.toFixed(4)}, {location.longitude.toFixed(4)})
+                    </span>
                   </div>
                 </div>
 
-                {/* Needs Selection */}
                 <div className="mb-5">
                   <label className="block text-sm font-medium text-gray-700 mb-3">What do you need? *</label>
                   <div className="grid grid-cols-3 gap-2">
@@ -549,7 +586,6 @@ export default function EmergencyApp() {
                   </div>
                 </div>
 
-                {/* Number of People */}
                 <div className="mb-5">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Number of People *</label>
                   <input
@@ -562,7 +598,6 @@ export default function EmergencyApp() {
                   />
                 </div>
 
-                {/* Urgency Level */}
                 <div className="mb-5">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Urgency Level *</label>
                   <div className="grid grid-cols-2 gap-2">
@@ -582,7 +617,6 @@ export default function EmergencyApp() {
                   </div>
                 </div>
 
-                {/* Additional Notes */}
                 <div className="mb-5">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
                   <textarea
@@ -610,7 +644,6 @@ export default function EmergencyApp() {
               </div>
             )}
 
-            {/* Success Modal */}
             {status === 'success' && (
               <div className="p-8 text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -628,7 +661,6 @@ export default function EmergencyApp() {
                   >
                     Submit Another Request
                   </button>
-                  
                   <button
                     onClick={() => setStatus('idle')}
                     className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-6 rounded-lg transition-all text-sm"
@@ -639,7 +671,6 @@ export default function EmergencyApp() {
               </div>
             )}
 
-            {/* Error Modal */}
             {status === 'error' && (
               <div className="p-8 text-center">
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
