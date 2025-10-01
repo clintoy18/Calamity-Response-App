@@ -1,11 +1,54 @@
-// server.ts with Prisma PostgreSQL
+// server.ts with WebSocket support
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import { createServer } from 'http';
+import { WebSocketServer, WebSocket } from 'ws';
 import { PrismaClient } from '@prisma/client';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const prisma = new PrismaClient();
+
+// Create HTTP server
+const server = createServer(app);
+
+// Create WebSocket server
+const wss = new WebSocketServer({ server });
+
+// Store connected clients
+const clients = new Set<WebSocket>();
+
+// WebSocket connection handler
+wss.on('connection', (ws: WebSocket) => {
+  console.log('New WebSocket client connected');
+  clients.add(ws);
+
+  ws.on('close', () => {
+    console.log('WebSocket client disconnected');
+    clients.delete(ws);
+  });
+
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+    clients.delete(ws);
+  });
+
+  // Send initial connection success message
+  ws.send(JSON.stringify({ type: 'connected', message: 'WebSocket connection established' }));
+});
+
+// Broadcast function to send updates to all connected clients
+function broadcastEmergency(type: 'created' | 'updated' | 'deleted', data: any) {
+  const message = JSON.stringify({ type, data });
+  
+  clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+  
+  console.log(`Broadcasted ${type} event to ${clients.size} clients`);
+}
 
 // Middleware
 app.use(cors());
@@ -31,12 +74,13 @@ interface EmergencyRequestBody {
 // Health check
 app.get('/api/health', async (req: Request, res: Response) => {
   try {
-    // Test database connection
     await prisma.$queryRaw`SELECT 1`;
     res.json({ 
       status: 'ok', 
-      message: 'Emergency Relief API with PostgreSQL is running',
+      message: 'Emergency Relief API with PostgreSQL and WebSocket is running',
       database: 'connected',
+      websocket: 'active',
+      connectedClients: clients.size,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -112,8 +156,6 @@ app.post('/api/emergencies', async (req: Request, res: Response) => {
       additionalNotes
     }: EmergencyRequestBody = req.body;
 
-    console.log(placename)
-
     // Validation
     if (!latitude || !longitude) {
       return res.status(400).json({
@@ -148,13 +190,16 @@ app.post('/api/emergencies', async (req: Request, res: Response) => {
         contactno,  
         accuracy: accuracy || 0,
         timestamp: new Date(),
-        needs: needs, // PostgreSQL supports arrays directly
+        needs: needs,
         numberOfPeople: numberOfPeople || 1,
         urgencyLevel: urgencyLevel || 'medium',
         additionalNotes: additionalNotes || '',
         status: 'pending'
       }
     });
+
+    // Broadcast the new emergency to all connected WebSocket clients
+    broadcastEmergency('created', newEmergency);
 
     res.status(201).json({
       success: true,
@@ -191,6 +236,9 @@ app.patch('/api/emergencies/:id/status', async (req: Request, res: Response) => 
       }
     });
 
+    // Broadcast the update to all connected WebSocket clients
+    broadcastEmergency('updated', emergency);
+
     res.json({
       success: true,
       message: 'Emergency status updated',
@@ -213,6 +261,9 @@ app.delete('/api/emergencies/:id', async (req: Request, res: Response) => {
       where: { id }
     });
 
+    // Broadcast the deletion to all connected WebSocket clients
+    broadcastEmergency('deleted', { id });
+
     res.json({
       success: true,
       message: 'Emergency request deleted'
@@ -230,6 +281,10 @@ app.delete('/api/emergencies/:id', async (req: Request, res: Response) => {
 app.delete('/api/emergencies', async (req: Request, res: Response) => {
   try {
     await prisma.emergency.deleteMany();
+    
+    // Broadcast clear all to all connected WebSocket clients
+    broadcastEmergency('deleted', { all: true });
+
     res.json({
       success: true,
       message: 'All emergency requests cleared'
@@ -289,14 +344,16 @@ app.get('/api/emergencies/status/:status', async (req: Request, res: Response) =
   }
 });
 
-// Start server
-app.listen(PORT, () => {
+// Start server (HTTP + WebSocket)
+server.listen(PORT, () => {
   console.log(`\n🚀 Server running on http://localhost:${PORT}`);
   console.log(`📍 Emergency Relief API with PostgreSQL is ready`);
+  console.log(`🔌 WebSocket server is active on ws://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health\n`);
 });
 
 // Cleanup on exit
 process.on('beforeExit', async () => {
   await prisma.$disconnect();
+  wss.close();
 });
