@@ -1,27 +1,31 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Emergency Relief Backend API with PostgreSQL",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset --force",
+    "db:push": "prisma db push"
   },
-  "keywords": [],
+  "keywords": ["emergency", "relief", "api", "prisma", "postgresql"],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
+    "@prisma/client": "^6.16.3",
     "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "uuid": "^13.0.0"
+    "express": "^5.1.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^24.6.1",
-    "@types/uuid": "^10.0.0",
+    "prisma": "^6.16.3",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }
