@@ -3,6 +3,8 @@ import { AlertCircle, MapPin, CheckCircle, Loader, Package, Users, Droplet, Home
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 interface Location {
   latitude: number;
   longitude: number;
@@ -23,6 +25,9 @@ interface EmergencyRequest {
 
 interface EmergencyRecord extends Location, EmergencyRequest {
   id: string;
+  status?: 'pending' | 'responded' | 'resolved';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export default function EmergencyApp() {
@@ -31,6 +36,7 @@ export default function EmergencyApp() {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [emergencyId, setEmergencyId] = useState<string | null>(null);
   const [emergencies, setEmergencies] = useState<EmergencyRecord[]>([]);
+  const [isLoadingEmergencies, setIsLoadingEmergencies] = useState<boolean>(false);
   
   // Form states
   const [selectedNeeds, setSelectedNeeds] = useState<NeedType[]>([]);
@@ -46,7 +52,7 @@ export default function EmergencyApp() {
   const CEBU_CENTER: L.LatLngExpression = [10.3157, 123.8854];
   const CEBU_BOUNDS: L.LatLngBoundsExpression = [
     [9.4, 123.1],
-   [11.4, 124.1]   
+    [11.4, 124.1]   
   ];
 
   const needOptions: Array<{ value: NeedType; label: string; icon: React.ReactNode }> = [
@@ -65,18 +71,19 @@ export default function EmergencyApp() {
     critical: { bg: '#ef4444', text: 'Critical', light: '#fee2e2' }
   };
 
+  // Initialize map
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
     const map = L.map(mapRef.current, {
-    center: CEBU_CENTER,
-    zoom: 12,
-    maxBounds: CEBU_BOUNDS,
-    maxBoundsViscosity: 1.0,
-    minZoom: 10,     // allow zooming out to see full Cebu
-    maxZoom: 18,
-    zoomControl: true
-  });
+      center: CEBU_CENTER,
+      zoom: 12,
+      maxBounds: CEBU_BOUNDS,
+      maxBoundsViscosity: 1.0,
+      minZoom: 10,
+      maxZoom: 18,
+      zoomControl: true
+    });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap',
@@ -92,6 +99,53 @@ export default function EmergencyApp() {
       }
     };
   }, []);
+
+  // Fetch all emergencies on mount
+  useEffect(() => {
+    fetchEmergencies();
+  }, []);
+
+  const fetchEmergencies = async (): Promise<void> => {
+    setIsLoadingEmergencies(true);
+    try {
+      const response = await fetch(`${API_URL}/emergencies`);
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        const formattedEmergencies = data.data.map((emergency: any) => ({
+          id: emergency.id,
+          latitude: emergency.latitude,
+          longitude: emergency.longitude,
+          accuracy: emergency.accuracy,
+          timestamp: emergency.timestamp || emergency.createdAt,
+          needs: emergency.needs,
+          numberOfPeople: emergency.numberOfPeople,
+          urgencyLevel: emergency.urgencyLevel.toLowerCase() as 'low' | 'medium' | 'high' | 'critical',
+          additionalNotes: emergency.additionalNotes || '',
+          status: emergency.status?.toLowerCase() as 'pending' | 'responded' | 'resolved',
+          createdAt: emergency.createdAt,
+          updatedAt: emergency.updatedAt
+        }));
+
+        setEmergencies(formattedEmergencies);
+
+        // Add markers for all emergencies
+        formattedEmergencies.forEach((emergency: EmergencyRecord) => {
+          addEmergencyMarker(
+            emergency.latitude,
+            emergency.longitude,
+            emergency.accuracy,
+            emergency.id,
+            emergency
+          );
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching emergencies:', error);
+    } finally {
+      setIsLoadingEmergencies(false);
+    }
+  };
 
   const addEmergencyMarker = (lat: number, lng: number, accuracy: number, id: string, emergencyData?: EmergencyRecord): boolean => {
     if (!mapInstanceRef.current) return false;
@@ -145,10 +199,23 @@ export default function EmergencyApp() {
               ${urgencyColors[emergencyData.urgencyLevel].text}
             </span>
           </div>
+          ${emergencyData.status ? `
+            <div style="font-size: 12px; margin-bottom: 6px;">
+              <strong style="color: #374151;">Status:</strong>
+              <span style="color: #6b7280; text-transform: capitalize; margin-left: 4px;">
+                ${emergencyData.status}
+              </span>
+            </div>
+          ` : ''}
           ${emergencyData.additionalNotes ? `
             <div style="font-size: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
               <strong style="color: #374151;">Notes:</strong><br>
               <span style="color: #6b7280;">${emergencyData.additionalNotes}</span>
+            </div>
+          ` : ''}
+          ${emergencyData.createdAt ? `
+            <div style="font-size: 11px; margin-top: 8px; color: #9ca3af;">
+              <strong>Created:</strong> ${new Date(emergencyData.createdAt).toLocaleString()}
             </div>
           ` : ''}
         </div>
@@ -172,7 +239,10 @@ export default function EmergencyApp() {
     const markerData = { marker, circle: accuracyCircle, data: emergencyData || {} as EmergencyRecord };
     markersRef.current.push(markerData);
     
-    map.setView([lat, lng], 15, { animate: true });
+    // Only pan to location if it's a new emergency request
+    if (!emergencyData?.createdAt) {
+      map.setView([lat, lng], 15, { animate: true });
+    }
 
     return true;
   };
@@ -196,7 +266,7 @@ export default function EmergencyApp() {
           timestamp: new Date().toISOString()
         };
 
-        const newEmergencyId = 'EMG-' + Date.now();
+        const newEmergencyId = 'EMG-TEMP-' + Date.now();
 
         const isValidLocation = addEmergencyMarker(
           coords.latitude,
@@ -245,44 +315,80 @@ export default function EmergencyApp() {
     );
   };
 
-  const handleSubmitRequest = (): void => {
+  const handleSubmitRequest = async (): Promise<void> => {
     if (selectedNeeds.length === 0) {
       setErrorMessage('Please select at least one relief item');
       return;
     }
 
-    if (!location || !emergencyId) return;
+    if (!location) return;
 
-    const newEmergency: EmergencyRecord = {
-      ...location,
-      id: emergencyId,
-      needs: selectedNeeds,
-      numberOfPeople,
-      urgencyLevel,
-      additionalNotes
-    };
+    setStatus('loading');
 
-    // Remove the temporary marker
-    if (markersRef.current.length > 0) {
-      const lastMarker = markersRef.current[markersRef.current.length - 1];
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.removeLayer(lastMarker.marker);
-        mapInstanceRef.current.removeLayer(lastMarker.circle);
+    try {
+      const response = await fetch(`${API_URL}/emergencies`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          latitude: location.latitude,
+          longitude: location.longitude,
+          accuracy: location.accuracy,
+          needs: selectedNeeds,
+          numberOfPeople,
+          urgencyLevel: urgencyLevel.toUpperCase(),
+          additionalNotes: additionalNotes || null
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit request');
       }
-      markersRef.current.pop();
+
+      const newEmergency: EmergencyRecord = {
+        ...location,
+        id: data.data.id,
+        needs: selectedNeeds,
+        numberOfPeople,
+        urgencyLevel,
+        additionalNotes,
+        status: 'pending',
+        createdAt: data.data.createdAt,
+        updatedAt: data.data.updatedAt
+      };
+
+      // Remove the temporary marker
+      if (markersRef.current.length > 0) {
+        const tempMarkerIndex = markersRef.current.findIndex(m => m.data.id?.includes('TEMP'));
+        if (tempMarkerIndex !== -1) {
+          const tempMarker = markersRef.current[tempMarkerIndex];
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.removeLayer(tempMarker.marker);
+            mapInstanceRef.current.removeLayer(tempMarker.circle);
+          }
+          markersRef.current.splice(tempMarkerIndex, 1);
+        }
+      }
+
+      // Add new marker with full emergency data
+      addEmergencyMarker(
+        location.latitude,
+        location.longitude,
+        location.accuracy,
+        data.data.id,
+        newEmergency
+      );
+
+      setEmergencies(prev => [...prev, newEmergency]);
+      setStatus('success');
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to submit request. Please try again.');
+      setStatus('error');
     }
-
-    // Add new marker with full emergency data
-    addEmergencyMarker(
-      location.latitude,
-      location.longitude,
-      location.accuracy,
-      emergencyId,
-      newEmergency
-    );
-
-    setEmergencies(prev => [...prev, newEmergency]);
-    setStatus('success');
   };
 
   const handleReset = (): void => {
@@ -296,18 +402,38 @@ export default function EmergencyApp() {
     setErrorMessage('');
   };
 
-  const handleClearAll = (): void => {
-    if (mapInstanceRef.current) {
-      markersRef.current.forEach(({ marker, circle }) => {
-        mapInstanceRef.current?.removeLayer(marker);
-        mapInstanceRef.current?.removeLayer(circle);
-      });
-      markersRef.current = [];
-      mapInstanceRef.current.setView(CEBU_CENTER, 12, { animate: true });
+  const handleClearAll = async (): Promise<void> => {
+    if (!window.confirm('Are you sure you want to clear all emergency requests? This action cannot be undone.')) {
+      return;
     }
 
-    setEmergencies([]);
-    handleReset();
+    try {
+      const response = await fetch(`${API_URL}/emergencies`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to clear emergencies');
+      }
+
+      // Clear all markers from map
+      if (mapInstanceRef.current) {
+        markersRef.current.forEach(({ marker, circle }) => {
+          mapInstanceRef.current?.removeLayer(marker);
+          mapInstanceRef.current?.removeLayer(circle);
+        });
+        markersRef.current = [];
+        mapInstanceRef.current.setView(CEBU_CENTER, 12, { animate: true });
+      }
+
+      setEmergencies([]);
+      handleReset();
+    } catch (error) {
+      console.error('Error clearing emergencies:', error);
+      alert('Failed to clear emergencies. Please try again.');
+    }
   };
 
   return (
@@ -318,14 +444,24 @@ export default function EmergencyApp() {
       {/* Minimal Header */}
       <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
         <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg">
-          <span className="text-sm font-semibold text-gray-800">Emergency Relief</span>
+          <span className="text-sm font-semibold text-gray-800">Emergency Relief - Cebu</span>
         </div>
         {emergencies.length > 0 && (
           <div className="bg-red-500 text-white px-3 py-1.5 rounded-full shadow-lg text-sm font-semibold">
-            {emergencies.length}
+            {emergencies.length} Active
           </div>
         )}
       </div>
+
+      {/* Loading Indicator */}
+      {isLoadingEmergencies && (
+        <div className="absolute top-20 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg z-10">
+          <div className="flex items-center gap-2">
+            <Loader className="w-4 h-4 animate-spin text-gray-600" />
+            <span className="text-sm text-gray-600">Loading emergencies...</span>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Action Button */}
       {status === 'idle' && (
@@ -359,7 +495,9 @@ export default function EmergencyApp() {
             {status === 'loading' && (
               <div className="p-10 text-center">
                 <Loader className="w-12 h-12 text-red-500 animate-spin mx-auto mb-4" />
-                <p className="text-gray-700 font-medium">Locating you...</p>
+                <p className="text-gray-700 font-medium">
+                  {location ? 'Submitting request...' : 'Locating you...'}
+                </p>
               </div>
             )}
 
@@ -373,9 +511,17 @@ export default function EmergencyApp() {
                   </button>
                 </div>
                 
+                {/* Location Info */}
+                <div className="mb-5 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <MapPin className="w-4 h-4" />
+                    <span>Location: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}</span>
+                  </div>
+                </div>
+
                 {/* Needs Selection */}
                 <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">What do you need?</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">What do you need? *</label>
                   <div className="grid grid-cols-3 gap-2">
                     {needOptions.map((option) => (
                       <button
@@ -396,7 +542,7 @@ export default function EmergencyApp() {
 
                 {/* Number of People */}
                 <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Number of People</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Number of People *</label>
                   <input
                     type="number"
                     min="1"
@@ -409,7 +555,7 @@ export default function EmergencyApp() {
 
                 {/* Urgency Level */}
                 <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Urgency</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Urgency Level *</label>
                   <div className="grid grid-cols-2 gap-2">
                     {(['low', 'medium', 'high', 'critical'] as const).map((level) => (
                       <button
@@ -418,7 +564,7 @@ export default function EmergencyApp() {
                         className={`px-3 py-2 rounded-lg border font-medium text-sm transition-all ${
                           urgencyLevel === level
                             ? 'border-red-500 bg-red-50 text-red-700'
-                            : 'border-gray-200 bg-white text-gray-600'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                         }`}
                       >
                         {level.charAt(0).toUpperCase() + level.slice(1)}
@@ -429,11 +575,11 @@ export default function EmergencyApp() {
 
                 {/* Additional Notes */}
                 <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
                   <textarea
                     value={additionalNotes}
                     onChange={(e) => setAdditionalNotes(e.target.value)}
-                    placeholder="Any special needs..."
+                    placeholder="Special needs, medical conditions, number of children, etc."
                     rows={3}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none text-sm"
                   />
@@ -447,7 +593,8 @@ export default function EmergencyApp() {
 
                 <button
                   onClick={handleSubmitRequest}
-                  className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+                  disabled={selectedNeeds.length === 0}
+                  className="w-full bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all"
                 >
                   Submit Request
                 </button>
@@ -460,22 +607,24 @@ export default function EmergencyApp() {
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CheckCircle className="w-10 h-10 text-green-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Request Submitted</h3>
-                <p className="text-sm text-gray-600 mb-6">Help is on the way. Check the map for your marker.</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Request Submitted!</h3>
+                <p className="text-sm text-gray-600 mb-6">
+                  Your emergency request has been recorded. Help will be dispatched soon. Check the map for your marker.
+                </p>
                 
                 <div className="space-y-2">
                   <button
                     onClick={handleReset}
                     className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 px-6 rounded-lg transition-all"
                   >
-                    Submit Another
+                    Submit Another Request
                   </button>
                   
                   <button
-                    onClick={handleClearAll}
+                    onClick={() => setStatus('idle')}
                     className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-6 rounded-lg transition-all text-sm"
                   >
-                    Clear All
+                    Close
                   </button>
                 </div>
               </div>
@@ -491,7 +640,14 @@ export default function EmergencyApp() {
                 <p className="text-sm text-red-600 mb-6">{errorMessage}</p>
                 
                 <button
-                  onClick={() => setStatus('idle')}
+                  onClick={() => {
+                    setErrorMessage('');
+                    if (location) {
+                      setStatus('form');
+                    } else {
+                      setStatus('idle');
+                    }
+                  }}
                   className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg transition-all"
                 >
                   Try Again
