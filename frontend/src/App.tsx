@@ -178,6 +178,7 @@ export default function EmergencyApp() {
               status: emergency.status?.toLowerCase() as 'pending' | 'responded' | 'resolved',
               createdAt: emergency.createdAt,
               updatedAt: emergency.updatedAt,
+              contactNo: emergency.contactNo || emergency.contactno || '', // <--- map here
               placeName,
             };
           })
@@ -236,7 +237,7 @@ export default function EmergencyApp() {
         </div>
     `;
 
-    if (emergencyData) {
+        if (emergencyData) {
       popupContent += `
         <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
           <div style="font-size: 12px; margin-bottom: 6px;">
@@ -253,6 +254,14 @@ export default function EmergencyApp() {
               ${urgencyColors[emergencyData.urgencyLevel].text}
             </span>
           </div>
+        ${emergencyData.contactNo ? `
+          <div style="font-size: 12px; margin-bottom: 6px;">
+            <strong style="color: #374151;">Contact:</strong>
+            <a href="tel:${emergencyData.contactNo}" style="color: #6b7280; margin-left: 4px; text-decoration: underline;">
+              ${emergencyData.contactNo}
+            </a>
+          </div>
+        ` : ''}
           ${emergencyData.status ? `
             <div style="font-size: 12px; margin-bottom: 6px;">
               <strong style="color: #374151;">Status:</strong>
@@ -261,6 +270,7 @@ export default function EmergencyApp() {
               </span>
             </div>
           ` : ''}
+          
           ${emergencyData.additionalNotes ? `
             <div style="font-size: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
               <strong style="color: #374151;">Notes:</strong><br>
@@ -275,6 +285,10 @@ export default function EmergencyApp() {
         </div>
       `;
     }
+
+
+    
+
 
     popupContent += `</div>`;
 
