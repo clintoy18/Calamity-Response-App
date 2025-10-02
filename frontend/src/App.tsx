@@ -3,7 +3,6 @@ import { AlertCircle, MapPin, CheckCircle, Loader, Package, Users, Droplet, Home
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Simple in-memory cache for place names
@@ -127,6 +126,12 @@ export default function EmergencyApp() {
       zoomControl: true,
       worldCopyJump: true,
     });
+
+  // Initialize map directly with OpenStreetMap
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 19,
+      }).addTo(map);
 
       mapInstanceRef.current = map;
 
