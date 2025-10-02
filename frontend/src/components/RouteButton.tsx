@@ -7,7 +7,7 @@ interface RouteButtonProps {
   emergencyId: string;
 }
 
-export const RouteButton: React.FC<RouteButtonProps> = ({ lat, lng, emergencyId }) => {
+export const RouteButton: React.FC<RouteButtonProps> = ({ lat, lng }) => {
   const handleGetDirections = () => {
     // Option 1: Google Maps (most popular)
     const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
