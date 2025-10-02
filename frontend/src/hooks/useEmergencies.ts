@@ -8,34 +8,49 @@ interface UseEmergenciesReturn {
   setEmergencies: React.Dispatch<React.SetStateAction<EmergencyRecord[]>>;
   isLoadingEmergencies: boolean;
   fetchEmergencies: () => Promise<EmergencyRecord[]>;
+  triggerFetch: () => void; // 🔥 external trigger
 }
 
 export const useEmergencies = (): UseEmergenciesReturn => {
   const [emergencies, setEmergencies] = useState<EmergencyRecord[]>([]);
   const [isLoadingEmergencies, setIsLoadingEmergencies] = useState<boolean>(false);
+  const [fetchTrigger, setFetchTrigger] = useState<number>(0); // 🚀 trigger flag
 
   const fetchEmergencies = useCallback(async (): Promise<EmergencyRecord[]> => {
     setIsLoadingEmergencies(true);
     try {
       const data = await apiFetchEmergencies();
-      
+
       const formattedEmergencies = await Promise.all(
         data.map(async (emergency) => {
-          const placeName = emergency.placeName || await getPlaceName(emergency.latitude, emergency.longitude);
+          const placeName =
+            emergency.placeName ||
+            (await getPlaceName(emergency.latitude, emergency.longitude));
+
           return {
             id: emergency.id,
             latitude: emergency.latitude,
             longitude: emergency.longitude,
             accuracy: emergency.accuracy,
-            timestamp: emergency.timestamp || emergency.createdAt || new Date().toISOString(),
+            timestamp:
+              emergency.timestamp ||
+              emergency.createdAt ||
+              new Date().toISOString(),
             needs: emergency.needs,
             numberOfPeople: emergency.numberOfPeople,
-            urgencyLevel: emergency.urgencyLevel.toLowerCase() as 'low' | 'medium' | 'high' | 'critical',
+            urgencyLevel: emergency.urgencyLevel.toLowerCase() as
+              | 'low'
+              | 'medium'
+              | 'high'
+              | 'critical',
             additionalNotes: emergency.additionalNotes || '',
-            status: (emergency.status?.toLowerCase() || 'pending') as 'pending' | 'responded' | 'resolved',
+            status: (emergency.status?.toLowerCase() || 'pending') as
+              | 'pending'
+              | 'responded'
+              | 'resolved',
             createdAt: emergency.createdAt,
             updatedAt: emergency.updatedAt,
-            contactNo: emergency.contactNo || emergency.contactno || '', 
+            contactNo: emergency.contactNo || emergency.contactno || '',
             placeName,
           };
         })
@@ -51,11 +66,13 @@ export const useEmergencies = (): UseEmergenciesReturn => {
     }
   }, []);
 
+  // 👇 fetch only when "fetchTrigger" changes
   useEffect(() => {
     fetchEmergencies();
-    const pollInterval = setInterval(() => fetchEmergencies(), 10000);
-    return () => clearInterval(pollInterval);
-  }, [fetchEmergencies]);
+  }, [fetchTrigger, fetchEmergencies]);
 
-  return { emergencies, setEmergencies, isLoadingEmergencies, fetchEmergencies };
+  // Function to manually trigger fetch
+  const triggerFetch = () => setFetchTrigger((prev) => prev + 1);
+
+  return { emergencies, setEmergencies, isLoadingEmergencies, fetchEmergencies, triggerFetch };
 };
