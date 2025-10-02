@@ -4,8 +4,13 @@ import 'leaflet/dist/leaflet.css';
 import { CEBU_CENTER, CEBU_BOUNDS } from '../constants';
 import { addAffectedAreaMarkers } from '../utils/mapUtils';
 
-export const useMapSetup = () => {
-  const mapRef = useRef<HTMLDivElement>(null);
+interface UseMapSetupReturn {
+  mapRef: React.RefObject<HTMLDivElement | null>;
+  mapInstanceRef: React.MutableRefObject<L.Map | null>;
+}
+
+export const useMapSetup = (): UseMapSetupReturn => {
+  const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
@@ -29,7 +34,7 @@ export const useMapSetup = () => {
 
     mapInstanceRef.current = map;
     mapInstanceRef.current.flyTo(CEBU_CENTER, 12, { duration: 2, easeLinearity: 0.2 });
-    
+
     addAffectedAreaMarkers(map);
 
     return () => {

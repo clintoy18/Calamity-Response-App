@@ -1,12 +1,12 @@
 import { Package, Droplet, Heart, Home, Users } from 'lucide-react';
-import type { AffectedArea } from '../types';
+import type { AffectedArea, NeedOption, UrgencyColor } from '../types';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export const API_URL: string = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export const CEBU_CENTER: L.LatLngExpression = [10.3157, 123.8854];
-export const CEBU_BOUNDS: L.LatLngBoundsExpression = [[9.5, 123.3], [11.5, 124.5]];
+export const CEBU_CENTER: [number, number] = [10.3157, 123.8854];
+export const CEBU_BOUNDS: [[number, number], [number, number]] = [[9.5, 123.3], [11.5, 124.5]];
 
-export const needOptions = [
+export const needOptions: NeedOption[] = [
   { value: 'food', label: 'Food', icon: <Package className="w-5 h-5" /> },
   { value: 'water', label: 'Water', icon: <Droplet className="w-5 h-5" /> },
   { value: 'medical', label: 'Medical', icon: <Heart className="w-5 h-5" /> },
@@ -15,7 +15,7 @@ export const needOptions = [
   { value: 'other', label: 'Other', icon: <Package className="w-5 h-5" /> },
 ];
 
-export const urgencyColors = {
+export const urgencyColors: Record<'low' | 'medium' | 'high' | 'critical', UrgencyColor> = {
   low: { bg: '#10b981', text: 'Low', light: '#d1fae5' },
   medium: { bg: '#f59e0b', text: 'Medium', light: '#fef3c7' },
   high: { bg: '#f97316', text: 'High', light: '#ffedd5' },

@@ -1,3 +1,4 @@
+import React from 'react';
 import { X, MapPin } from 'lucide-react';
 import { affectedAreas } from '../constants';
 
@@ -6,7 +7,7 @@ interface AffectedAreasPanelProps {
   setIsVisible: (visible: boolean) => void;
 }
 
-export const AffectedAreasPanel = ({ isVisible, setIsVisible }: AffectedAreasPanelProps) => {
+export const AffectedAreasPanel: React.FC<AffectedAreasPanelProps> = ({ isVisible, setIsVisible }) => {
   return (
     <>
       <button
@@ -54,4 +55,4 @@ export const AffectedAreasPanel = ({ isVisible, setIsVisible }: AffectedAreasPan
       </div>
     </>
   );
-};  
+};

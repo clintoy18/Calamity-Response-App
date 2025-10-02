@@ -1,10 +1,11 @@
+import React from 'react';
 import { Loader } from 'lucide-react';
 
 interface LoadingStateProps {
   hasLocation: boolean;
 }
 
-export const LoadingState = ({ hasLocation }: LoadingStateProps) => {
+export const LoadingState: React.FC<LoadingStateProps> = ({ hasLocation }) => {
   return (
     <div className="p-10 text-center">
       <Loader className="w-12 h-12 text-red-500 animate-spin mx-auto mb-4" />

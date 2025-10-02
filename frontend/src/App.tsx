@@ -1,31 +1,31 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Loader } from 'lucide-react';
 import type { Status, Location, NeedType, EmergencyRecord } from './types';
 import { useMapSetup } from './hooks/useMapSetup';
 import { useEmergencies } from './hooks/useEmergencies';
 import { useEmergencyMarkers } from './hooks/useEmergencyMarkers';
 import { getPlaceName } from './utils/geocoding';
-import { submitEmergency, clearAllEmergencies } from './services/api';
+import { submitEmergency } from './services/api';
 import { MapHeader } from './components/MapHeader';
 import { AffectedAreasPanel } from './components/AffectedAreasPanel';
 import { ActionButtons } from './components/ActionButtons';
 import { EmergencyModal } from './components/EmergencyModal';
 
-export default function EmergencyApp() {
+const EmergencyApp: React.FC = () => {
   const [status, setStatus] = useState<Status>('idle');
   const [location, setLocation] = useState<Location | null>(null);
   const [placeName, setPlaceName] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [contactNo, setContactNo] = useState<string>('');
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState<boolean>(false);
   const [selectedNeeds, setSelectedNeeds] = useState<NeedType[]>([]);
   const [numberOfPeople, setNumberOfPeople] = useState<number>(1);
   const [urgencyLevel, setUrgencyLevel] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
   const [additionalNotes, setAdditionalNotes] = useState<string>('');
 
   const { mapRef, mapInstanceRef } = useMapSetup();
-  const { emergencies, setEmergencies, isLoadingEmergencies, fetchEmergencies } = useEmergencies();
-  const { addEmergencyMarker, removeTempMarker, clearAllMarkers } = useEmergencyMarkers(
+  const { emergencies, setEmergencies, isLoadingEmergencies } = useEmergencies();
+  const { addEmergencyMarker, removeTempMarker } = useEmergencyMarkers(
     mapInstanceRef,
     setErrorMessage,
     setStatus
@@ -166,22 +166,6 @@ export default function EmergencyApp() {
     setErrorMessage('');
   };
 
-  const handleClearAll = async (): Promise<void> => {
-    if (!window.confirm('Are you sure you want to clear all emergency requests? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      await clearAllEmergencies();
-      clearAllMarkers();
-      setEmergencies([]);
-      handleReset();
-    } catch (error) {
-      console.error('Error clearing emergencies:', error);
-      alert('Failed to clear emergencies. Please try again.');
-    }
-  };
-
   return (
     <div className="relative w-full h-screen overflow-hidden">
       <div ref={mapRef} className="absolute inset-0 w-full h-full z-0"></div>
@@ -200,9 +184,7 @@ export default function EmergencyApp() {
 
       <ActionButtons
         status={status}
-        emergencyCount={emergencies.length}
         onRequestHelp={handleEmergency}
-        onClearAll={handleClearAll}
       />
 
       <EmergencyModal
@@ -226,4 +208,6 @@ export default function EmergencyApp() {
       />
     </div>
   );
-}
+};
+
+export default EmergencyApp;

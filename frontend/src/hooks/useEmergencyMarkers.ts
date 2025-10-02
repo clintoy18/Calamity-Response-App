@@ -1,14 +1,26 @@
 import { useRef, useCallback } from 'react';
 import L from 'leaflet';
-import type { EmergencyRecord, MarkerData } from '../types';
-import { urgencyColors, CEBU_CENTER } from '../constants';
+import type { EmergencyRecord, MarkerData, Status } from '../types';
+import { urgencyColors } from '../constants';
 import { createMarkerIcon, createPopupContent, isInCebu } from '../utils/mapUtils';
+
+interface UseEmergencyMarkersReturn {
+  addEmergencyMarker: (
+    lat: number,
+    lng: number,
+    accuracy: number,
+    id: string,
+    emergencyData?: EmergencyRecord
+  ) => boolean;
+  removeTempMarker: () => void;
+  markersRef: React.MutableRefObject<MarkerData[]>;
+}
 
 export const useEmergencyMarkers = (
   mapInstanceRef: React.RefObject<L.Map | null>,
   setErrorMessage: (msg: string) => void,
-  setStatus: (status: any) => void
-) => {
+  setStatus: (status: Status) => void
+): UseEmergencyMarkersReturn => {
   const markersRef = useRef<MarkerData[]>([]);
 
   const addEmergencyMarker = useCallback((
@@ -44,7 +56,11 @@ export const useEmergencyMarkers = (
       weight: 2,
     }).addTo(map);
 
-    const markerData = { marker, circle: accuracyCircle, data: emergencyData || {} as EmergencyRecord };
+    const markerData: MarkerData = { 
+      marker, 
+      circle: accuracyCircle, 
+      data: emergencyData || {} as EmergencyRecord 
+    };
     markersRef.current.push(markerData);
 
     if (!emergencyData?.createdAt) {
@@ -54,7 +70,7 @@ export const useEmergencyMarkers = (
     return true;
   }, [mapInstanceRef, setErrorMessage, setStatus]);
 
-  const removeTempMarker = useCallback(() => {
+  const removeTempMarker = useCallback((): void => {
     if (markersRef.current.length > 0) {
       const tempMarkerIndex = markersRef.current.findIndex(m => m.data.id?.includes('TEMP'));
       if (tempMarkerIndex !== -1) {
@@ -68,16 +84,5 @@ export const useEmergencyMarkers = (
     }
   }, [mapInstanceRef]);
 
-  const clearAllMarkers = useCallback(() => {
-    if (mapInstanceRef.current) {
-      markersRef.current.forEach(({ marker, circle }) => {
-        mapInstanceRef.current?.removeLayer(marker);
-        mapInstanceRef.current?.removeLayer(circle);
-      });
-      markersRef.current = [];
-      mapInstanceRef.current.setView(CEBU_CENTER, 12, { animate: true });
-    }
-  }, [mapInstanceRef]);
-
-  return { addEmergencyMarker, removeTempMarker, clearAllMarkers, markersRef };
+  return { addEmergencyMarker, removeTempMarker, markersRef };
 };

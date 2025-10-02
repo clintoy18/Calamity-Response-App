@@ -3,7 +3,14 @@ import type { EmergencyRecord } from '../types';
 import { fetchEmergencies as apiFetchEmergencies } from '../services/api';
 import { getPlaceName } from '../utils/geocoding';
 
-export const useEmergencies = () => {
+interface UseEmergenciesReturn {
+  emergencies: EmergencyRecord[];
+  setEmergencies: React.Dispatch<React.SetStateAction<EmergencyRecord[]>>;
+  isLoadingEmergencies: boolean;
+  fetchEmergencies: () => Promise<EmergencyRecord[]>;
+}
+
+export const useEmergencies = (): UseEmergenciesReturn => {
   const [emergencies, setEmergencies] = useState<EmergencyRecord[]>([]);
   const [isLoadingEmergencies, setIsLoadingEmergencies] = useState<boolean>(false);
 
@@ -13,19 +20,19 @@ export const useEmergencies = () => {
       const data = await apiFetchEmergencies();
       
       const formattedEmergencies = await Promise.all(
-        data.map(async (emergency: any) => {
+        data.map(async (emergency) => {
           const placeName = emergency.placeName || await getPlaceName(emergency.latitude, emergency.longitude);
           return {
             id: emergency.id,
             latitude: emergency.latitude,
             longitude: emergency.longitude,
             accuracy: emergency.accuracy,
-            timestamp: emergency.timestamp || emergency.createdAt,
+            timestamp: emergency.timestamp || emergency.createdAt || new Date().toISOString(),
             needs: emergency.needs,
             numberOfPeople: emergency.numberOfPeople,
             urgencyLevel: emergency.urgencyLevel.toLowerCase() as 'low' | 'medium' | 'high' | 'critical',
             additionalNotes: emergency.additionalNotes || '',
-            status: emergency.status?.toLowerCase() as 'pending' | 'responded' | 'resolved',
+            status: (emergency.status?.toLowerCase() || 'pending') as 'pending' | 'responded' | 'resolved',
             createdAt: emergency.createdAt,
             updatedAt: emergency.updatedAt,
             contactNo: emergency.contactNo || emergency.contactno || '', 

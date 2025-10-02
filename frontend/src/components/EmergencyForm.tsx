@@ -1,3 +1,4 @@
+import React from 'react';
 import { MapPin, X } from 'lucide-react';
 import type { Location, NeedType } from '../types';
 import { needOptions } from '../constants';
@@ -20,7 +21,7 @@ interface EmergencyFormProps {
   onClose: () => void;
 }
 
-export const EmergencyForm = ({
+export const EmergencyForm: React.FC<EmergencyFormProps> = ({
   location,
   placeName,
   contactNo,
@@ -36,7 +37,7 @@ export const EmergencyForm = ({
   errorMessage,
   onSubmit,
   onClose,
-}: EmergencyFormProps) => {
+}) => {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">

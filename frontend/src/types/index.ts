@@ -1,3 +1,5 @@
+import type * as L from 'leaflet';
+
 export interface Location {
   latitude: number;
   longitude: number;
@@ -14,7 +16,7 @@ export interface EmergencyRequest {
   numberOfPeople: number;
   urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
   additionalNotes: string;
-  contactno?: string;
+  contactNo?: string;
 }
 
 export interface EmergencyRecord extends Location, EmergencyRequest {
@@ -35,4 +37,16 @@ export interface MarkerData {
   marker: L.Marker;
   circle: L.Circle;
   data: EmergencyRecord;
+}
+
+export interface NeedOption {
+  value: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
+export interface UrgencyColor {
+  bg: string;
+  text: string;
+  light: string;
 }

@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Status, Location, NeedType } from '../types';
 import { LoadingState } from './LoadingState';
 import { SuccessState } from './SuccessState';
@@ -24,7 +25,7 @@ interface EmergencyModalProps {
   setStatus: (status: Status) => void;
 }
 
-export const EmergencyModal = ({
+export const EmergencyModal: React.FC<EmergencyModalProps> = ({
   status,
   location,
   placeName,
@@ -42,10 +43,10 @@ export const EmergencyModal = ({
   onSubmit,
   onReset,
   setStatus,
-}: EmergencyModalProps) => {
+}) => {
   if (status === 'idle') return null;
 
-  const handleRetry = () => {
+  const handleRetry = (): void => {
     if (location) {
       setStatus('form');
     } else {
@@ -85,6 +86,7 @@ export const EmergencyModal = ({
         {status === 'error' && (
           <ErrorState 
             errorMessage={errorMessage} 
+            hasLocation={!!location}
             onRetry={handleRetry} 
           />
         )}

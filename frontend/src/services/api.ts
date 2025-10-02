@@ -1,9 +1,33 @@
 import { API_URL } from '../constants';
-import type { EmergencyRecord, Location, NeedType } from '../types';
+import type { Location, NeedType } from '../types';
 
-export const fetchEmergencies = async (): Promise<any[]> => {
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
+interface EmergencyApiData {
+  id: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  timestamp?: string;
+  needs: NeedType[];
+  numberOfPeople: number;
+  urgencyLevel: string;
+  additionalNotes?: string;
+  contactNo?: string;
+  contactno?: string;
+  placeName?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const fetchEmergencies = async (): Promise<EmergencyApiData[]> => {
   const response = await fetch(`${API_URL}/emergencies`);
-  const data = await response.json();
+  const data: ApiResponse<EmergencyApiData[]> = await response.json();
   
   if (data.success && data.data) {
     return data.data;
@@ -19,7 +43,7 @@ export const submitEmergency = async (
   numberOfPeople: number,
   urgencyLevel: string,
   additionalNotes: string
-) => {
+): Promise<ApiResponse<EmergencyApiData>> => {
   const response = await fetch(`${API_URL}/emergencies`, {
     method: 'POST',
     headers: {
@@ -38,23 +62,11 @@ export const submitEmergency = async (
     }),
   });
 
-  const data = await response.json();
+  const data: ApiResponse<EmergencyApiData> = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || 'Failed to submit request');
   }
 
   return data;
-};
-
-export const clearAllEmergencies = async (): Promise<void> => {
-  const response = await fetch(`${API_URL}/emergencies`, {
-    method: 'DELETE',
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || 'Failed to clear emergencies');
-  }
 };

@@ -1,8 +1,10 @@
+import React from 'react';
+
 interface MapHeaderProps {
   emergencyCount: number;
 }
 
-export const MapHeader = ({ emergencyCount }: MapHeaderProps) => {
+export const MapHeader: React.FC<MapHeaderProps> = ({ emergencyCount }) => {
   return (
     <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
       <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg">
