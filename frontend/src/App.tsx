@@ -1,376 +1,42 @@
-import { useState, useEffect, useRef } from 'react';
-import { AlertCircle, MapPin, CheckCircle, Loader, Package, Users, Droplet, Home, Heart, X } from 'lucide-react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-// Simple in-memory cache for place names
-const placeNameCache = new Map<string, string>();
-
-interface Location {
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  timestamp: string;
-}
-
-type Status = 'idle' | 'loading' | 'form' | 'success' | 'error';
-
-type NeedType = 'food' | 'water' | 'medical' | 'shelter' | 'clothing' | 'other';
-
-interface EmergencyRequest {
-  needs: NeedType[];
-  numberOfPeople: number;
-  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
-  additionalNotes: string;
-  contactNo?: string;
-}
-
-interface EmergencyRecord extends Location, EmergencyRequest {
-  id: string;
-  status?: 'pending' | 'responded' | 'resolved';
-  createdAt?: string;
-  updatedAt?: string;
-  placeName?: string;
-  contactNo?: string;
-}
+import { useState } from 'react';
+import { Loader } from 'lucide-react';
+import type { Status, Location, NeedType, EmergencyRecord } from './types';
+import { useMapSetup } from './hooks/useMapSetup';
+import { useEmergencies } from './hooks/useEmergencies';
+import { useEmergencyMarkers } from './hooks/useEmergencyMarkers';
+import { getPlaceName } from './utils/geocoding';
+import { submitEmergency, clearAllEmergencies } from './services/api';
+import { MapHeader } from './components/MapHeader';
+import { AffectedAreasPanel } from './components/AffectedAreasPanel';
+import { ActionButtons } from './components/ActionButtons';
+import { EmergencyModal } from './components/EmergencyModal';
 
 export default function EmergencyApp() {
   const [status, setStatus] = useState<Status>('idle');
   const [location, setLocation] = useState<Location | null>(null);
   const [placeName, setPlaceName] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  // const [emergencyId, setEmergencyId] = useState<string | null>(null);
-  const [emergencies, setEmergencies] = useState<EmergencyRecord[]>([]);
-  const [isLoadingEmergencies, setIsLoadingEmergencies] = useState<boolean>(false);
   const [contactNo, setContactNo] = useState<string>('');
   const [isVisible, setIsVisible] = useState(false);
   const [selectedNeeds, setSelectedNeeds] = useState<NeedType[]>([]);
   const [numberOfPeople, setNumberOfPeople] = useState<number>(1);
   const [urgencyLevel, setUrgencyLevel] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
   const [additionalNotes, setAdditionalNotes] = useState<string>('');
-  
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<Array<{ marker: L.Marker; circle: L.Circle; data: EmergencyRecord }>>([]);
 
-  const CEBU_CENTER: L.LatLngExpression = [10.3157, 123.8854];
-  const CEBU_BOUNDS: L.LatLngBoundsExpression = [[9.5, 123.3], [11.5, 124.5]];
+  const { mapRef, mapInstanceRef } = useMapSetup();
+  const { emergencies, setEmergencies, isLoadingEmergencies, fetchEmergencies } = useEmergencies();
+  const { addEmergencyMarker, removeTempMarker, clearAllMarkers } = useEmergencyMarkers(
+    mapInstanceRef,
+    setErrorMessage,
+    setStatus
+  );
 
-  const needOptions = [
-    { value: 'food', label: 'Food', icon: <Package className="w-5 h-5" /> },
-    { value: 'water', label: 'Water', icon: <Droplet className="w-5 h-5" /> },
-    { value: 'medical', label: 'Medical', icon: <Heart className="w-5 h-5" /> },
-    { value: 'shelter', label: 'Shelter', icon: <Home className="w-5 h-5" /> },
-    { value: 'clothing', label: 'Clothing', icon: <Users className="w-5 h-5" /> },
-    { value: 'other', label: 'Other', icon: <Package className="w-5 h-5" /> },
-  ];
-
-  const urgencyColors = {
-    low: { bg: '#10b981', text: 'Low', light: '#d1fae5' },
-    medium: { bg: '#f59e0b', text: 'Medium', light: '#fef3c7' },
-    high: { bg: '#f97316', text: 'High', light: '#ffedd5' },
-    critical: { bg: '#ef4444', text: 'Critical', light: '#fee2e2' },
-  };
-
-
-   // Affected areas static pins
-    const affectedAreas = [
-    { name: 'Bogo City', coords: [11.0517, 124.0055], intensity: 'VII (Destructive)' },
-    { name: 'San Remigio', coords: [11.0809, 123.9381], intensity: 'VI (Very Strong)' },
-    { name: 'Medellin', coords: [11.1286, 123.9620], intensity: 'V (Strong)' },
-    { name: 'Tabogon', coords: [10.9433, 124.0278], intensity: 'IV (Moderately Strong)' },
-    { name: 'Tabuelan', coords: [10.8217, 123.8717], intensity: 'IV (Moderately Strong)' },
-    { name: 'Sogod', coords: [10.7508, 123.9996], intensity: 'III (Weak)' },
-  ];
-
-
-  // Reverse geocoding function with caching
-  const getPlaceName = async (lat: number, lon: number): Promise<string> => {
-    const cacheKey = `${lat.toFixed(4)}:${lon.toFixed(4)}`;
-    if (placeNameCache.has(cacheKey)) {
-      return placeNameCache.get(cacheKey)!;
-    }
-
-    try {
-      // Delay to respect Nominatim's 1 request/sec limit
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
-        { headers: { 'User-Agent': 'EmergencyReliefApp/1.0' } }
-      );
-      if (!response.ok) throw new Error(`Nominatim API error: ${response.status}`);
-      const data = await response.json();
-      const name = data.display_name || 'Unknown location';
-      placeNameCache.set(cacheKey, name);
-      return name;
-    } catch (error) {
-      console.error('Reverse geocoding error:', error);
-      return 'Unknown location';
-    }
-  };
-
-
-// Initialize map with globe animation and static affected areas
-  useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
-
-    const map = L.map(mapRef.current, {
-      center: [0, 0],
-      zoom: 1,
-      maxBounds: CEBU_BOUNDS,
-      maxBoundsViscosity: 1.0,
-      minZoom: 10,
-      maxZoom: 18,
-      zoomControl: true,
-      worldCopyJump: true,
-    });
-
-  // Initialize map directly with OpenStreetMap
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap',
-        maxZoom: 19,
-      }).addTo(map);
-
-      mapInstanceRef.current = map;
-
-      // Fly directly to Cebu
-      mapInstanceRef.current.flyTo(CEBU_CENTER, 12, { duration: 2, easeLinearity: 0.2 });
-
-      // Add static earthquake-affected area markers
-   affectedAreas.forEach(area => {
-    const [lat, lng] = area.coords;
-
-  const marker = L.marker([lat, lng], {
-    icon: L.divIcon({
-      html: `
-      <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-        <span style="
-          position: absolute;
-          display: block;
-          width: 100%;
-          height: 100%;
-          background: #f97316;
-          border-radius: 50%;
-          opacity: 0.5;
-          animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
-        "></span>
-        <div style="
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          background: #f97316;
-          border: 2px solid white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        ">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="white">
-            <path d="M12 2 C6 2, 2 6, 2 12 s4 10, 10 10 s10 -4, 10 -10 s-4 -10, -10 -10zm0 18 c-4.418 0 -8 -3.582 -8 -8 s3.582 -8, 8 -8 s8 3.582, 8 8 s-3.582 8 -8 8zm0 -14 c-3.314 0 -6 2.686 -6 6 s2.686 6, 6 6 s6 -2.686, 6 -6 s-2.686 -6 -6 -6z"/>
-          </svg>
-        </div>
-      </div>
-      `,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
-      popupAnchor: [0, -16],
-      className: '',
-    }),
-  }).addTo(map);
-
-
-
-    marker.bindPopup(`
-      <div style="font-weight:bold; font-size:14px;">Earthquake Affected Area</div>
-      <div style="font-size:12px; color:#6b7280;">${area.name}</div>
-    `);
-  });
-
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, []);
-
-  // Fetch all emergencies on mount
-  useEffect(() => {
-    fetchEmergencies();
-  }, []);
-
-  const fetchEmergencies = async (): Promise<void> => {
-    setIsLoadingEmergencies(true);
-    try {
-      const response = await fetch(`${API_URL}/emergencies`);
-      const data = await response.json();
-      
-      if (data.success && data.data) {
-        const formattedEmergencies = await Promise.all(
-          data.data.map(async (emergency: any) => {
-            const placeName = emergency.placeName || await getPlaceName(emergency.latitude, emergency.longitude);
-            return {
-              id: emergency.id,
-              latitude: emergency.latitude,
-              longitude: emergency.longitude,
-              accuracy: emergency.accuracy,
-              timestamp: emergency.timestamp || emergency.createdAt,
-              needs: emergency.needs,
-              numberOfPeople: emergency.numberOfPeople,
-              urgencyLevel: emergency.urgencyLevel.toLowerCase() as 'low' | 'medium' | 'high' | 'critical',
-              additionalNotes: emergency.additionalNotes || '',
-              status: emergency.status?.toLowerCase() as 'pending' | 'responded' | 'resolved',
-              createdAt: emergency.createdAt,
-              updatedAt: emergency.updatedAt,
-              contactNo: emergency.contactNo || emergency.contactno || '', 
-              placeName,
-            };
-          })
-        );
-
-        setEmergencies(formattedEmergencies);
-
-        formattedEmergencies.forEach((emergency: EmergencyRecord) => {
-          addEmergencyMarker(
-            emergency.latitude,
-            emergency.longitude,
-            emergency.accuracy,
-            emergency.id,
-            emergency
-          );
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching emergencies:', error);
-    } finally {
-      setIsLoadingEmergencies(false);
-    }
-  };
-
-
-  
-
-  useEffect(() => {
-    fetchEmergencies();
-    
-    // Poll for new emergencies every 10 seconds
-    const pollInterval = setInterval(() => {
-      fetchEmergencies();
-    }, 10000);
-
-    return () => clearInterval(pollInterval);
-  }, []);
-
-  const addEmergencyMarker = (lat: number, lng: number, accuracy: number, id: string, emergencyData?: EmergencyRecord): boolean => {
-    if (!mapInstanceRef.current) return false;
-
-    const map = mapInstanceRef.current;
-    const isInCebu = lat >= 9.8 && lat <= 10.8 && lng >= 123.3 && lng <= 124.4;
-
-    if (!isInCebu) {
-      setErrorMessage('Location is outside Cebu area. This service is only available in Cebu.');
-      setStatus('error');
-      return false;
-    }
-
-    const color = emergencyData ? urgencyColors[emergencyData.urgencyLevel].bg : '#6366f1';
-
-    const userIcon = L.divIcon({
-      html: `<div style="background: ${color}; width: 32px; height: 32px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
-        <div style="color: white; font-size: 16px;">📍</div>
-      </div>`,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
-      popupAnchor: [0, -16],
-      className: '',
-    });
-
-    let popupContent = `
-      <div style="min-width: 200px;">
-        <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #1f2937;">Emergency Request</div>
-        <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">
-          <strong>ID:</strong> ${id}<br>
-          <strong>Location:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}<br>
-          ${emergencyData?.placeName ? `<strong>Place:</strong> ${emergencyData.placeName}<br>` : ''}
-        </div>
-    `;
-
-        if (emergencyData) {
-      popupContent += `
-        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
-          <div style="font-size: 12px; margin-bottom: 6px;">
-            <strong style="color: #374151;">Relief Items:</strong><br>
-            <span style="color: #6b7280;">${emergencyData.needs.join(', ')}</span>
-          </div>
-          <div style="font-size: 12px; margin-bottom: 6px;">
-            <strong style="color: #374151;">People:</strong> 
-            <span style="color: #6b7280;">${emergencyData.numberOfPeople}</span>
-          </div>
-          <div style="font-size: 12px; margin-bottom: 6px;">
-            <strong style="color: #374151;">Urgency:</strong>
-            <span style="background: ${urgencyColors[emergencyData.urgencyLevel].light}; color: ${urgencyColors[emergencyData.urgencyLevel].bg}; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 11px; margin-left: 4px;">
-              ${urgencyColors[emergencyData.urgencyLevel].text}
-            </span>
-          </div>
-        ${emergencyData.contactNo ? `
-          <div style="font-size: 12px; margin-bottom: 6px;">
-            <strong style="color: #374151;">Contact:</strong>
-            <a href="tel:${emergencyData.contactNo}" style="color: #6b7280; margin-left: 4px; text-decoration: underline;">
-              ${emergencyData.contactNo}
-            </a>
-          </div>
-        ` : ''}
-          ${emergencyData.status ? `
-            <div style="font-size: 12px; margin-bottom: 6px;">
-              <strong style="color: #374151;">Status:</strong>
-              <span style="color: #6b7280; text-transform: capitalize; margin-left: 4px;">
-                ${emergencyData.status}
-              </span>
-            </div>
-          ` : ''}
-          
-          ${emergencyData.additionalNotes ? `
-            <div style="font-size: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
-              <strong style="color: #374151;">Notes:</strong><br>
-              <span style="color: #6b7280;">${emergencyData.additionalNotes}</span>
-            </div>
-          ` : ''}
-          ${emergencyData.createdAt ? `
-            <div style="font-size: 11px; margin-top: 8px; color: #9ca3af;">
-              <strong>Created:</strong> ${new Date(emergencyData.createdAt).toLocaleString()}
-            </div>
-          ` : ''}
-        </div>
-      `;
-    }
-
-
-    
-
-
-    popupContent += `</div>`;
-
-    const marker = L.marker([lat, lng], { icon: userIcon })
-      .bindPopup(popupContent, { maxWidth: 300 })
-      .addTo(map);
-
-    const accuracyCircle = L.circle([lat, lng], {
-      radius: accuracy,
-      color: color,
-      fillColor: color,
-      fillOpacity: 0.1,
-      weight: 2,
-    }).addTo(map);
-
-    const markerData = { marker, circle: accuracyCircle, data: emergencyData || {} as EmergencyRecord };
-    markersRef.current.push(markerData);
-
-    if (!emergencyData?.createdAt) {
-      map.setView([lat, lng], 15, { animate: true });
-    }
-
-    return true;
+  const toggleNeed = (need: NeedType): void => {
+    setSelectedNeeds(prev => 
+      prev.includes(need) 
+        ? prev.filter(n => n !== need)
+        : [...prev, need]
+    );
   };
 
   const handleEmergency = async (): Promise<void> => {
@@ -405,11 +71,9 @@ export default function EmergencyApp() {
           return;
         }
 
-        // Get place name
         const name = await getPlaceName(coords.latitude, coords.longitude);
         setPlaceName(name);
         setLocation(coords);
-        // setEmergencyId(newEmergencyId);
         setStatus('form');
       },
       (error: GeolocationPositionError) => {
@@ -436,14 +100,6 @@ export default function EmergencyApp() {
     );
   };
 
-  const toggleNeed = (need: NeedType): void => {
-    setSelectedNeeds(prev => 
-      prev.includes(need) 
-        ? prev.filter(n => n !== need)
-        : [...prev, need]
-    );
-  };
-
   const handleSubmitRequest = async (): Promise<void> => {
     if (selectedNeeds.length === 0) {
       setErrorMessage('Please select at least one relief item');
@@ -455,31 +111,15 @@ export default function EmergencyApp() {
     setStatus('loading');
 
     try {
-      const response = await fetch(`${API_URL}/emergencies`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          latitude: location.latitude,
-          longitude: location.longitude,
-          placename: placeName,
-          contactno: contactNo,
-          accuracy: location.accuracy,
-          needs: selectedNeeds,
-          numberOfPeople,
-          urgencyLevel: urgencyLevel.toUpperCase(),
-          additionalNotes: additionalNotes || null,
-          // placeName, // Send place name to backend
-          // contactNo, 
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to submit request');
-      }
+      const data = await submitEmergency(
+        location,
+        placeName,
+        contactNo,
+        selectedNeeds,
+        numberOfPeople,
+        urgencyLevel,
+        additionalNotes
+      );
 
       const newEmergency: EmergencyRecord = {
         ...location,
@@ -488,23 +128,14 @@ export default function EmergencyApp() {
         numberOfPeople,
         urgencyLevel,
         additionalNotes,
+        contactNo,
         status: 'pending',
         createdAt: data.data.createdAt,
         updatedAt: data.data.updatedAt,
         placeName: data.data.placeName || placeName,
       };
 
-      if (markersRef.current.length > 0) {
-        const tempMarkerIndex = markersRef.current.findIndex(m => m.data.id?.includes('TEMP'));
-        if (tempMarkerIndex !== -1) {
-          const tempMarker = markersRef.current[tempMarkerIndex];
-          if (mapInstanceRef.current) {
-            mapInstanceRef.current.removeLayer(tempMarker.marker);
-            mapInstanceRef.current.removeLayer(tempMarker.circle);
-          }
-          markersRef.current.splice(tempMarkerIndex, 1);
-        }
-      }
+      removeTempMarker();
 
       addEmergencyMarker(
         location.latitude,
@@ -527,11 +158,11 @@ export default function EmergencyApp() {
     setStatus('idle');
     setLocation(null);
     setPlaceName('');
-    // setEmergencyId(null);
     setSelectedNeeds([]);
     setNumberOfPeople(1);
     setUrgencyLevel('medium');
     setAdditionalNotes('');
+    setContactNo('');
     setErrorMessage('');
   };
 
@@ -541,25 +172,8 @@ export default function EmergencyApp() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/emergencies`, {
-        method: 'DELETE',
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to clear emergencies');
-      }
-
-      if (mapInstanceRef.current) {
-        markersRef.current.forEach(({ marker, circle }) => {
-          mapInstanceRef.current?.removeLayer(marker);
-          mapInstanceRef.current?.removeLayer(circle);
-        });
-        markersRef.current = [];
-        mapInstanceRef.current.setView(CEBU_CENTER, 12, { animate: true });
-      }
-
+      await clearAllEmergencies();
+      clearAllMarkers();
       setEmergencies([]);
       handleReset();
     } catch (error) {
@@ -572,66 +186,8 @@ export default function EmergencyApp() {
     <div className="relative w-full h-screen overflow-hidden">
       <div ref={mapRef} className="absolute inset-0 w-full h-full z-0"></div>
 
-      <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
-        <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg">
-          <span className="text-sm font-semibold text-gray-800">Emergency Relief - Cebu</span>
-        </div>
-        {emergencies.length > 0 && (
-          <div className="bg-red-500 text-white px-3 py-1.5 rounded-full shadow-lg text-sm font-semibold">
-            {emergencies.length} Active
-          </div>
-        )}
-      </div>
-
- <>
-      {/* Toggle Button - visible only on small screens */}
-      <button
-        className="sm:hidden fixed bottom-4 right-4 z-20 bg-orange-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2"
-        onClick={() => setIsVisible(!isVisible)}
-      >
-        <MapPin className="w-4 h-4" />
-        {isVisible ? "Hide Areas" : "Show Areas"}
-      </button>
-
-      {/* Affected areas card */}
-      <div
-        className={`
-          absolute top-4 right-4 z-10 bg-white/90 backdrop-blur px-4 py-4 rounded-lg shadow-lg max-w-xs w-full
-          sm:block
-          ${isVisible ? "block" : "hidden"} sm:block
-        `}
-      >
-        <div className="flex justify-between items-center mb-2 sm:hidden">
-          <h3 className="text-sm font-semibold text-gray-800">Affected Areas</h3>
-          <button onClick={() => setIsVisible(false)}>
-            <X className="w-4 h-4 text-gray-600" />
-          </button>
-        </div>
-        <ul className="space-y-2">
-          {affectedAreas.map((area, index) => (
-            <li key={index} className="text-xs text-gray-600 flex items-center gap-3">
-              <div className="relative w-5 h-5 flex items-center justify-center">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-50 animate-ping"></span>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f97316" className="w-5 h-5 relative">
-                  <path d="M12 2 C6 2, 2 6, 2 12 s4 10, 10 10 s10 -4, 10 -10 s-4 -10, -10 -10zm0 18 c-4.418 0 -8 -3.582 -8 -8 s3.582 -8, 8 -8 s8 3.582, 8 8 s-3.582 8 -8 8zm0 -14 c-3.314 0 -6 2.686 -6 6 s2.686 6, 6 6 s6 -2.686, 6 -6 s-2.686 -6 -6 -6z"/>
-                </svg>
-              </div>
-              <div>
-                <span className="font-medium">{area.name}</span>
-                <br />
-                <span className="text-gray-500 text-[11px]">
-                  ({area.coords[0].toFixed(4)}, {area.coords[1].toFixed(4)})
-                </span>
-                <br />
-                {area.intensity && <span className="text-red-500 font-semibold text-[11px]">Intensity: {area.intensity}</span>}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </>
- 
-
+      <MapHeader emergencyCount={emergencies.length} />
+      <AffectedAreasPanel isVisible={isVisible} setIsVisible={setIsVisible} />
 
       {isLoadingEmergencies && (
         <div className="absolute top-20 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg z-10">
@@ -642,201 +198,32 @@ export default function EmergencyApp() {
         </div>
       )}
 
-      {status === 'idle' && (
-        <div className="absolute bottom-12 left-4 right-4 z-10">
-          <div className="max-w-md mx-auto space-y-2">
-            <button
-              onClick={handleEmergency}
-              className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-4 px-6 rounded-full shadow-xl transition-all flex items-center justify-center gap-2"
-            >
-              <AlertCircle className="w-5 h-5" />
-              Request Help
-            </button>
-            {emergencies.length > 0 && (
-              <button
-                onClick={handleClearAll}
-                className="w-full bg-white/90 backdrop-blur hover:bg-white text-gray-700 font-medium py-2 px-6 rounded-full shadow-lg transition-all text-sm"
-              >
-                Clear All ({emergencies.length})
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      <ActionButtons
+        status={status}
+        emergencyCount={emergencies.length}
+        onRequestHelp={handleEmergency}
+        onClearAll={handleClearAll}
+      />
 
-      {(status === 'loading' || status === 'form' || status === 'success' || status === 'error') && (
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-20 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-y-auto">
-            {status === 'loading' && (
-              <div className="p-10 text-center">
-                <Loader className="w-12 h-12 text-red-500 animate-spin mx-auto mb-4" />
-                <p className="text-gray-700 font-medium">
-                  {location ? 'Submitting request...' : 'Locating you...'}
-                </p>
-              </div>
-            )}
-
-            {status === 'form' && location && (
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Request Relief</h3>
-                  <button onClick={handleReset} className="text-gray-400 hover:text-gray-600">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="mb-5 p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="w-4 h-4" />
-                    <span>
-                      {placeName ? placeName : 'Fetching location name...'}<br />
-                      ({location.latitude.toFixed(4)}, {location.longitude.toFixed(4)})
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">What do you need? *</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {needOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => toggleNeed(option.value as NeedType)}
-                        className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all ${
-                          selectedNeeds.includes(option.value as NeedType)
-                            ? 'border-red-500 bg-red-50 text-red-700'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                        }`}
-                      >
-                        {option.icon}
-                        <span className="text-xs font-medium">{option.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Number of People *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="1000"
-                    value={numberOfPeople}
-                    onChange={(e) => setNumberOfPeople(parseInt(e.target.value) || 1)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Urgency Level *</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {(['low', 'medium', 'high', 'critical'] as const).map((level) => (
-                      <button
-                        key={level}
-                        onClick={() => setUrgencyLevel(level)}
-                        className={`px-3 py-2 rounded-lg border font-medium text-sm transition-all ${
-                          urgencyLevel === level
-                            ? 'border-red-500 bg-red-50 text-red-700'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                        }`}
-                      >
-                        {level.charAt(0).toUpperCase() + level.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Contact No *</label>
-                <input
-                  type="tel"
-                  value={contactNo}
-                  onChange={(e) => setContactNo(e.target.value)}
-                  placeholder="e.g., 09171234567"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
-                />
-              </div>
-
-                <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
-                  <textarea
-                    value={additionalNotes}
-                    onChange={(e) => setAdditionalNotes(e.target.value)}
-                    placeholder="Special needs, medical conditions, number of children, etc."
-                    rows={3}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none text-sm"
-                  />
-                </div>
-
-                {errorMessage && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-700">{errorMessage}</p>
-                  </div>
-                )}
-
-                <button
-                  onClick={handleSubmitRequest}
-                  disabled={selectedNeeds.length === 0}
-                  className="w-full bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all"
-                >
-                  Submit Request
-                </button>
-              </div>
-            )}
-
-            {status === 'success' && (
-              <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-10 h-10 text-green-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Request Submitted!</h3>
-                <p className="text-sm text-gray-600 mb-6">
-                  Your emergency request has been recorded. Help will be dispatched soon. Check the map for your marker.
-                </p>
-                
-                <div className="space-y-2">
-                  <button
-                    onClick={handleReset}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 px-6 rounded-lg transition-all"
-                  >
-                    Submit Another Request
-                  </button>
-                  <button
-                    onClick={() => setStatus('idle')}
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-6 rounded-lg transition-all text-sm"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {status === 'error' && (
-              <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <AlertCircle className="w-10 h-10 text-red-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Error</h3>
-                <p className="text-sm text-red-600 mb-6">{errorMessage}</p>
-                
-                <button
-                  onClick={() => {
-                    setErrorMessage('');
-                    if (location) {
-                      setStatus('form');
-                    } else {
-                      setStatus('idle');
-                    }
-                  }}
-                  className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg transition-all"
-                >
-                  Try Again
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <EmergencyModal
+        status={status}
+        location={location}
+        placeName={placeName}
+        contactNo={contactNo}
+        setContactNo={setContactNo}
+        selectedNeeds={selectedNeeds}
+        toggleNeed={toggleNeed}
+        numberOfPeople={numberOfPeople}
+        setNumberOfPeople={setNumberOfPeople}
+        urgencyLevel={urgencyLevel}
+        setUrgencyLevel={setUrgencyLevel}
+        additionalNotes={additionalNotes}
+        setAdditionalNotes={setAdditionalNotes}
+        errorMessage={errorMessage}
+        onSubmit={handleSubmitRequest}
+        onReset={handleReset}
+        setStatus={setStatus}
+      />
     </div>
   );
 }
