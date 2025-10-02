@@ -53,11 +53,7 @@ export const useEmergencies = (): UseEmergenciesReturn => {
 
   useEffect(() => {
     fetchEmergencies();
-    
-    const pollInterval = setInterval(() => {
-      fetchEmergencies();
-    }, 10000);
-
+    const pollInterval = setInterval(() => fetchEmergencies(), 10000);
     return () => clearInterval(pollInterval);
   }, [fetchEmergencies]);
 

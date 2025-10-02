@@ -1,3 +1,4 @@
+// frontend/src/components/ActionButtons.tsx
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
 import type { Status } from '../types';
@@ -5,10 +6,15 @@ import type { Status } from '../types';
 interface ActionButtonsProps {
   status: Status;
   onRequestHelp: () => void;
+  isPinpointMode?: boolean;
 }
 
-export const ActionButtons: React.FC<ActionButtonsProps> = ({ status, onRequestHelp }) => {
-  if (status !== 'idle') return null;
+export const ActionButtons: React.FC<ActionButtonsProps> = ({ 
+  status, 
+  onRequestHelp,
+  isPinpointMode = false 
+}) => {
+  if (status !== 'idle' || isPinpointMode) return null;
 
   return (
     <div className="absolute bottom-12 left-4 right-4 z-10">

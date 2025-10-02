@@ -81,15 +81,15 @@ export const createEmergency = async (req: Request, res: Response) => {
     }
 
     // Check if location is in Cebu bounds
-    const isInCebu = latitude >= 9.8 && latitude <= 10.8 && 
-                     longitude >= 123.3 && longitude <= 124.4;
+    // const isInCebu = latitude >= 9.8 && latitude <= 10.8 && 
+    //                  longitude >= 123.3 && longitude <= 124.4;
     
-    if (!isInCebu) {
-      return res.status(400).json({
-        success: false,
-        message: 'Location is outside Cebu area'
-      });
-    }
+    // if (!isInCebu) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: 'Location is outside Cebu area'
+    //   });
+    // }
 
     const newEmergency = await prisma.emergency.create({
       data: {
