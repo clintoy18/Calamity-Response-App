@@ -25,3 +25,22 @@ model Emergency {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+model Donor {
+  id              String    @id @default(cuid())
+  latitude        Float
+  longitude       Float
+  placename       String?
+  contactno       String?
+  accuracy        Float?
+  items           String[]  // Must match your controller
+  availableFrom   DateTime?
+  availableUntil  DateTime?
+  additionalNotes String?
+  createdAt       DateTime  @default(now())
+}
+
+
+
+
+
