@@ -40,12 +40,12 @@ const EmergencyApp: React.FC = () => {
   };
 
   const handleEmergency = async (): Promise<void> => {
-    setStatus('loading');
-    setErrorMessage('');
+    setStatus("loading");
+    setErrorMessage("");
 
     if (!navigator.geolocation) {
-      setStatus('error');
-      setErrorMessage('GPS not supported by your browser');
+      setStatus("error");
+      setErrorMessage("GPS not supported by your browser");
       return;
     }
 
@@ -58,7 +58,7 @@ const EmergencyApp: React.FC = () => {
           timestamp: new Date().toISOString(),
         };
 
-        const newEmergencyId = 'EMG-TEMP-' + Date.now();
+        const newEmergencyId = "EMG-TEMP-" + Date.now();
 
         const isValidLocation = addEmergencyMarker(
           coords.latitude,
@@ -77,19 +77,21 @@ const EmergencyApp: React.FC = () => {
         setStatus('form');
       },
       (error: GeolocationPositionError) => {
-        setStatus('error');
+        setStatus("error");
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            setErrorMessage('Location permission denied. Please enable GPS access.');
+            setErrorMessage(
+              "Location permission denied. Please enable GPS access."
+            );
             break;
           case error.POSITION_UNAVAILABLE:
-            setErrorMessage('Location information unavailable.');
+            setErrorMessage("Location information unavailable.");
             break;
           case error.TIMEOUT:
-            setErrorMessage('Location request timed out.');
+            setErrorMessage("Location request timed out.");
             break;
           default:
-            setErrorMessage('An unknown error occurred.');
+            setErrorMessage("An unknown error occurred.");
         }
       },
       {
@@ -102,13 +104,13 @@ const EmergencyApp: React.FC = () => {
 
   const handleSubmitRequest = async (): Promise<void> => {
     if (selectedNeeds.length === 0) {
-      setErrorMessage('Please select at least one relief item');
+      setErrorMessage("Please select at least one relief item");
       return;
     }
 
     if (!location) return;
 
-    setStatus('loading');
+    setStatus("loading");
 
     try {
       const data = await submitEmergency(
@@ -145,17 +147,21 @@ const EmergencyApp: React.FC = () => {
         newEmergency
       );
 
-      setEmergencies(prev => [...prev, newEmergency]);
-      setStatus('success');
+      setEmergencies((prev) => [...prev, newEmergency]);
+      setStatus("success");
     } catch (error) {
-      console.error('Error submitting request:', error);
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to submit request. Please try again.');
-      setStatus('error');
+      console.error("Error submitting request:", error);
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to submit request. Please try again."
+      );
+      setStatus("error");
     }
   };
 
   const handleReset = (): void => {
-    setStatus('idle');
+    setStatus("idle");
     setLocation(null);
     setPlaceName('');
     setSelectedNeeds([]);
@@ -177,7 +183,9 @@ const EmergencyApp: React.FC = () => {
         <div className="absolute top-20 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg z-10">
           <div className="flex items-center gap-2">
             <Loader className="w-4 h-4 animate-spin text-gray-600" />
-            <span className="text-sm text-gray-600">Loading emergencies...</span>
+            <span className="text-sm text-gray-600">
+              Loading emergencies...
+            </span>
           </div>
         </div>
       )}
