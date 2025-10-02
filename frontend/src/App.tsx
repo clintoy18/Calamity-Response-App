@@ -128,12 +128,6 @@ export default function EmergencyApp() {
       worldCopyJump: true,
     });
 
-  // Initialize map directly with OpenStreetMap
-      const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap',
-        maxZoom: 19,
-      }).addTo(map);
-
       mapInstanceRef.current = map;
 
       // Fly directly to Cebu
