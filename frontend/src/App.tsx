@@ -139,8 +139,7 @@ const EmergencyApp: React.FC = () => {
   const handleSearchSelect = async (lat:number,lng:number,name:string) => {
     removeTempMarker();
     const newId = 'EMG-TEMP-'+Date.now();
-    const isValid = addEmergencyMarker(lat,lng,50,newId);
-    if(!isValid){setStatus('error'); setErrorMessage('Selected location outside Cebu.'); return;}
+    addEmergencyMarker(lat,lng,50,newId);
     mapInstanceRef.current?.setView([lat,lng],16,{animate:true});
     setLocation({latitude:lat,longitude:lng,accuracy:50,timestamp:new Date().toISOString()});
     setPlaceName(name);
