@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "main":"dist/server.ts",
+  "main": "dist/server.ts",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "leaflet": "^1.9.4",
+    "leaflet-routing-machine": "^3.2.12",
     "lucide-react": "^0.544.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@eslint/js": "^9.36.0",
     "@types/leaflet": "^1.9.20",
+    "@types/leaflet-routing-machine": "^3.2.9",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react-swc": "^4.1.0",

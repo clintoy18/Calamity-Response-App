@@ -42,7 +42,7 @@ export const createPopupContent = (
       ${emergencyData.contactNo ? `
         <div style="font-size: 12px; margin-bottom: 6px;">
           <strong style="color: #374151;">Contact:</strong>
-          <a href="tel:${emergencyData.contactNo}" style="color: #6b7280; margin-left: 4px; text-decoration: underline;">
+          <a href="tel:${emergencyData.contactNo}" style="color: #2563eb; margin-left: 4px; text-decoration: underline;">
             ${emergencyData.contactNo}
           </a>
         </div>
@@ -66,6 +66,52 @@ export const createPopupContent = (
             <strong>Created:</strong> ${new Date(emergencyData.createdAt).toLocaleString()}
           </div>
         ` : ''}
+      </div>
+      
+      <!-- Add Navigation Buttons -->
+      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; display: flex; gap: 8px;">
+        <a 
+          href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" 
+          target="_blank"
+          style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; background: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 600; transition: background 0.2s;"
+          onmouseover="this.style.background='#2563eb'"
+          onmouseout="this.style.background='#3b82f6'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+          </svg>
+          Google Maps
+        </a>
+        <a 
+          href="https://waze.com/ul?ll=${lat},${lng}&navigate=yes" 
+          target="_blank"
+          style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; background: #10b981; color: white; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 600; transition: background 0.2s;"
+          onmouseover="this.style.background='#059669'"
+          onmouseout="this.style.background='#10b981'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+          </svg>
+          Waze
+        </a>
+      </div>
+    `;
+  } else {
+    // For non-emergency markers (like manual pin), still show navigation
+    popupContent += `
+      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+        <a 
+          href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" 
+          target="_blank"
+          style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px; background: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 600; transition: background 0.2s;"
+          onmouseover="this.style.background='#2563eb'"
+          onmouseout="this.style.background='#3b82f6'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+          </svg>
+          Get Directions
+        </a>
       </div>
     `;
   }

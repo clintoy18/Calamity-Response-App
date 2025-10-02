@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { CEBU_CENTER, CEBU_BOUNDS } from '../constants';
+import { CEBU_CENTER } from '../constants';
 import { addAffectedAreaMarkers } from '../utils/mapUtils';
 
 interface UseMapSetupReturn {
@@ -19,9 +19,8 @@ export const useMapSetup = (): UseMapSetupReturn => {
     const map = L.map(mapRef.current, {
       center: [0, 0],
       zoom: 1,
-      maxBounds: CEBU_BOUNDS,
-      maxBoundsViscosity: 1.0,
-      minZoom: 10,
+      // Removed maxBounds and maxBoundsViscosity to allow global access
+      minZoom: 2,
       maxZoom: 18,
       zoomControl: true,
       worldCopyJump: true,

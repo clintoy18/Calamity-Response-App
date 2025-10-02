@@ -4,8 +4,7 @@ import type { EmergencyRecord, MarkerData, Status } from '../types';
 import { urgencyColors } from '../constants';
 import { 
   createMarkerIcon, 
-  createPopupContent,
-  // isInCebu 
+  createPopupContent
 } from '../utils/mapUtils';
 
 interface UseEmergencyMarkersReturn {
@@ -37,12 +36,6 @@ export const useEmergencyMarkers = (
     if (!mapInstanceRef.current) return false;
 
     const map = mapInstanceRef.current;
-    
-    // if (!isInCebu(lat, lng)) {
-    //   setErrorMessage('Location is outside Cebu area. This service is only available in Cebu.');
-    //   setStatus('error');
-    //   return false;
-    // }
 
     const color = emergencyData ? urgencyColors[emergencyData.urgencyLevel].bg : '#6366f1';
     const userIcon = createMarkerIcon(color);
