@@ -56,7 +56,7 @@ export default function EmergencyApp() {
   const markersRef = useRef<Array<{ marker: L.Marker; circle: L.Circle; data: EmergencyRecord }>>([]);
 
   const CEBU_CENTER: L.LatLngExpression = [10.3157, 123.8854];
-  const CEBU_BOUNDS: L.LatLngBoundsExpression = [[9.4, 123.1], [11.4, 124.1]];
+  const CEBU_BOUNDS: L.LatLngBoundsExpression = [[9.5, 123.3], [11.5, 124.5]];
 
   const needOptions = [
     { value: 'food', label: 'Food', icon: <Package className="w-5 h-5" /> },
@@ -73,6 +73,18 @@ export default function EmergencyApp() {
     high: { bg: '#f97316', text: 'High', light: '#ffedd5' },
     critical: { bg: '#ef4444', text: 'Critical', light: '#fee2e2' },
   };
+
+
+   // Affected areas static pins
+    const affectedAreas = [
+    { name: 'Bogo City', coords: [11.0517, 124.0055], intensity: 'VII (Destructive)' },
+    { name: 'San Remigio', coords: [11.0809, 123.9381], intensity: 'VI (Very Strong)' },
+    { name: 'Medellin', coords: [11.1286, 123.9620], intensity: 'V (Strong)' },
+    { name: 'Tabogon', coords: [10.9433, 124.0278], intensity: 'IV (Moderately Strong)' },
+    { name: 'Tabuelan', coords: [10.8217, 123.8717], intensity: 'IV (Moderately Strong)' },
+    { name: 'Sogod', coords: [10.7508, 123.9996], intensity: 'III (Weak)' },
+  ];
+
 
   // Reverse geocoding function with caching
   const getPlaceName = async (lat: number, lon: number): Promise<string> => {
@@ -99,12 +111,13 @@ export default function EmergencyApp() {
     }
   };
 
-  // Initialize map with globe animation
+
+// Initialize map with globe animation and static affected areas
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
     const map = L.map(mapRef.current, {
-      center: [0, 0], // Start at world view
+      center: [0, 0],
       zoom: 1,
       maxBounds: CEBU_BOUNDS,
       maxBoundsViscosity: 1.0,
@@ -114,33 +127,65 @@ export default function EmergencyApp() {
       worldCopyJump: true,
     });
 
-    const blueMarbleLayer = L.tileLayer(
-      'https://map1.vis.earthdata.nasa.gov/wmts-webmerc/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg',
-      {
-        attribution: '&copy; NASA Blue Marble, OpenStreetMap',
-        maxZoom: 8,
-        tileSize: 512,
-      }
-    ).addTo(map);
+  // Initialize map directly with OpenStreetMap
+      const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 19,
+      }).addTo(map);
 
-    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap',
-      maxZoom: 19,
-    });
+      mapInstanceRef.current = map;
 
-    mapInstanceRef.current = map;
+      // Fly directly to Cebu
+      mapInstanceRef.current.flyTo(CEBU_CENTER, 12, { duration: 2, easeLinearity: 0.2 });
 
-    // Animate to Cebu after 1.5 seconds
-    setTimeout(() => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.removeLayer(blueMarbleLayer);
-        osmLayer.addTo(mapInstanceRef.current);
-        mapInstanceRef.current.flyTo(CEBU_CENTER, 12, {
-          duration: 4,
-          easeLinearity: 0.2,
-        });
-      }
-    }, 1500);
+      // Add static earthquake-affected area markers
+   affectedAreas.forEach(area => {
+    const [lat, lng] = area.coords;
+
+  const marker = L.marker([lat, lng], {
+    icon: L.divIcon({
+      html: `
+      <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+        <span style="
+          position: absolute;
+          display: block;
+          width: 100%;
+          height: 100%;
+          background: #f97316;
+          border-radius: 50%;
+          opacity: 0.5;
+          animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        "></span>
+        <div style="
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #f97316;
+          border: 2px solid white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="white">
+            <path d="M12 2 C6 2, 2 6, 2 12 s4 10, 10 10 s10 -4, 10 -10 s-4 -10, -10 -10zm0 18 c-4.418 0 -8 -3.582 -8 -8 s3.582 -8, 8 -8 s8 3.582, 8 8 s-3.582 8 -8 8zm0 -14 c-3.314 0 -6 2.686 -6 6 s2.686 6, 6 6 s6 -2.686, 6 -6 s-2.686 -6 -6 -6z"/>
+          </svg>
+        </div>
+      </div>
+      `,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -16],
+      className: '',
+    }),
+  }).addTo(map);
+
+
+
+    marker.bindPopup(`
+      <div style="font-weight:bold; font-size:14px;">Earthquake Affected Area</div>
+      <div style="font-size:12px; color:#6b7280;">${area.name}</div>
+    `);
+  });
 
     return () => {
       if (mapInstanceRef.current) {
@@ -202,6 +247,9 @@ export default function EmergencyApp() {
       setIsLoadingEmergencies(false);
     }
   };
+
+
+  
 
   useEffect(() => {
     fetchEmergencies();
@@ -533,6 +581,44 @@ export default function EmergencyApp() {
             {emergencies.length} Active
           </div>
         )}
+      </div>
+
+      
+        {/* Added static card for affected areas */}
+      <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur px-4 py-4 rounded-lg shadow-lg max-w-xs w-full">
+        <h3 className="text-sm font-semibold text-gray-800 mb-3">Affected Areas</h3>
+        <ul className="space-y-2">
+          {affectedAreas.map((area, index) => (
+            <li key={index} className="text-xs text-gray-600 flex items-center gap-3">
+              {/* Seismic wave icon with pulse */}
+              <div className="relative w-5 h-5 flex items-center justify-center">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-50 animate-ping"></span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="#f97316"
+                  className="w-5 h-5 relative"
+                >
+                  <path d="M12 2 C6 2, 2 6, 2 12 s4 10, 10 10 s10 -4, 10 -10 s-4 -10, -10 -10zm0 18 c-4.418 0 -8 -3.582 -8 -8 s3.582 -8, 8 -8 s8 3.582, 8 8 s-3.582 8 -8 8zm0 -14 c-3.314 0 -6 2.686 -6 6 s2.686 6, 6 6 s6 -2.686, 6 -6 s-2.686 -6 -6 -6z"/>
+                </svg>
+              </div>
+
+              <div>
+                <span className="font-medium">{area.name}</span>
+                <br />
+                <span className="text-gray-500 text-[11px]">
+                  ({area.coords[0].toFixed(4)}, {area.coords[1].toFixed(4)})
+                </span>
+                <br />
+                {area.intensity && (
+                  <span className="text-red-500 font-semibold text-[11px]">
+                    Intensity: {area.intensity}
+                  </span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {isLoadingEmergencies && (
