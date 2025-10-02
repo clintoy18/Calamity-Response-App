@@ -1,7 +1,11 @@
+// frontend/src/utils/mapUtils.ts
 import L from 'leaflet';
 import { urgencyColors, affectedAreas } from '../constants';
 import type { EmergencyRecord } from '../types';
 
+/**
+ * Create popup content for an emergency marker
+ */
 export const createPopupContent = (
   lat: number,
   lng: number,
@@ -70,6 +74,9 @@ export const createPopupContent = (
   return popupContent;
 };
 
+/**
+ * Create a colored marker icon
+ */
 export const createMarkerIcon = (color: string): L.DivIcon => {
   return L.divIcon({
     html: `<div style="background: ${color}; width: 32px; height: 32px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
@@ -82,6 +89,9 @@ export const createMarkerIcon = (color: string): L.DivIcon => {
   });
 };
 
+/**
+ * Add affected area markers for reference
+ */
 export const addAffectedAreaMarkers = (map: L.Map): void => {
   affectedAreas.forEach(area => {
     const [lat, lng] = area.coords;
@@ -130,6 +140,9 @@ export const addAffectedAreaMarkers = (map: L.Map): void => {
   });
 };
 
-export const isInCebu = (lat: number, lng: number): boolean => {
-  return lat >= 9.8 && lat <= 10.8 && lng >= 123.3 && lng <= 124.4;
-};
+/**
+ * Check if a coordinate is inside Cebu bounds
+ */
+// export const isInCebu = (lat: number, lng: number): boolean => {
+//   return lat >= 9.55 && lat <= 11.35 && lng >= 123.35 && lng <= 124.65;
+// };

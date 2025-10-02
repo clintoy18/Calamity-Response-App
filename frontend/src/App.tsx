@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader } from 'lucide-react';
+import L from 'leaflet';
 import type { Status, Location, NeedType, EmergencyRecord } from './types';
 import { useMapSetup } from './hooks/useMapSetup';
 import { useEmergencies } from './hooks/useEmergencies';
@@ -10,38 +11,86 @@ import { MapHeader } from './components/MapHeader';
 import { AffectedAreasPanel } from './components/AffectedAreasPanel';
 import { ActionButtons } from './components/ActionButtons';
 import { EmergencyModal } from './components/EmergencyModal';
+import { ManualPinpoint } from './components/ManualPinPoint';
+import { LocationSearch } from './components/LocationSearch';
 
 const EmergencyApp: React.FC = () => {
   const [status, setStatus] = useState<Status>('idle');
   const [location, setLocation] = useState<Location | null>(null);
-  const [placeName, setPlaceName] = useState<string>('');
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [contactNo, setContactNo] = useState<string>('');
-  const [isVisible, setIsVisible] = useState<boolean>(false);
+  const [placeName, setPlaceName] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [contactNo, setContactNo] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
   const [selectedNeeds, setSelectedNeeds] = useState<NeedType[]>([]);
-  const [numberOfPeople, setNumberOfPeople] = useState<number>(1);
-  const [urgencyLevel, setUrgencyLevel] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
-  const [additionalNotes, setAdditionalNotes] = useState<string>('');
+  const [numberOfPeople, setNumberOfPeople] = useState(1);
+  const [urgencyLevel, setUrgencyLevel] = useState<'low'|'medium'|'high'|'critical'>('medium');
+  const [additionalNotes, setAdditionalNotes] = useState('');
+
+  // Manual pin & search
+  const [isPinpointMode, setIsPinpointMode] = useState(false);
+  const [selectedMapLocation, setSelectedMapLocation] = useState<{lat:number,lng:number}|null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const { mapRef, mapInstanceRef } = useMapSetup();
   const { emergencies, setEmergencies, isLoadingEmergencies } = useEmergencies();
-  const { addEmergencyMarker, removeTempMarker } = useEmergencyMarkers(
+  const { addEmergencyMarker, removeTempMarker, markersRef } = useEmergencyMarkers(
     mapInstanceRef,
     setErrorMessage,
     setStatus
   );
 
-  const toggleNeed = (need: NeedType): void => {
-    setSelectedNeeds(prev => 
-      prev.includes(need) 
-        ? prev.filter(n => n !== need)
-        : [...prev, need]
-    );
+  // Sync markers for all emergencies (real-time)
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    // Remove all non-TEMP markers first
+    markersRef.current = markersRef.current.filter(m => {
+      if (!m.data.id?.includes('TEMP')) {
+        mapInstanceRef.current?.removeLayer(m.marker);
+        mapInstanceRef.current?.removeLayer(m.circle);
+        return false;
+      }
+      return true;
+    });
+
+    emergencies.forEach(emergency => {
+      const exists = markersRef.current.some(m => m.data.id === emergency.id);
+      if (!exists) {
+        addEmergencyMarker(
+          emergency.latitude,
+          emergency.longitude,
+          emergency.accuracy,
+          emergency.id,
+          emergency
+        );
+      }
+    });
+  }, [emergencies, addEmergencyMarker, mapInstanceRef, markersRef]);
+
+  // Manual map click
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    const handleMapClick = (e: L.LeafletMouseEvent) => {
+      if (isPinpointMode) {
+        const { lat, lng } = e.latlng;
+        setSelectedMapLocation({ lat, lng });
+        removeTempMarker();
+        addEmergencyMarker(lat, lng, 50, 'EMG-TEMP-'+Date.now());
+      }
+    };
+
+    mapInstanceRef.current.on('click', handleMapClick);
+    return () => { mapInstanceRef.current?.off('click', handleMapClick); };
+  }, [isPinpointMode, mapInstanceRef, addEmergencyMarker, removeTempMarker]);
+
+  const toggleNeed = (need: NeedType) => {
+    setSelectedNeeds(prev => prev.includes(need) ? prev.filter(n=>n!==need) : [...prev,need]);
   };
 
-  const handleEmergency = async (): Promise<void> => {
-    setStatus("loading");
-    setErrorMessage("");
+  const handleEmergency = () => {
+    setStatus('loading');
+    setErrorMessage('');
 
     if (!navigator.geolocation) {
       setStatus("error");
@@ -50,127 +99,85 @@ const EmergencyApp: React.FC = () => {
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (position: GeolocationPosition) => {
+      async (pos) => {
         const coords: Location = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          timestamp: new Date().toISOString(),
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          timestamp: new Date().toISOString()
         };
-
-        const newEmergencyId = "EMG-TEMP-" + Date.now();
-
-        const isValidLocation = addEmergencyMarker(
-          coords.latitude,
-          coords.longitude,
-          coords.accuracy,
-          newEmergencyId
-        );
-
-        if (!isValidLocation) {
-          return;
-        }
-
+        const newEmergencyId = 'EMG-TEMP-'+Date.now();
+        const isValid = addEmergencyMarker(coords.latitude, coords.longitude, coords.accuracy, newEmergencyId);
+        if (!isValid) return;
         const name = await getPlaceName(coords.latitude, coords.longitude);
         setPlaceName(name);
         setLocation(coords);
         setStatus('form');
       },
-      (error: GeolocationPositionError) => {
-        setStatus("error");
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setErrorMessage(
-              "Location permission denied. Please enable GPS access."
-            );
-            break;
-          case error.POSITION_UNAVAILABLE:
-            setErrorMessage("Location information unavailable.");
-            break;
-          case error.TIMEOUT:
-            setErrorMessage("Location request timed out.");
-            break;
-          default:
-            setErrorMessage("An unknown error occurred.");
-        }
+      (err) => {
+        setStatus('error');
+        if(err.code===1) setErrorMessage('Location permission denied.');
+        else if(err.code===2) setErrorMessage('Position unavailable.');
+        else if(err.code===3) setErrorMessage('Timeout.');
+        else setErrorMessage('Unknown error.');
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy:true, timeout:10000, maximumAge:0 }
     );
   };
 
-  const handleSubmitRequest = async (): Promise<void> => {
-    if (selectedNeeds.length === 0) {
-      setErrorMessage("Please select at least one relief item");
-      return;
-    }
+  const handleManualPinpointConfirm = async (lat:number,lng:number) => {
+    setStatus('loading');
+    const coords:Location={latitude:lat,longitude:lng,accuracy:50,timestamp:new Date().toISOString()};
+    const name = await getPlaceName(lat,lng);
+    setPlaceName(name);
+    setLocation(coords);
+    setIsPinpointMode(false);
+    setSelectedMapLocation(null);
+    setStatus('form');
+  };
 
-    if (!location) return;
+  const handleSearchSelect = async (lat:number,lng:number,name:string) => {
+    removeTempMarker();
+    const newId = 'EMG-TEMP-'+Date.now();
+    const isValid = addEmergencyMarker(lat,lng,50,newId);
+    if(!isValid){setStatus('error'); setErrorMessage('Selected location outside Cebu.'); return;}
+    mapInstanceRef.current?.setView([lat,lng],16,{animate:true});
+    setLocation({latitude:lat,longitude:lng,accuracy:50,timestamp:new Date().toISOString()});
+    setPlaceName(name);
+    setIsSearchOpen(false);
+    setStatus('form');
+  };
 
-    setStatus("loading");
+  const handleSubmitRequest = async () => {
+    if(selectedNeeds.length===0){setErrorMessage('Select at least one relief item'); return;}
+    if(!location) return;
+    setStatus('loading');
 
     try {
-      const data = await submitEmergency(
-        location,
-        placeName,
-        contactNo,
-        selectedNeeds,
-        numberOfPeople,
-        urgencyLevel,
-        additionalNotes
-      );
-
-      const newEmergency: EmergencyRecord = {
-        ...location,
-        id: data.data.id,
-        needs: selectedNeeds,
-        numberOfPeople,
-        urgencyLevel,
-        additionalNotes,
-        contactNo,
-        status: 'pending',
-        createdAt: data.data.createdAt,
-        updatedAt: data.data.updatedAt,
-        placeName: data.data.placeName || placeName,
-      };
+      const data = await submitEmergency(location, placeName, contactNo, selectedNeeds, numberOfPeople, urgencyLevel, additionalNotes);
+      const newEmergency:EmergencyRecord = {...location, id:data.data.id, needs:selectedNeeds, numberOfPeople, urgencyLevel, additionalNotes, contactNo, status:'pending', createdAt:data.data.createdAt, updatedAt:data.data.updatedAt, placeName:data.data.placeName||placeName};
 
       removeTempMarker();
+      addEmergencyMarker(location.latitude, location.longitude, location.accuracy, data.data.id, newEmergency);
 
-      addEmergencyMarker(
-        location.latitude,
-        location.longitude,
-        location.accuracy,
-        data.data.id,
-        newEmergency
-      );
-
-      setEmergencies((prev) => [...prev, newEmergency]);
-      setStatus("success");
-    } catch (error) {
-      console.error("Error submitting request:", error);
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Failed to submit request. Please try again."
-      );
-      setStatus("error");
+      setEmergencies(prev=>[...prev,newEmergency]);
+      setStatus('success');
+    } catch(e: unknown){
+      console.error(e);
+      setErrorMessage(e instanceof Error? e.message : 'Failed to submit request');
+      setStatus('error');
     }
   };
 
-  const handleReset = (): void => {
-    setStatus("idle");
-    setLocation(null);
-    setPlaceName('');
-    setSelectedNeeds([]);
-    setNumberOfPeople(1);
-    setUrgencyLevel('medium');
-    setAdditionalNotes('');
-    setContactNo('');
-    setErrorMessage('');
+  const handleReset = () => {
+    setStatus('idle'); setLocation(null); setPlaceName('');
+    setSelectedNeeds([]); setNumberOfPeople(1); setUrgencyLevel('medium'); setAdditionalNotes('');
+    setContactNo(''); setErrorMessage(''); setIsPinpointMode(false); setSelectedMapLocation(null);
+    removeTempMarker();
   };
+
+  const handleActivatePinpoint = ()=>{setIsPinpointMode(true); setSelectedMapLocation(null);}
+  const handleDeactivatePinpoint = ()=>{setIsPinpointMode(false); setSelectedMapLocation(null); removeTempMarker();}
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -190,29 +197,21 @@ const EmergencyApp: React.FC = () => {
         </div>
       )}
 
-      <ActionButtons
-        status={status}
-        onRequestHelp={handleEmergency}
-      />
+      <ActionButtons status={status} onRequestHelp={handleEmergency} isPinpointMode={isPinpointMode} />
+
+      <div className="absolute bottom-28 left-4 right-4 z-10">
+        <div className="max-w-md mx-auto">
+          <ManualPinpoint isActive={isPinpointMode} onActivate={handleActivatePinpoint} onDeactivate={handleDeactivatePinpoint} onConfirm={handleManualPinpointConfirm} onOpenSearch={()=>setIsSearchOpen(true)} selectedLocation={selectedMapLocation}/>
+        </div>
+      </div>
+
+      <LocationSearch isActive={isSearchOpen} onClose={()=>setIsSearchOpen(false)} onSelectLocation={handleSearchSelect} />
 
       <EmergencyModal
-        status={status}
-        location={location}
-        placeName={placeName}
-        contactNo={contactNo}
-        setContactNo={setContactNo}
-        selectedNeeds={selectedNeeds}
-        toggleNeed={toggleNeed}
-        numberOfPeople={numberOfPeople}
-        setNumberOfPeople={setNumberOfPeople}
-        urgencyLevel={urgencyLevel}
-        setUrgencyLevel={setUrgencyLevel}
-        additionalNotes={additionalNotes}
-        setAdditionalNotes={setAdditionalNotes}
-        errorMessage={errorMessage}
-        onSubmit={handleSubmitRequest}
-        onReset={handleReset}
-        setStatus={setStatus}
+        status={status} location={location} placeName={placeName} contactNo={contactNo} setContactNo={setContactNo}
+        selectedNeeds={selectedNeeds} toggleNeed={toggleNeed} numberOfPeople={numberOfPeople} setNumberOfPeople={setNumberOfPeople}
+        urgencyLevel={urgencyLevel} setUrgencyLevel={setUrgencyLevel} additionalNotes={additionalNotes} setAdditionalNotes={setAdditionalNotes}
+        errorMessage={errorMessage} onSubmit={handleSubmitRequest} onReset={handleReset} setStatus={setStatus}
       />
     </div>
   );
