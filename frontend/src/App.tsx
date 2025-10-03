@@ -16,6 +16,7 @@ import { LocationSearch } from './components/LocationSearch';
 
 const EmergencyApp: React.FC = () => {
   const [status, setStatus] = useState<Status>('idle');
+  const [contactName, setContactName] = useState('');
   const [location, setLocation] = useState<Location | null>(null);
   const [placeName, setPlaceName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -153,7 +154,7 @@ const EmergencyApp: React.FC = () => {
     setStatus('loading');
 
     try {
-      const data = await submitEmergency(location, placeName, contactNo, selectedNeeds, numberOfPeople, urgencyLevel, additionalNotes);
+      const data = await submitEmergency(location, placeName, contactNo, contactName, selectedNeeds, numberOfPeople, urgencyLevel, additionalNotes);
       const newEmergency:EmergencyRecord = {...location, id:data.data.id, needs:selectedNeeds, numberOfPeople, urgencyLevel, additionalNotes, contactNo, status:'pending', createdAt:data.data.createdAt, updatedAt:data.data.updatedAt, placeName:data.data.placeName||placeName};
 
       removeTempMarker();
@@ -207,10 +208,25 @@ const EmergencyApp: React.FC = () => {
       <LocationSearch isActive={isSearchOpen} onClose={()=>setIsSearchOpen(false)} onSelectLocation={handleSearchSelect} />
 
       <EmergencyModal
-        status={status} location={location} placeName={placeName} contactNo={contactNo} setContactNo={setContactNo}
-        selectedNeeds={selectedNeeds} toggleNeed={toggleNeed} numberOfPeople={numberOfPeople} setNumberOfPeople={setNumberOfPeople}
-        urgencyLevel={urgencyLevel} setUrgencyLevel={setUrgencyLevel} additionalNotes={additionalNotes} setAdditionalNotes={setAdditionalNotes}
-        errorMessage={errorMessage} onSubmit={handleSubmitRequest} onReset={handleReset} setStatus={setStatus}
+        status={status}
+        location={location}
+        placeName={placeName}
+        contactNo={contactNo}
+        setContactNo={setContactNo}
+        contactName={contactName}              // new
+        setContactName={setContactName}        // new
+        selectedNeeds={selectedNeeds}
+        toggleNeed={toggleNeed}
+        numberOfPeople={numberOfPeople}
+        setNumberOfPeople={setNumberOfPeople}
+        urgencyLevel={urgencyLevel}
+        setUrgencyLevel={setUrgencyLevel}
+        additionalNotes={additionalNotes}
+        setAdditionalNotes={setAdditionalNotes}
+        errorMessage={errorMessage}
+        onSubmit={handleSubmitRequest}
+        onReset={handleReset}
+        setStatus={setStatus}
       />
     </div>
   );

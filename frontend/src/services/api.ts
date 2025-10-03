@@ -17,8 +17,8 @@ interface EmergencyApiData {
   numberOfPeople: number;
   urgencyLevel: string;
   additionalNotes?: string;
-  contactNo?: string;
   contactno?: string;
+  contactPerson?: string;
   placeName?: string;
   status?: string;
   createdAt?: string;
@@ -39,6 +39,7 @@ export const submitEmergency = async (
   location: Location,
   placeName: string,
   contactNo: string,
+  contactName: string, // new
   selectedNeeds: NeedType[],
   numberOfPeople: number,
   urgencyLevel: string,
@@ -52,9 +53,10 @@ export const submitEmergency = async (
     body: JSON.stringify({
       latitude: location.latitude,
       longitude: location.longitude,
+      accuracy: location.accuracy,
       placename: placeName,
       contactno: contactNo,
-      accuracy: location.accuracy,
+      contactPerson: contactName,          // send contactName
       needs: selectedNeeds,
       numberOfPeople,
       urgencyLevel: urgencyLevel.toUpperCase(),

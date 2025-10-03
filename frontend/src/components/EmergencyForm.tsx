@@ -6,6 +6,8 @@ import { needOptions } from '../constants';
 interface EmergencyFormProps {
   location: Location;
   placeName: string;
+  contactName: string; // new
+  setContactName: (value: string) => void; // new
   contactNo: string;
   setContactNo: (value: string) => void;
   selectedNeeds: NeedType[];
@@ -24,6 +26,8 @@ interface EmergencyFormProps {
 export const EmergencyForm: React.FC<EmergencyFormProps> = ({
   location,
   placeName,
+  contactName,          // new
+  setContactName,       // new
   contactNo,
   setContactNo,
   selectedNeeds,
@@ -108,6 +112,19 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
         </div>
       </div>
 
+      {/* Contact Name */}
+      <div className="mb-5">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name *</label>
+        <input
+          type="text"
+          value={contactName}
+          onChange={(e) => setContactName(e.target.value)}
+          placeholder="Full name of contact person"
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+        />
+      </div>
+
+      {/* Contact Number */}
       <div className="mb-5">
         <label className="block text-sm font-medium text-gray-700 mb-2">Contact No *</label>
         <input

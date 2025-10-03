@@ -11,6 +11,8 @@ interface EmergencyModalProps {
   placeName: string;
   contactNo: string;
   setContactNo: (value: string) => void;
+  contactName: string; // new
+  setContactName: (value: string) => void; // new
   selectedNeeds: NeedType[];
   toggleNeed: (need: NeedType) => void;
   numberOfPeople: number;
@@ -31,6 +33,8 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
   placeName,
   contactNo,
   setContactNo,
+  contactName,          // new
+  setContactName,       // new
   selectedNeeds,
   toggleNeed,
   numberOfPeople,
@@ -65,6 +69,8 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
             placeName={placeName}
             contactNo={contactNo}
             setContactNo={setContactNo}
+            contactName={contactName}              // new
+            setContactName={setContactName}        // new
             selectedNeeds={selectedNeeds}
             toggleNeed={toggleNeed}
             numberOfPeople={numberOfPeople}

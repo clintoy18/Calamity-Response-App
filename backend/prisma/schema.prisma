@@ -1,7 +1,6 @@
-// Prisma schema file for PostgreSQL
-
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -10,18 +9,33 @@ datasource db {
 }
 
 model Emergency {
-  id              String   @id @default(uuid())
+  id              String   @id
+  latitude        Float
+  longitude       Float
+  accuracy        Float
+  timestamp       DateTime
+  needs           String[]
+  numberOfPeople  Int
+  urgencyLevel    String
+  additionalNotes String?
+  status          String   @default("pending")
+  contactno       String?
+  placename       String?
+  contactPerson   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Donor {
+  id              String    @id
   latitude        Float
   longitude       Float
   placename       String?
   contactno       String?
-  accuracy        Float
-  timestamp       DateTime
-  needs           String[] // Array of strings: ["food", "water"]
-  numberOfPeople  Int
-  urgencyLevel    String   // low, medium, high, critical
+  accuracy        Float?
+  items           String[]
+  availableFrom   DateTime?
+  availableUntil  DateTime?
   additionalNotes String?
-  status          String   @default("pending") // pending, responded, resolved
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
 }

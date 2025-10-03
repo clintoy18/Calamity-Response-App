@@ -10,4 +10,5 @@ export interface EmergencyRequestBody {
   numberOfPeople: number;
   urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
   additionalNotes?: string;
+  contactPerson?: string;
 }

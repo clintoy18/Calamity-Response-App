@@ -50,7 +50,12 @@ export const useEmergencies = (): UseEmergenciesReturn => {
               | 'resolved',
             createdAt: emergency.createdAt,
             updatedAt: emergency.updatedAt,
+<<<<<<< Updated upstream
             contactNo: emergency.contactNo || emergency.contactno || '',
+=======
+            contactNo: emergency.contactno || '',
+            contactPerson: emergency.contactPerson || '',
+>>>>>>> Stashed changes
             placeName,
           };
         })

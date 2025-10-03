@@ -12,6 +12,10 @@ export const createPopupContent = (
   id: string,
   emergencyData?: EmergencyRecord
 ): string => {
+   // Add this debug line
+  console.log('Contact Person in popup:', emergencyData?.contactPerson);
+  console.log('Full emergency data:', emergencyData);
+
   let popupContent = `
     <div style="min-width: 200px;">
       <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #1f2937;">Emergency Request</div>
@@ -23,6 +27,7 @@ export const createPopupContent = (
   `;
 
   if (emergencyData) {
+
     popupContent += `
       <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
         <div style="font-size: 12px; margin-bottom: 6px;">
@@ -39,9 +44,17 @@ export const createPopupContent = (
             ${urgencyColors[emergencyData.urgencyLevel].text}
           </span>
         </div>
+
+      ${emergencyData.contactPerson ? `
+        <div style="font-size: 12px; margin-bottom: 6px;">
+          <strong style="color: #374151;">Contact Person:</strong>
+          <span style="color: #6b7280; margin-left: 4px;">${emergencyData.contactPerson}</span>
+        </div>
+      ` : ''}
+          
       ${emergencyData.contactNo ? `
         <div style="font-size: 12px; margin-bottom: 6px;">
-          <strong style="color: #374151;">Contact:</strong>
+          <strong style="color: #374151;">Contact No:</strong>
           <a href="tel:${emergencyData.contactNo}" style="color: #2563eb; margin-left: 4px; text-decoration: underline;">
             ${emergencyData.contactNo}
           </a>

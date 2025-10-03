@@ -120,9 +120,57 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.EmergencyScalarFieldEnum = {
+  id: 'id',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  accuracy: 'accuracy',
+  timestamp: 'timestamp',
+  needs: 'needs',
+  numberOfPeople: 'numberOfPeople',
+  urgencyLevel: 'urgencyLevel',
+  additionalNotes: 'additionalNotes',
+  status: 'status',
+  contactno: 'contactno',
+  placename: 'placename',
+  contactPerson: 'contactPerson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DonorScalarFieldEnum = {
+  id: 'id',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  placename: 'placename',
+  contactno: 'contactno',
+  accuracy: 'accuracy',
+  items: 'items',
+  availableFrom: 'availableFrom',
+  availableUntil: 'availableUntil',
+  additionalNotes: 'additionalNotes',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.SortOrder = {
+  asc: 'asc',
+  desc: 'desc'
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+};
+
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
+
 
 exports.Prisma.ModelName = {
-
+  Emergency: 'Emergency',
+  Donor: 'Donor'
 };
 
 /**

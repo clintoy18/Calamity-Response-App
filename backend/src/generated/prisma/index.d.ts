@@ -13,7 +13,16 @@ import $Result = runtime.Types.Result
 export type PrismaPromise<T> = $Public.PrismaPromise<T>
 
 
-
+/**
+ * Model Emergency
+ * 
+ */
+export type Emergency = $Result.DefaultSelection<Prisma.$EmergencyPayload>
+/**
+ * Model Donor
+ * 
+ */
+export type Donor = $Result.DefaultSelection<Prisma.$DonorPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -22,8 +31,8 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Users
- * const users = await prisma.user.findMany()
+ * // Fetch zero or more Emergencies
+ * const emergencies = await prisma.emergency.findMany()
  * ```
  *
  *
@@ -43,8 +52,8 @@ export class PrismaClient<
    * @example
    * ```
    * const prisma = new PrismaClient()
-   * // Fetch zero or more Users
-   * const users = await prisma.user.findMany()
+   * // Fetch zero or more Emergencies
+   * const emergencies = await prisma.emergency.findMany()
    * ```
    *
    *
@@ -133,7 +142,25 @@ export class PrismaClient<
     extArgs: ExtArgs
   }>>
 
-    
+      /**
+   * `prisma.emergency`: Exposes CRUD operations for the **Emergency** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Emergencies
+    * const emergencies = await prisma.emergency.findMany()
+    * ```
+    */
+  get emergency(): Prisma.EmergencyDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.donor`: Exposes CRUD operations for the **Donor** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Donors
+    * const donors = await prisma.donor.findMany()
+    * ```
+    */
+  get donor(): Prisma.DonorDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -574,7 +601,8 @@ export namespace Prisma {
 
 
   export const ModelName: {
-
+    Emergency: 'Emergency',
+    Donor: 'Donor'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -593,10 +621,159 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: never
+      modelProps: "emergency" | "donor"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
-    model: {}
+    model: {
+      Emergency: {
+        payload: Prisma.$EmergencyPayload<ExtArgs>
+        fields: Prisma.EmergencyFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EmergencyFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmergencyPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EmergencyFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmergencyPayload>
+          }
+          findFirst: {
+            args: Prisma.EmergencyFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmergencyPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EmergencyFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmergencyPayload>
+          }
+          findMany: {
+            args: Prisma.EmergencyFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmergencyPayload>[]
+          }
+          create: {
+            args: Prisma.EmergencyCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmergencyPayload>
+          }
+          createMany: {
+            args: Prisma.EmergencyCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EmergencyCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmergencyPayload>[]
+          }
+          delete: {
+            args: Prisma.EmergencyDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmergencyPayload>
+          }
+          update: {
+            args: Prisma.EmergencyUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmergencyPayload>
+          }
+          deleteMany: {
+            args: Prisma.EmergencyDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EmergencyUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.EmergencyUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmergencyPayload>[]
+          }
+          upsert: {
+            args: Prisma.EmergencyUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmergencyPayload>
+          }
+          aggregate: {
+            args: Prisma.EmergencyAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEmergency>
+          }
+          groupBy: {
+            args: Prisma.EmergencyGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EmergencyGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EmergencyCountArgs<ExtArgs>
+            result: $Utils.Optional<EmergencyCountAggregateOutputType> | number
+          }
+        }
+      }
+      Donor: {
+        payload: Prisma.$DonorPayload<ExtArgs>
+        fields: Prisma.DonorFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.DonorFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DonorPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.DonorFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DonorPayload>
+          }
+          findFirst: {
+            args: Prisma.DonorFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DonorPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.DonorFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DonorPayload>
+          }
+          findMany: {
+            args: Prisma.DonorFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DonorPayload>[]
+          }
+          create: {
+            args: Prisma.DonorCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DonorPayload>
+          }
+          createMany: {
+            args: Prisma.DonorCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.DonorCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DonorPayload>[]
+          }
+          delete: {
+            args: Prisma.DonorDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DonorPayload>
+          }
+          update: {
+            args: Prisma.DonorUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DonorPayload>
+          }
+          deleteMany: {
+            args: Prisma.DonorDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.DonorUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.DonorUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DonorPayload>[]
+          }
+          upsert: {
+            args: Prisma.DonorUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DonorPayload>
+          }
+          aggregate: {
+            args: Prisma.DonorAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateDonor>
+          }
+          groupBy: {
+            args: Prisma.DonorGroupByArgs<ExtArgs>
+            result: $Utils.Optional<DonorGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.DonorCountArgs<ExtArgs>
+            result: $Utils.Optional<DonorCountAggregateOutputType> | number
+          }
+        }
+      }
+    }
   } & {
     other: {
       payload: any
@@ -691,7 +868,10 @@ export namespace Prisma {
      */
     omit?: Prisma.GlobalOmitConfig
   }
-  export type GlobalOmitConfig = {}
+  export type GlobalOmitConfig = {
+    emergency?: EmergencyOmit
+    donor?: DonorOmit
+  }
 
   /* Types for Logging */
   export type LogLevel = 'info' | 'query' | 'warn' | 'error'
@@ -771,6 +951,2283 @@ export namespace Prisma {
    * Models
    */
 
+  /**
+   * Model Emergency
+   */
+
+  export type AggregateEmergency = {
+    _count: EmergencyCountAggregateOutputType | null
+    _avg: EmergencyAvgAggregateOutputType | null
+    _sum: EmergencySumAggregateOutputType | null
+    _min: EmergencyMinAggregateOutputType | null
+    _max: EmergencyMaxAggregateOutputType | null
+  }
+
+  export type EmergencyAvgAggregateOutputType = {
+    latitude: number | null
+    longitude: number | null
+    accuracy: number | null
+    numberOfPeople: number | null
+  }
+
+  export type EmergencySumAggregateOutputType = {
+    latitude: number | null
+    longitude: number | null
+    accuracy: number | null
+    numberOfPeople: number | null
+  }
+
+  export type EmergencyMinAggregateOutputType = {
+    id: string | null
+    latitude: number | null
+    longitude: number | null
+    accuracy: number | null
+    timestamp: Date | null
+    numberOfPeople: number | null
+    urgencyLevel: string | null
+    additionalNotes: string | null
+    status: string | null
+    contactno: string | null
+    placename: string | null
+    contactPerson: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type EmergencyMaxAggregateOutputType = {
+    id: string | null
+    latitude: number | null
+    longitude: number | null
+    accuracy: number | null
+    timestamp: Date | null
+    numberOfPeople: number | null
+    urgencyLevel: string | null
+    additionalNotes: string | null
+    status: string | null
+    contactno: string | null
+    placename: string | null
+    contactPerson: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type EmergencyCountAggregateOutputType = {
+    id: number
+    latitude: number
+    longitude: number
+    accuracy: number
+    timestamp: number
+    needs: number
+    numberOfPeople: number
+    urgencyLevel: number
+    additionalNotes: number
+    status: number
+    contactno: number
+    placename: number
+    contactPerson: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type EmergencyAvgAggregateInputType = {
+    latitude?: true
+    longitude?: true
+    accuracy?: true
+    numberOfPeople?: true
+  }
+
+  export type EmergencySumAggregateInputType = {
+    latitude?: true
+    longitude?: true
+    accuracy?: true
+    numberOfPeople?: true
+  }
+
+  export type EmergencyMinAggregateInputType = {
+    id?: true
+    latitude?: true
+    longitude?: true
+    accuracy?: true
+    timestamp?: true
+    numberOfPeople?: true
+    urgencyLevel?: true
+    additionalNotes?: true
+    status?: true
+    contactno?: true
+    placename?: true
+    contactPerson?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type EmergencyMaxAggregateInputType = {
+    id?: true
+    latitude?: true
+    longitude?: true
+    accuracy?: true
+    timestamp?: true
+    numberOfPeople?: true
+    urgencyLevel?: true
+    additionalNotes?: true
+    status?: true
+    contactno?: true
+    placename?: true
+    contactPerson?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type EmergencyCountAggregateInputType = {
+    id?: true
+    latitude?: true
+    longitude?: true
+    accuracy?: true
+    timestamp?: true
+    needs?: true
+    numberOfPeople?: true
+    urgencyLevel?: true
+    additionalNotes?: true
+    status?: true
+    contactno?: true
+    placename?: true
+    contactPerson?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type EmergencyAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Emergency to aggregate.
+     */
+    where?: EmergencyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Emergencies to fetch.
+     */
+    orderBy?: EmergencyOrderByWithRelationInput | EmergencyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EmergencyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Emergencies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Emergencies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Emergencies
+    **/
+    _count?: true | EmergencyCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: EmergencyAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: EmergencySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EmergencyMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EmergencyMaxAggregateInputType
+  }
+
+  export type GetEmergencyAggregateType<T extends EmergencyAggregateArgs> = {
+        [P in keyof T & keyof AggregateEmergency]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEmergency[P]>
+      : GetScalarType<T[P], AggregateEmergency[P]>
+  }
+
+
+
+
+  export type EmergencyGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EmergencyWhereInput
+    orderBy?: EmergencyOrderByWithAggregationInput | EmergencyOrderByWithAggregationInput[]
+    by: EmergencyScalarFieldEnum[] | EmergencyScalarFieldEnum
+    having?: EmergencyScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EmergencyCountAggregateInputType | true
+    _avg?: EmergencyAvgAggregateInputType
+    _sum?: EmergencySumAggregateInputType
+    _min?: EmergencyMinAggregateInputType
+    _max?: EmergencyMaxAggregateInputType
+  }
+
+  export type EmergencyGroupByOutputType = {
+    id: string
+    latitude: number
+    longitude: number
+    accuracy: number
+    timestamp: Date
+    needs: string[]
+    numberOfPeople: number
+    urgencyLevel: string
+    additionalNotes: string | null
+    status: string
+    contactno: string | null
+    placename: string | null
+    contactPerson: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: EmergencyCountAggregateOutputType | null
+    _avg: EmergencyAvgAggregateOutputType | null
+    _sum: EmergencySumAggregateOutputType | null
+    _min: EmergencyMinAggregateOutputType | null
+    _max: EmergencyMaxAggregateOutputType | null
+  }
+
+  type GetEmergencyGroupByPayload<T extends EmergencyGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EmergencyGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EmergencyGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EmergencyGroupByOutputType[P]>
+            : GetScalarType<T[P], EmergencyGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EmergencySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    accuracy?: boolean
+    timestamp?: boolean
+    needs?: boolean
+    numberOfPeople?: boolean
+    urgencyLevel?: boolean
+    additionalNotes?: boolean
+    status?: boolean
+    contactno?: boolean
+    placename?: boolean
+    contactPerson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["emergency"]>
+
+  export type EmergencySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    accuracy?: boolean
+    timestamp?: boolean
+    needs?: boolean
+    numberOfPeople?: boolean
+    urgencyLevel?: boolean
+    additionalNotes?: boolean
+    status?: boolean
+    contactno?: boolean
+    placename?: boolean
+    contactPerson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["emergency"]>
+
+  export type EmergencySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    accuracy?: boolean
+    timestamp?: boolean
+    needs?: boolean
+    numberOfPeople?: boolean
+    urgencyLevel?: boolean
+    additionalNotes?: boolean
+    status?: boolean
+    contactno?: boolean
+    placename?: boolean
+    contactPerson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["emergency"]>
+
+  export type EmergencySelectScalar = {
+    id?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    accuracy?: boolean
+    timestamp?: boolean
+    needs?: boolean
+    numberOfPeople?: boolean
+    urgencyLevel?: boolean
+    additionalNotes?: boolean
+    status?: boolean
+    contactno?: boolean
+    placename?: boolean
+    contactPerson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type EmergencyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "latitude" | "longitude" | "accuracy" | "timestamp" | "needs" | "numberOfPeople" | "urgencyLevel" | "additionalNotes" | "status" | "contactno" | "placename" | "contactPerson" | "createdAt" | "updatedAt", ExtArgs["result"]["emergency"]>
+
+  export type $EmergencyPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Emergency"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      latitude: number
+      longitude: number
+      accuracy: number
+      timestamp: Date
+      needs: string[]
+      numberOfPeople: number
+      urgencyLevel: string
+      additionalNotes: string | null
+      status: string
+      contactno: string | null
+      placename: string | null
+      contactPerson: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["emergency"]>
+    composites: {}
+  }
+
+  type EmergencyGetPayload<S extends boolean | null | undefined | EmergencyDefaultArgs> = $Result.GetResult<Prisma.$EmergencyPayload, S>
+
+  type EmergencyCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<EmergencyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: EmergencyCountAggregateInputType | true
+    }
+
+  export interface EmergencyDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Emergency'], meta: { name: 'Emergency' } }
+    /**
+     * Find zero or one Emergency that matches the filter.
+     * @param {EmergencyFindUniqueArgs} args - Arguments to find a Emergency
+     * @example
+     * // Get one Emergency
+     * const emergency = await prisma.emergency.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EmergencyFindUniqueArgs>(args: SelectSubset<T, EmergencyFindUniqueArgs<ExtArgs>>): Prisma__EmergencyClient<$Result.GetResult<Prisma.$EmergencyPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Emergency that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {EmergencyFindUniqueOrThrowArgs} args - Arguments to find a Emergency
+     * @example
+     * // Get one Emergency
+     * const emergency = await prisma.emergency.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EmergencyFindUniqueOrThrowArgs>(args: SelectSubset<T, EmergencyFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EmergencyClient<$Result.GetResult<Prisma.$EmergencyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Emergency that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmergencyFindFirstArgs} args - Arguments to find a Emergency
+     * @example
+     * // Get one Emergency
+     * const emergency = await prisma.emergency.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EmergencyFindFirstArgs>(args?: SelectSubset<T, EmergencyFindFirstArgs<ExtArgs>>): Prisma__EmergencyClient<$Result.GetResult<Prisma.$EmergencyPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Emergency that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmergencyFindFirstOrThrowArgs} args - Arguments to find a Emergency
+     * @example
+     * // Get one Emergency
+     * const emergency = await prisma.emergency.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EmergencyFindFirstOrThrowArgs>(args?: SelectSubset<T, EmergencyFindFirstOrThrowArgs<ExtArgs>>): Prisma__EmergencyClient<$Result.GetResult<Prisma.$EmergencyPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Emergencies that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmergencyFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Emergencies
+     * const emergencies = await prisma.emergency.findMany()
+     * 
+     * // Get first 10 Emergencies
+     * const emergencies = await prisma.emergency.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const emergencyWithIdOnly = await prisma.emergency.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends EmergencyFindManyArgs>(args?: SelectSubset<T, EmergencyFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmergencyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Emergency.
+     * @param {EmergencyCreateArgs} args - Arguments to create a Emergency.
+     * @example
+     * // Create one Emergency
+     * const Emergency = await prisma.emergency.create({
+     *   data: {
+     *     // ... data to create a Emergency
+     *   }
+     * })
+     * 
+     */
+    create<T extends EmergencyCreateArgs>(args: SelectSubset<T, EmergencyCreateArgs<ExtArgs>>): Prisma__EmergencyClient<$Result.GetResult<Prisma.$EmergencyPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Emergencies.
+     * @param {EmergencyCreateManyArgs} args - Arguments to create many Emergencies.
+     * @example
+     * // Create many Emergencies
+     * const emergency = await prisma.emergency.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EmergencyCreateManyArgs>(args?: SelectSubset<T, EmergencyCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Emergencies and returns the data saved in the database.
+     * @param {EmergencyCreateManyAndReturnArgs} args - Arguments to create many Emergencies.
+     * @example
+     * // Create many Emergencies
+     * const emergency = await prisma.emergency.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Emergencies and only return the `id`
+     * const emergencyWithIdOnly = await prisma.emergency.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EmergencyCreateManyAndReturnArgs>(args?: SelectSubset<T, EmergencyCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmergencyPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Emergency.
+     * @param {EmergencyDeleteArgs} args - Arguments to delete one Emergency.
+     * @example
+     * // Delete one Emergency
+     * const Emergency = await prisma.emergency.delete({
+     *   where: {
+     *     // ... filter to delete one Emergency
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EmergencyDeleteArgs>(args: SelectSubset<T, EmergencyDeleteArgs<ExtArgs>>): Prisma__EmergencyClient<$Result.GetResult<Prisma.$EmergencyPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Emergency.
+     * @param {EmergencyUpdateArgs} args - Arguments to update one Emergency.
+     * @example
+     * // Update one Emergency
+     * const emergency = await prisma.emergency.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EmergencyUpdateArgs>(args: SelectSubset<T, EmergencyUpdateArgs<ExtArgs>>): Prisma__EmergencyClient<$Result.GetResult<Prisma.$EmergencyPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Emergencies.
+     * @param {EmergencyDeleteManyArgs} args - Arguments to filter Emergencies to delete.
+     * @example
+     * // Delete a few Emergencies
+     * const { count } = await prisma.emergency.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EmergencyDeleteManyArgs>(args?: SelectSubset<T, EmergencyDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Emergencies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmergencyUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Emergencies
+     * const emergency = await prisma.emergency.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EmergencyUpdateManyArgs>(args: SelectSubset<T, EmergencyUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Emergencies and returns the data updated in the database.
+     * @param {EmergencyUpdateManyAndReturnArgs} args - Arguments to update many Emergencies.
+     * @example
+     * // Update many Emergencies
+     * const emergency = await prisma.emergency.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Emergencies and only return the `id`
+     * const emergencyWithIdOnly = await prisma.emergency.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends EmergencyUpdateManyAndReturnArgs>(args: SelectSubset<T, EmergencyUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmergencyPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Emergency.
+     * @param {EmergencyUpsertArgs} args - Arguments to update or create a Emergency.
+     * @example
+     * // Update or create a Emergency
+     * const emergency = await prisma.emergency.upsert({
+     *   create: {
+     *     // ... data to create a Emergency
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Emergency we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EmergencyUpsertArgs>(args: SelectSubset<T, EmergencyUpsertArgs<ExtArgs>>): Prisma__EmergencyClient<$Result.GetResult<Prisma.$EmergencyPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Emergencies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmergencyCountArgs} args - Arguments to filter Emergencies to count.
+     * @example
+     * // Count the number of Emergencies
+     * const count = await prisma.emergency.count({
+     *   where: {
+     *     // ... the filter for the Emergencies we want to count
+     *   }
+     * })
+    **/
+    count<T extends EmergencyCountArgs>(
+      args?: Subset<T, EmergencyCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EmergencyCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Emergency.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmergencyAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EmergencyAggregateArgs>(args: Subset<T, EmergencyAggregateArgs>): Prisma.PrismaPromise<GetEmergencyAggregateType<T>>
+
+    /**
+     * Group by Emergency.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmergencyGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EmergencyGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EmergencyGroupByArgs['orderBy'] }
+        : { orderBy?: EmergencyGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EmergencyGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEmergencyGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Emergency model
+   */
+  readonly fields: EmergencyFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Emergency.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EmergencyClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Emergency model
+   */
+  interface EmergencyFieldRefs {
+    readonly id: FieldRef<"Emergency", 'String'>
+    readonly latitude: FieldRef<"Emergency", 'Float'>
+    readonly longitude: FieldRef<"Emergency", 'Float'>
+    readonly accuracy: FieldRef<"Emergency", 'Float'>
+    readonly timestamp: FieldRef<"Emergency", 'DateTime'>
+    readonly needs: FieldRef<"Emergency", 'String[]'>
+    readonly numberOfPeople: FieldRef<"Emergency", 'Int'>
+    readonly urgencyLevel: FieldRef<"Emergency", 'String'>
+    readonly additionalNotes: FieldRef<"Emergency", 'String'>
+    readonly status: FieldRef<"Emergency", 'String'>
+    readonly contactno: FieldRef<"Emergency", 'String'>
+    readonly placename: FieldRef<"Emergency", 'String'>
+    readonly contactPerson: FieldRef<"Emergency", 'String'>
+    readonly createdAt: FieldRef<"Emergency", 'DateTime'>
+    readonly updatedAt: FieldRef<"Emergency", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Emergency findUnique
+   */
+  export type EmergencyFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Emergency
+     */
+    select?: EmergencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Emergency
+     */
+    omit?: EmergencyOmit<ExtArgs> | null
+    /**
+     * Filter, which Emergency to fetch.
+     */
+    where: EmergencyWhereUniqueInput
+  }
+
+  /**
+   * Emergency findUniqueOrThrow
+   */
+  export type EmergencyFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Emergency
+     */
+    select?: EmergencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Emergency
+     */
+    omit?: EmergencyOmit<ExtArgs> | null
+    /**
+     * Filter, which Emergency to fetch.
+     */
+    where: EmergencyWhereUniqueInput
+  }
+
+  /**
+   * Emergency findFirst
+   */
+  export type EmergencyFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Emergency
+     */
+    select?: EmergencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Emergency
+     */
+    omit?: EmergencyOmit<ExtArgs> | null
+    /**
+     * Filter, which Emergency to fetch.
+     */
+    where?: EmergencyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Emergencies to fetch.
+     */
+    orderBy?: EmergencyOrderByWithRelationInput | EmergencyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Emergencies.
+     */
+    cursor?: EmergencyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Emergencies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Emergencies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Emergencies.
+     */
+    distinct?: EmergencyScalarFieldEnum | EmergencyScalarFieldEnum[]
+  }
+
+  /**
+   * Emergency findFirstOrThrow
+   */
+  export type EmergencyFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Emergency
+     */
+    select?: EmergencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Emergency
+     */
+    omit?: EmergencyOmit<ExtArgs> | null
+    /**
+     * Filter, which Emergency to fetch.
+     */
+    where?: EmergencyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Emergencies to fetch.
+     */
+    orderBy?: EmergencyOrderByWithRelationInput | EmergencyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Emergencies.
+     */
+    cursor?: EmergencyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Emergencies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Emergencies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Emergencies.
+     */
+    distinct?: EmergencyScalarFieldEnum | EmergencyScalarFieldEnum[]
+  }
+
+  /**
+   * Emergency findMany
+   */
+  export type EmergencyFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Emergency
+     */
+    select?: EmergencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Emergency
+     */
+    omit?: EmergencyOmit<ExtArgs> | null
+    /**
+     * Filter, which Emergencies to fetch.
+     */
+    where?: EmergencyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Emergencies to fetch.
+     */
+    orderBy?: EmergencyOrderByWithRelationInput | EmergencyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Emergencies.
+     */
+    cursor?: EmergencyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Emergencies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Emergencies.
+     */
+    skip?: number
+    distinct?: EmergencyScalarFieldEnum | EmergencyScalarFieldEnum[]
+  }
+
+  /**
+   * Emergency create
+   */
+  export type EmergencyCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Emergency
+     */
+    select?: EmergencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Emergency
+     */
+    omit?: EmergencyOmit<ExtArgs> | null
+    /**
+     * The data needed to create a Emergency.
+     */
+    data: XOR<EmergencyCreateInput, EmergencyUncheckedCreateInput>
+  }
+
+  /**
+   * Emergency createMany
+   */
+  export type EmergencyCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Emergencies.
+     */
+    data: EmergencyCreateManyInput | EmergencyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Emergency createManyAndReturn
+   */
+  export type EmergencyCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Emergency
+     */
+    select?: EmergencySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Emergency
+     */
+    omit?: EmergencyOmit<ExtArgs> | null
+    /**
+     * The data used to create many Emergencies.
+     */
+    data: EmergencyCreateManyInput | EmergencyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Emergency update
+   */
+  export type EmergencyUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Emergency
+     */
+    select?: EmergencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Emergency
+     */
+    omit?: EmergencyOmit<ExtArgs> | null
+    /**
+     * The data needed to update a Emergency.
+     */
+    data: XOR<EmergencyUpdateInput, EmergencyUncheckedUpdateInput>
+    /**
+     * Choose, which Emergency to update.
+     */
+    where: EmergencyWhereUniqueInput
+  }
+
+  /**
+   * Emergency updateMany
+   */
+  export type EmergencyUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Emergencies.
+     */
+    data: XOR<EmergencyUpdateManyMutationInput, EmergencyUncheckedUpdateManyInput>
+    /**
+     * Filter which Emergencies to update
+     */
+    where?: EmergencyWhereInput
+    /**
+     * Limit how many Emergencies to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Emergency updateManyAndReturn
+   */
+  export type EmergencyUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Emergency
+     */
+    select?: EmergencySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Emergency
+     */
+    omit?: EmergencyOmit<ExtArgs> | null
+    /**
+     * The data used to update Emergencies.
+     */
+    data: XOR<EmergencyUpdateManyMutationInput, EmergencyUncheckedUpdateManyInput>
+    /**
+     * Filter which Emergencies to update
+     */
+    where?: EmergencyWhereInput
+    /**
+     * Limit how many Emergencies to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Emergency upsert
+   */
+  export type EmergencyUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Emergency
+     */
+    select?: EmergencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Emergency
+     */
+    omit?: EmergencyOmit<ExtArgs> | null
+    /**
+     * The filter to search for the Emergency to update in case it exists.
+     */
+    where: EmergencyWhereUniqueInput
+    /**
+     * In case the Emergency found by the `where` argument doesn't exist, create a new Emergency with this data.
+     */
+    create: XOR<EmergencyCreateInput, EmergencyUncheckedCreateInput>
+    /**
+     * In case the Emergency was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EmergencyUpdateInput, EmergencyUncheckedUpdateInput>
+  }
+
+  /**
+   * Emergency delete
+   */
+  export type EmergencyDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Emergency
+     */
+    select?: EmergencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Emergency
+     */
+    omit?: EmergencyOmit<ExtArgs> | null
+    /**
+     * Filter which Emergency to delete.
+     */
+    where: EmergencyWhereUniqueInput
+  }
+
+  /**
+   * Emergency deleteMany
+   */
+  export type EmergencyDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Emergencies to delete
+     */
+    where?: EmergencyWhereInput
+    /**
+     * Limit how many Emergencies to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Emergency without action
+   */
+  export type EmergencyDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Emergency
+     */
+    select?: EmergencySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Emergency
+     */
+    omit?: EmergencyOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Donor
+   */
+
+  export type AggregateDonor = {
+    _count: DonorCountAggregateOutputType | null
+    _avg: DonorAvgAggregateOutputType | null
+    _sum: DonorSumAggregateOutputType | null
+    _min: DonorMinAggregateOutputType | null
+    _max: DonorMaxAggregateOutputType | null
+  }
+
+  export type DonorAvgAggregateOutputType = {
+    latitude: number | null
+    longitude: number | null
+    accuracy: number | null
+  }
+
+  export type DonorSumAggregateOutputType = {
+    latitude: number | null
+    longitude: number | null
+    accuracy: number | null
+  }
+
+  export type DonorMinAggregateOutputType = {
+    id: string | null
+    latitude: number | null
+    longitude: number | null
+    placename: string | null
+    contactno: string | null
+    accuracy: number | null
+    availableFrom: Date | null
+    availableUntil: Date | null
+    additionalNotes: string | null
+    createdAt: Date | null
+  }
+
+  export type DonorMaxAggregateOutputType = {
+    id: string | null
+    latitude: number | null
+    longitude: number | null
+    placename: string | null
+    contactno: string | null
+    accuracy: number | null
+    availableFrom: Date | null
+    availableUntil: Date | null
+    additionalNotes: string | null
+    createdAt: Date | null
+  }
+
+  export type DonorCountAggregateOutputType = {
+    id: number
+    latitude: number
+    longitude: number
+    placename: number
+    contactno: number
+    accuracy: number
+    items: number
+    availableFrom: number
+    availableUntil: number
+    additionalNotes: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type DonorAvgAggregateInputType = {
+    latitude?: true
+    longitude?: true
+    accuracy?: true
+  }
+
+  export type DonorSumAggregateInputType = {
+    latitude?: true
+    longitude?: true
+    accuracy?: true
+  }
+
+  export type DonorMinAggregateInputType = {
+    id?: true
+    latitude?: true
+    longitude?: true
+    placename?: true
+    contactno?: true
+    accuracy?: true
+    availableFrom?: true
+    availableUntil?: true
+    additionalNotes?: true
+    createdAt?: true
+  }
+
+  export type DonorMaxAggregateInputType = {
+    id?: true
+    latitude?: true
+    longitude?: true
+    placename?: true
+    contactno?: true
+    accuracy?: true
+    availableFrom?: true
+    availableUntil?: true
+    additionalNotes?: true
+    createdAt?: true
+  }
+
+  export type DonorCountAggregateInputType = {
+    id?: true
+    latitude?: true
+    longitude?: true
+    placename?: true
+    contactno?: true
+    accuracy?: true
+    items?: true
+    availableFrom?: true
+    availableUntil?: true
+    additionalNotes?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type DonorAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Donor to aggregate.
+     */
+    where?: DonorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Donors to fetch.
+     */
+    orderBy?: DonorOrderByWithRelationInput | DonorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: DonorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Donors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Donors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Donors
+    **/
+    _count?: true | DonorCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: DonorAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: DonorSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: DonorMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: DonorMaxAggregateInputType
+  }
+
+  export type GetDonorAggregateType<T extends DonorAggregateArgs> = {
+        [P in keyof T & keyof AggregateDonor]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateDonor[P]>
+      : GetScalarType<T[P], AggregateDonor[P]>
+  }
+
+
+
+
+  export type DonorGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DonorWhereInput
+    orderBy?: DonorOrderByWithAggregationInput | DonorOrderByWithAggregationInput[]
+    by: DonorScalarFieldEnum[] | DonorScalarFieldEnum
+    having?: DonorScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: DonorCountAggregateInputType | true
+    _avg?: DonorAvgAggregateInputType
+    _sum?: DonorSumAggregateInputType
+    _min?: DonorMinAggregateInputType
+    _max?: DonorMaxAggregateInputType
+  }
+
+  export type DonorGroupByOutputType = {
+    id: string
+    latitude: number
+    longitude: number
+    placename: string | null
+    contactno: string | null
+    accuracy: number | null
+    items: string[]
+    availableFrom: Date | null
+    availableUntil: Date | null
+    additionalNotes: string | null
+    createdAt: Date
+    _count: DonorCountAggregateOutputType | null
+    _avg: DonorAvgAggregateOutputType | null
+    _sum: DonorSumAggregateOutputType | null
+    _min: DonorMinAggregateOutputType | null
+    _max: DonorMaxAggregateOutputType | null
+  }
+
+  type GetDonorGroupByPayload<T extends DonorGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<DonorGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof DonorGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], DonorGroupByOutputType[P]>
+            : GetScalarType<T[P], DonorGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type DonorSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    placename?: boolean
+    contactno?: boolean
+    accuracy?: boolean
+    items?: boolean
+    availableFrom?: boolean
+    availableUntil?: boolean
+    additionalNotes?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["donor"]>
+
+  export type DonorSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    placename?: boolean
+    contactno?: boolean
+    accuracy?: boolean
+    items?: boolean
+    availableFrom?: boolean
+    availableUntil?: boolean
+    additionalNotes?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["donor"]>
+
+  export type DonorSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    placename?: boolean
+    contactno?: boolean
+    accuracy?: boolean
+    items?: boolean
+    availableFrom?: boolean
+    availableUntil?: boolean
+    additionalNotes?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["donor"]>
+
+  export type DonorSelectScalar = {
+    id?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    placename?: boolean
+    contactno?: boolean
+    accuracy?: boolean
+    items?: boolean
+    availableFrom?: boolean
+    availableUntil?: boolean
+    additionalNotes?: boolean
+    createdAt?: boolean
+  }
+
+  export type DonorOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "latitude" | "longitude" | "placename" | "contactno" | "accuracy" | "items" | "availableFrom" | "availableUntil" | "additionalNotes" | "createdAt", ExtArgs["result"]["donor"]>
+
+  export type $DonorPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Donor"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      latitude: number
+      longitude: number
+      placename: string | null
+      contactno: string | null
+      accuracy: number | null
+      items: string[]
+      availableFrom: Date | null
+      availableUntil: Date | null
+      additionalNotes: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["donor"]>
+    composites: {}
+  }
+
+  type DonorGetPayload<S extends boolean | null | undefined | DonorDefaultArgs> = $Result.GetResult<Prisma.$DonorPayload, S>
+
+  type DonorCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<DonorFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: DonorCountAggregateInputType | true
+    }
+
+  export interface DonorDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Donor'], meta: { name: 'Donor' } }
+    /**
+     * Find zero or one Donor that matches the filter.
+     * @param {DonorFindUniqueArgs} args - Arguments to find a Donor
+     * @example
+     * // Get one Donor
+     * const donor = await prisma.donor.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends DonorFindUniqueArgs>(args: SelectSubset<T, DonorFindUniqueArgs<ExtArgs>>): Prisma__DonorClient<$Result.GetResult<Prisma.$DonorPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Donor that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {DonorFindUniqueOrThrowArgs} args - Arguments to find a Donor
+     * @example
+     * // Get one Donor
+     * const donor = await prisma.donor.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends DonorFindUniqueOrThrowArgs>(args: SelectSubset<T, DonorFindUniqueOrThrowArgs<ExtArgs>>): Prisma__DonorClient<$Result.GetResult<Prisma.$DonorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Donor that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DonorFindFirstArgs} args - Arguments to find a Donor
+     * @example
+     * // Get one Donor
+     * const donor = await prisma.donor.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends DonorFindFirstArgs>(args?: SelectSubset<T, DonorFindFirstArgs<ExtArgs>>): Prisma__DonorClient<$Result.GetResult<Prisma.$DonorPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Donor that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DonorFindFirstOrThrowArgs} args - Arguments to find a Donor
+     * @example
+     * // Get one Donor
+     * const donor = await prisma.donor.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends DonorFindFirstOrThrowArgs>(args?: SelectSubset<T, DonorFindFirstOrThrowArgs<ExtArgs>>): Prisma__DonorClient<$Result.GetResult<Prisma.$DonorPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Donors that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DonorFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Donors
+     * const donors = await prisma.donor.findMany()
+     * 
+     * // Get first 10 Donors
+     * const donors = await prisma.donor.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const donorWithIdOnly = await prisma.donor.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends DonorFindManyArgs>(args?: SelectSubset<T, DonorFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DonorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Donor.
+     * @param {DonorCreateArgs} args - Arguments to create a Donor.
+     * @example
+     * // Create one Donor
+     * const Donor = await prisma.donor.create({
+     *   data: {
+     *     // ... data to create a Donor
+     *   }
+     * })
+     * 
+     */
+    create<T extends DonorCreateArgs>(args: SelectSubset<T, DonorCreateArgs<ExtArgs>>): Prisma__DonorClient<$Result.GetResult<Prisma.$DonorPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Donors.
+     * @param {DonorCreateManyArgs} args - Arguments to create many Donors.
+     * @example
+     * // Create many Donors
+     * const donor = await prisma.donor.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends DonorCreateManyArgs>(args?: SelectSubset<T, DonorCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Donors and returns the data saved in the database.
+     * @param {DonorCreateManyAndReturnArgs} args - Arguments to create many Donors.
+     * @example
+     * // Create many Donors
+     * const donor = await prisma.donor.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Donors and only return the `id`
+     * const donorWithIdOnly = await prisma.donor.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends DonorCreateManyAndReturnArgs>(args?: SelectSubset<T, DonorCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DonorPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Donor.
+     * @param {DonorDeleteArgs} args - Arguments to delete one Donor.
+     * @example
+     * // Delete one Donor
+     * const Donor = await prisma.donor.delete({
+     *   where: {
+     *     // ... filter to delete one Donor
+     *   }
+     * })
+     * 
+     */
+    delete<T extends DonorDeleteArgs>(args: SelectSubset<T, DonorDeleteArgs<ExtArgs>>): Prisma__DonorClient<$Result.GetResult<Prisma.$DonorPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Donor.
+     * @param {DonorUpdateArgs} args - Arguments to update one Donor.
+     * @example
+     * // Update one Donor
+     * const donor = await prisma.donor.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends DonorUpdateArgs>(args: SelectSubset<T, DonorUpdateArgs<ExtArgs>>): Prisma__DonorClient<$Result.GetResult<Prisma.$DonorPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Donors.
+     * @param {DonorDeleteManyArgs} args - Arguments to filter Donors to delete.
+     * @example
+     * // Delete a few Donors
+     * const { count } = await prisma.donor.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends DonorDeleteManyArgs>(args?: SelectSubset<T, DonorDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Donors.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DonorUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Donors
+     * const donor = await prisma.donor.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends DonorUpdateManyArgs>(args: SelectSubset<T, DonorUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Donors and returns the data updated in the database.
+     * @param {DonorUpdateManyAndReturnArgs} args - Arguments to update many Donors.
+     * @example
+     * // Update many Donors
+     * const donor = await prisma.donor.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Donors and only return the `id`
+     * const donorWithIdOnly = await prisma.donor.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends DonorUpdateManyAndReturnArgs>(args: SelectSubset<T, DonorUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DonorPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Donor.
+     * @param {DonorUpsertArgs} args - Arguments to update or create a Donor.
+     * @example
+     * // Update or create a Donor
+     * const donor = await prisma.donor.upsert({
+     *   create: {
+     *     // ... data to create a Donor
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Donor we want to update
+     *   }
+     * })
+     */
+    upsert<T extends DonorUpsertArgs>(args: SelectSubset<T, DonorUpsertArgs<ExtArgs>>): Prisma__DonorClient<$Result.GetResult<Prisma.$DonorPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Donors.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DonorCountArgs} args - Arguments to filter Donors to count.
+     * @example
+     * // Count the number of Donors
+     * const count = await prisma.donor.count({
+     *   where: {
+     *     // ... the filter for the Donors we want to count
+     *   }
+     * })
+    **/
+    count<T extends DonorCountArgs>(
+      args?: Subset<T, DonorCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], DonorCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Donor.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DonorAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends DonorAggregateArgs>(args: Subset<T, DonorAggregateArgs>): Prisma.PrismaPromise<GetDonorAggregateType<T>>
+
+    /**
+     * Group by Donor.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DonorGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends DonorGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: DonorGroupByArgs['orderBy'] }
+        : { orderBy?: DonorGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, DonorGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetDonorGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Donor model
+   */
+  readonly fields: DonorFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Donor.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__DonorClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Donor model
+   */
+  interface DonorFieldRefs {
+    readonly id: FieldRef<"Donor", 'String'>
+    readonly latitude: FieldRef<"Donor", 'Float'>
+    readonly longitude: FieldRef<"Donor", 'Float'>
+    readonly placename: FieldRef<"Donor", 'String'>
+    readonly contactno: FieldRef<"Donor", 'String'>
+    readonly accuracy: FieldRef<"Donor", 'Float'>
+    readonly items: FieldRef<"Donor", 'String[]'>
+    readonly availableFrom: FieldRef<"Donor", 'DateTime'>
+    readonly availableUntil: FieldRef<"Donor", 'DateTime'>
+    readonly additionalNotes: FieldRef<"Donor", 'String'>
+    readonly createdAt: FieldRef<"Donor", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Donor findUnique
+   */
+  export type DonorFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donor
+     */
+    select?: DonorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donor
+     */
+    omit?: DonorOmit<ExtArgs> | null
+    /**
+     * Filter, which Donor to fetch.
+     */
+    where: DonorWhereUniqueInput
+  }
+
+  /**
+   * Donor findUniqueOrThrow
+   */
+  export type DonorFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donor
+     */
+    select?: DonorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donor
+     */
+    omit?: DonorOmit<ExtArgs> | null
+    /**
+     * Filter, which Donor to fetch.
+     */
+    where: DonorWhereUniqueInput
+  }
+
+  /**
+   * Donor findFirst
+   */
+  export type DonorFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donor
+     */
+    select?: DonorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donor
+     */
+    omit?: DonorOmit<ExtArgs> | null
+    /**
+     * Filter, which Donor to fetch.
+     */
+    where?: DonorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Donors to fetch.
+     */
+    orderBy?: DonorOrderByWithRelationInput | DonorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Donors.
+     */
+    cursor?: DonorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Donors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Donors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Donors.
+     */
+    distinct?: DonorScalarFieldEnum | DonorScalarFieldEnum[]
+  }
+
+  /**
+   * Donor findFirstOrThrow
+   */
+  export type DonorFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donor
+     */
+    select?: DonorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donor
+     */
+    omit?: DonorOmit<ExtArgs> | null
+    /**
+     * Filter, which Donor to fetch.
+     */
+    where?: DonorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Donors to fetch.
+     */
+    orderBy?: DonorOrderByWithRelationInput | DonorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Donors.
+     */
+    cursor?: DonorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Donors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Donors.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Donors.
+     */
+    distinct?: DonorScalarFieldEnum | DonorScalarFieldEnum[]
+  }
+
+  /**
+   * Donor findMany
+   */
+  export type DonorFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donor
+     */
+    select?: DonorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donor
+     */
+    omit?: DonorOmit<ExtArgs> | null
+    /**
+     * Filter, which Donors to fetch.
+     */
+    where?: DonorWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Donors to fetch.
+     */
+    orderBy?: DonorOrderByWithRelationInput | DonorOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Donors.
+     */
+    cursor?: DonorWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Donors from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Donors.
+     */
+    skip?: number
+    distinct?: DonorScalarFieldEnum | DonorScalarFieldEnum[]
+  }
+
+  /**
+   * Donor create
+   */
+  export type DonorCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donor
+     */
+    select?: DonorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donor
+     */
+    omit?: DonorOmit<ExtArgs> | null
+    /**
+     * The data needed to create a Donor.
+     */
+    data: XOR<DonorCreateInput, DonorUncheckedCreateInput>
+  }
+
+  /**
+   * Donor createMany
+   */
+  export type DonorCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Donors.
+     */
+    data: DonorCreateManyInput | DonorCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Donor createManyAndReturn
+   */
+  export type DonorCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donor
+     */
+    select?: DonorSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donor
+     */
+    omit?: DonorOmit<ExtArgs> | null
+    /**
+     * The data used to create many Donors.
+     */
+    data: DonorCreateManyInput | DonorCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Donor update
+   */
+  export type DonorUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donor
+     */
+    select?: DonorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donor
+     */
+    omit?: DonorOmit<ExtArgs> | null
+    /**
+     * The data needed to update a Donor.
+     */
+    data: XOR<DonorUpdateInput, DonorUncheckedUpdateInput>
+    /**
+     * Choose, which Donor to update.
+     */
+    where: DonorWhereUniqueInput
+  }
+
+  /**
+   * Donor updateMany
+   */
+  export type DonorUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Donors.
+     */
+    data: XOR<DonorUpdateManyMutationInput, DonorUncheckedUpdateManyInput>
+    /**
+     * Filter which Donors to update
+     */
+    where?: DonorWhereInput
+    /**
+     * Limit how many Donors to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Donor updateManyAndReturn
+   */
+  export type DonorUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donor
+     */
+    select?: DonorSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donor
+     */
+    omit?: DonorOmit<ExtArgs> | null
+    /**
+     * The data used to update Donors.
+     */
+    data: XOR<DonorUpdateManyMutationInput, DonorUncheckedUpdateManyInput>
+    /**
+     * Filter which Donors to update
+     */
+    where?: DonorWhereInput
+    /**
+     * Limit how many Donors to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Donor upsert
+   */
+  export type DonorUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donor
+     */
+    select?: DonorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donor
+     */
+    omit?: DonorOmit<ExtArgs> | null
+    /**
+     * The filter to search for the Donor to update in case it exists.
+     */
+    where: DonorWhereUniqueInput
+    /**
+     * In case the Donor found by the `where` argument doesn't exist, create a new Donor with this data.
+     */
+    create: XOR<DonorCreateInput, DonorUncheckedCreateInput>
+    /**
+     * In case the Donor was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<DonorUpdateInput, DonorUncheckedUpdateInput>
+  }
+
+  /**
+   * Donor delete
+   */
+  export type DonorDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donor
+     */
+    select?: DonorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donor
+     */
+    omit?: DonorOmit<ExtArgs> | null
+    /**
+     * Filter which Donor to delete.
+     */
+    where: DonorWhereUniqueInput
+  }
+
+  /**
+   * Donor deleteMany
+   */
+  export type DonorDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Donors to delete
+     */
+    where?: DonorWhereInput
+    /**
+     * Limit how many Donors to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Donor without action
+   */
+  export type DonorDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donor
+     */
+    select?: DonorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donor
+     */
+    omit?: DonorOmit<ExtArgs> | null
+  }
+
 
   /**
    * Enums
@@ -786,11 +3243,1133 @@ export namespace Prisma {
   export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+  export const EmergencyScalarFieldEnum: {
+    id: 'id',
+    latitude: 'latitude',
+    longitude: 'longitude',
+    accuracy: 'accuracy',
+    timestamp: 'timestamp',
+    needs: 'needs',
+    numberOfPeople: 'numberOfPeople',
+    urgencyLevel: 'urgencyLevel',
+    additionalNotes: 'additionalNotes',
+    status: 'status',
+    contactno: 'contactno',
+    placename: 'placename',
+    contactPerson: 'contactPerson',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type EmergencyScalarFieldEnum = (typeof EmergencyScalarFieldEnum)[keyof typeof EmergencyScalarFieldEnum]
+
+
+  export const DonorScalarFieldEnum: {
+    id: 'id',
+    latitude: 'latitude',
+    longitude: 'longitude',
+    placename: 'placename',
+    contactno: 'contactno',
+    accuracy: 'accuracy',
+    items: 'items',
+    availableFrom: 'availableFrom',
+    availableUntil: 'availableUntil',
+    additionalNotes: 'additionalNotes',
+    createdAt: 'createdAt'
+  };
+
+  export type DonorScalarFieldEnum = (typeof DonorScalarFieldEnum)[keyof typeof DonorScalarFieldEnum]
+
+
+  export const SortOrder: {
+    asc: 'asc',
+    desc: 'desc'
+  };
+
+  export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+  export const QueryMode: {
+    default: 'default',
+    insensitive: 'insensitive'
+  };
+
+  export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+  export const NullsOrder: {
+    first: 'first',
+    last: 'last'
+  };
+
+  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  /**
+   * Field references
+   */
+
+
+  /**
+   * Reference to a field of type 'String'
+   */
+  export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String'>
+    
+
+
+  /**
+   * Reference to a field of type 'String[]'
+   */
+  export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime'
+   */
+  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime[]'
+   */
+  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Int'
+   */
+  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+  /**
+   * Reference to a field of type 'Int[]'
+   */
+  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
   /**
    * Deep Input Types
    */
 
-  undefined
+
+  export type EmergencyWhereInput = {
+    AND?: EmergencyWhereInput | EmergencyWhereInput[]
+    OR?: EmergencyWhereInput[]
+    NOT?: EmergencyWhereInput | EmergencyWhereInput[]
+    id?: StringFilter<"Emergency"> | string
+    latitude?: FloatFilter<"Emergency"> | number
+    longitude?: FloatFilter<"Emergency"> | number
+    accuracy?: FloatFilter<"Emergency"> | number
+    timestamp?: DateTimeFilter<"Emergency"> | Date | string
+    needs?: StringNullableListFilter<"Emergency">
+    numberOfPeople?: IntFilter<"Emergency"> | number
+    urgencyLevel?: StringFilter<"Emergency"> | string
+    additionalNotes?: StringNullableFilter<"Emergency"> | string | null
+    status?: StringFilter<"Emergency"> | string
+    contactno?: StringNullableFilter<"Emergency"> | string | null
+    placename?: StringNullableFilter<"Emergency"> | string | null
+    contactPerson?: StringNullableFilter<"Emergency"> | string | null
+    createdAt?: DateTimeFilter<"Emergency"> | Date | string
+    updatedAt?: DateTimeFilter<"Emergency"> | Date | string
+  }
+
+  export type EmergencyOrderByWithRelationInput = {
+    id?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    accuracy?: SortOrder
+    timestamp?: SortOrder
+    needs?: SortOrder
+    numberOfPeople?: SortOrder
+    urgencyLevel?: SortOrder
+    additionalNotes?: SortOrderInput | SortOrder
+    status?: SortOrder
+    contactno?: SortOrderInput | SortOrder
+    placename?: SortOrderInput | SortOrder
+    contactPerson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EmergencyWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: EmergencyWhereInput | EmergencyWhereInput[]
+    OR?: EmergencyWhereInput[]
+    NOT?: EmergencyWhereInput | EmergencyWhereInput[]
+    latitude?: FloatFilter<"Emergency"> | number
+    longitude?: FloatFilter<"Emergency"> | number
+    accuracy?: FloatFilter<"Emergency"> | number
+    timestamp?: DateTimeFilter<"Emergency"> | Date | string
+    needs?: StringNullableListFilter<"Emergency">
+    numberOfPeople?: IntFilter<"Emergency"> | number
+    urgencyLevel?: StringFilter<"Emergency"> | string
+    additionalNotes?: StringNullableFilter<"Emergency"> | string | null
+    status?: StringFilter<"Emergency"> | string
+    contactno?: StringNullableFilter<"Emergency"> | string | null
+    placename?: StringNullableFilter<"Emergency"> | string | null
+    contactPerson?: StringNullableFilter<"Emergency"> | string | null
+    createdAt?: DateTimeFilter<"Emergency"> | Date | string
+    updatedAt?: DateTimeFilter<"Emergency"> | Date | string
+  }, "id">
+
+  export type EmergencyOrderByWithAggregationInput = {
+    id?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    accuracy?: SortOrder
+    timestamp?: SortOrder
+    needs?: SortOrder
+    numberOfPeople?: SortOrder
+    urgencyLevel?: SortOrder
+    additionalNotes?: SortOrderInput | SortOrder
+    status?: SortOrder
+    contactno?: SortOrderInput | SortOrder
+    placename?: SortOrderInput | SortOrder
+    contactPerson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: EmergencyCountOrderByAggregateInput
+    _avg?: EmergencyAvgOrderByAggregateInput
+    _max?: EmergencyMaxOrderByAggregateInput
+    _min?: EmergencyMinOrderByAggregateInput
+    _sum?: EmergencySumOrderByAggregateInput
+  }
+
+  export type EmergencyScalarWhereWithAggregatesInput = {
+    AND?: EmergencyScalarWhereWithAggregatesInput | EmergencyScalarWhereWithAggregatesInput[]
+    OR?: EmergencyScalarWhereWithAggregatesInput[]
+    NOT?: EmergencyScalarWhereWithAggregatesInput | EmergencyScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Emergency"> | string
+    latitude?: FloatWithAggregatesFilter<"Emergency"> | number
+    longitude?: FloatWithAggregatesFilter<"Emergency"> | number
+    accuracy?: FloatWithAggregatesFilter<"Emergency"> | number
+    timestamp?: DateTimeWithAggregatesFilter<"Emergency"> | Date | string
+    needs?: StringNullableListFilter<"Emergency">
+    numberOfPeople?: IntWithAggregatesFilter<"Emergency"> | number
+    urgencyLevel?: StringWithAggregatesFilter<"Emergency"> | string
+    additionalNotes?: StringNullableWithAggregatesFilter<"Emergency"> | string | null
+    status?: StringWithAggregatesFilter<"Emergency"> | string
+    contactno?: StringNullableWithAggregatesFilter<"Emergency"> | string | null
+    placename?: StringNullableWithAggregatesFilter<"Emergency"> | string | null
+    contactPerson?: StringNullableWithAggregatesFilter<"Emergency"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Emergency"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Emergency"> | Date | string
+  }
+
+  export type DonorWhereInput = {
+    AND?: DonorWhereInput | DonorWhereInput[]
+    OR?: DonorWhereInput[]
+    NOT?: DonorWhereInput | DonorWhereInput[]
+    id?: StringFilter<"Donor"> | string
+    latitude?: FloatFilter<"Donor"> | number
+    longitude?: FloatFilter<"Donor"> | number
+    placename?: StringNullableFilter<"Donor"> | string | null
+    contactno?: StringNullableFilter<"Donor"> | string | null
+    accuracy?: FloatNullableFilter<"Donor"> | number | null
+    items?: StringNullableListFilter<"Donor">
+    availableFrom?: DateTimeNullableFilter<"Donor"> | Date | string | null
+    availableUntil?: DateTimeNullableFilter<"Donor"> | Date | string | null
+    additionalNotes?: StringNullableFilter<"Donor"> | string | null
+    createdAt?: DateTimeFilter<"Donor"> | Date | string
+  }
+
+  export type DonorOrderByWithRelationInput = {
+    id?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    placename?: SortOrderInput | SortOrder
+    contactno?: SortOrderInput | SortOrder
+    accuracy?: SortOrderInput | SortOrder
+    items?: SortOrder
+    availableFrom?: SortOrderInput | SortOrder
+    availableUntil?: SortOrderInput | SortOrder
+    additionalNotes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type DonorWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: DonorWhereInput | DonorWhereInput[]
+    OR?: DonorWhereInput[]
+    NOT?: DonorWhereInput | DonorWhereInput[]
+    latitude?: FloatFilter<"Donor"> | number
+    longitude?: FloatFilter<"Donor"> | number
+    placename?: StringNullableFilter<"Donor"> | string | null
+    contactno?: StringNullableFilter<"Donor"> | string | null
+    accuracy?: FloatNullableFilter<"Donor"> | number | null
+    items?: StringNullableListFilter<"Donor">
+    availableFrom?: DateTimeNullableFilter<"Donor"> | Date | string | null
+    availableUntil?: DateTimeNullableFilter<"Donor"> | Date | string | null
+    additionalNotes?: StringNullableFilter<"Donor"> | string | null
+    createdAt?: DateTimeFilter<"Donor"> | Date | string
+  }, "id">
+
+  export type DonorOrderByWithAggregationInput = {
+    id?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    placename?: SortOrderInput | SortOrder
+    contactno?: SortOrderInput | SortOrder
+    accuracy?: SortOrderInput | SortOrder
+    items?: SortOrder
+    availableFrom?: SortOrderInput | SortOrder
+    availableUntil?: SortOrderInput | SortOrder
+    additionalNotes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: DonorCountOrderByAggregateInput
+    _avg?: DonorAvgOrderByAggregateInput
+    _max?: DonorMaxOrderByAggregateInput
+    _min?: DonorMinOrderByAggregateInput
+    _sum?: DonorSumOrderByAggregateInput
+  }
+
+  export type DonorScalarWhereWithAggregatesInput = {
+    AND?: DonorScalarWhereWithAggregatesInput | DonorScalarWhereWithAggregatesInput[]
+    OR?: DonorScalarWhereWithAggregatesInput[]
+    NOT?: DonorScalarWhereWithAggregatesInput | DonorScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Donor"> | string
+    latitude?: FloatWithAggregatesFilter<"Donor"> | number
+    longitude?: FloatWithAggregatesFilter<"Donor"> | number
+    placename?: StringNullableWithAggregatesFilter<"Donor"> | string | null
+    contactno?: StringNullableWithAggregatesFilter<"Donor"> | string | null
+    accuracy?: FloatNullableWithAggregatesFilter<"Donor"> | number | null
+    items?: StringNullableListFilter<"Donor">
+    availableFrom?: DateTimeNullableWithAggregatesFilter<"Donor"> | Date | string | null
+    availableUntil?: DateTimeNullableWithAggregatesFilter<"Donor"> | Date | string | null
+    additionalNotes?: StringNullableWithAggregatesFilter<"Donor"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Donor"> | Date | string
+  }
+
+  export type EmergencyCreateInput = {
+    id: string
+    latitude: number
+    longitude: number
+    accuracy: number
+    timestamp: Date | string
+    needs?: EmergencyCreateneedsInput | string[]
+    numberOfPeople: number
+    urgencyLevel: string
+    additionalNotes?: string | null
+    status?: string
+    contactno?: string | null
+    placename?: string | null
+    contactPerson?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EmergencyUncheckedCreateInput = {
+    id: string
+    latitude: number
+    longitude: number
+    accuracy: number
+    timestamp: Date | string
+    needs?: EmergencyCreateneedsInput | string[]
+    numberOfPeople: number
+    urgencyLevel: string
+    additionalNotes?: string | null
+    status?: string
+    contactno?: string | null
+    placename?: string | null
+    contactPerson?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EmergencyUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    accuracy?: FloatFieldUpdateOperationsInput | number
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    needs?: EmergencyUpdateneedsInput | string[]
+    numberOfPeople?: IntFieldUpdateOperationsInput | number
+    urgencyLevel?: StringFieldUpdateOperationsInput | string
+    additionalNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    contactno?: NullableStringFieldUpdateOperationsInput | string | null
+    placename?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmergencyUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    accuracy?: FloatFieldUpdateOperationsInput | number
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    needs?: EmergencyUpdateneedsInput | string[]
+    numberOfPeople?: IntFieldUpdateOperationsInput | number
+    urgencyLevel?: StringFieldUpdateOperationsInput | string
+    additionalNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    contactno?: NullableStringFieldUpdateOperationsInput | string | null
+    placename?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmergencyCreateManyInput = {
+    id: string
+    latitude: number
+    longitude: number
+    accuracy: number
+    timestamp: Date | string
+    needs?: EmergencyCreateneedsInput | string[]
+    numberOfPeople: number
+    urgencyLevel: string
+    additionalNotes?: string | null
+    status?: string
+    contactno?: string | null
+    placename?: string | null
+    contactPerson?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EmergencyUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    accuracy?: FloatFieldUpdateOperationsInput | number
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    needs?: EmergencyUpdateneedsInput | string[]
+    numberOfPeople?: IntFieldUpdateOperationsInput | number
+    urgencyLevel?: StringFieldUpdateOperationsInput | string
+    additionalNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    contactno?: NullableStringFieldUpdateOperationsInput | string | null
+    placename?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmergencyUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    accuracy?: FloatFieldUpdateOperationsInput | number
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    needs?: EmergencyUpdateneedsInput | string[]
+    numberOfPeople?: IntFieldUpdateOperationsInput | number
+    urgencyLevel?: StringFieldUpdateOperationsInput | string
+    additionalNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    contactno?: NullableStringFieldUpdateOperationsInput | string | null
+    placename?: NullableStringFieldUpdateOperationsInput | string | null
+    contactPerson?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DonorCreateInput = {
+    id: string
+    latitude: number
+    longitude: number
+    placename?: string | null
+    contactno?: string | null
+    accuracy?: number | null
+    items?: DonorCreateitemsInput | string[]
+    availableFrom?: Date | string | null
+    availableUntil?: Date | string | null
+    additionalNotes?: string | null
+    createdAt?: Date | string
+  }
+
+  export type DonorUncheckedCreateInput = {
+    id: string
+    latitude: number
+    longitude: number
+    placename?: string | null
+    contactno?: string | null
+    accuracy?: number | null
+    items?: DonorCreateitemsInput | string[]
+    availableFrom?: Date | string | null
+    availableUntil?: Date | string | null
+    additionalNotes?: string | null
+    createdAt?: Date | string
+  }
+
+  export type DonorUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    placename?: NullableStringFieldUpdateOperationsInput | string | null
+    contactno?: NullableStringFieldUpdateOperationsInput | string | null
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    items?: DonorUpdateitemsInput | string[]
+    availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    additionalNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DonorUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    placename?: NullableStringFieldUpdateOperationsInput | string | null
+    contactno?: NullableStringFieldUpdateOperationsInput | string | null
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    items?: DonorUpdateitemsInput | string[]
+    availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    additionalNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DonorCreateManyInput = {
+    id: string
+    latitude: number
+    longitude: number
+    placename?: string | null
+    contactno?: string | null
+    accuracy?: number | null
+    items?: DonorCreateitemsInput | string[]
+    availableFrom?: Date | string | null
+    availableUntil?: Date | string | null
+    additionalNotes?: string | null
+    createdAt?: Date | string
+  }
+
+  export type DonorUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    placename?: NullableStringFieldUpdateOperationsInput | string | null
+    contactno?: NullableStringFieldUpdateOperationsInput | string | null
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    items?: DonorUpdateitemsInput | string[]
+    availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    additionalNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DonorUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    placename?: NullableStringFieldUpdateOperationsInput | string | null
+    contactno?: NullableStringFieldUpdateOperationsInput | string | null
+    accuracy?: NullableFloatFieldUpdateOperationsInput | number | null
+    items?: DonorUpdateitemsInput | string[]
+    availableFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    availableUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    additionalNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StringFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringFilter<$PrismaModel> | string
+  }
+
+  export type FloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type DateTimeFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type StringNullableListFilter<$PrismaModel = never> = {
+    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    has?: string | StringFieldRefInput<$PrismaModel> | null
+    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
+    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
+
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
+  }
+
+  export type EmergencyCountOrderByAggregateInput = {
+    id?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    accuracy?: SortOrder
+    timestamp?: SortOrder
+    needs?: SortOrder
+    numberOfPeople?: SortOrder
+    urgencyLevel?: SortOrder
+    additionalNotes?: SortOrder
+    status?: SortOrder
+    contactno?: SortOrder
+    placename?: SortOrder
+    contactPerson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EmergencyAvgOrderByAggregateInput = {
+    latitude?: SortOrder
+    longitude?: SortOrder
+    accuracy?: SortOrder
+    numberOfPeople?: SortOrder
+  }
+
+  export type EmergencyMaxOrderByAggregateInput = {
+    id?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    accuracy?: SortOrder
+    timestamp?: SortOrder
+    numberOfPeople?: SortOrder
+    urgencyLevel?: SortOrder
+    additionalNotes?: SortOrder
+    status?: SortOrder
+    contactno?: SortOrder
+    placename?: SortOrder
+    contactPerson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EmergencyMinOrderByAggregateInput = {
+    id?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    accuracy?: SortOrder
+    timestamp?: SortOrder
+    numberOfPeople?: SortOrder
+    urgencyLevel?: SortOrder
+    additionalNotes?: SortOrder
+    status?: SortOrder
+    contactno?: SortOrder
+    placename?: SortOrder
+    contactPerson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EmergencySumOrderByAggregateInput = {
+    latitude?: SortOrder
+    longitude?: SortOrder
+    accuracy?: SortOrder
+    numberOfPeople?: SortOrder
+  }
+
+  export type StringWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type FloatWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedFloatFilter<$PrismaModel>
+    _min?: NestedFloatFilter<$PrismaModel>
+    _max?: NestedFloatFilter<$PrismaModel>
+  }
+
+  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type FloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type DonorCountOrderByAggregateInput = {
+    id?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    placename?: SortOrder
+    contactno?: SortOrder
+    accuracy?: SortOrder
+    items?: SortOrder
+    availableFrom?: SortOrder
+    availableUntil?: SortOrder
+    additionalNotes?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type DonorAvgOrderByAggregateInput = {
+    latitude?: SortOrder
+    longitude?: SortOrder
+    accuracy?: SortOrder
+  }
+
+  export type DonorMaxOrderByAggregateInput = {
+    id?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    placename?: SortOrder
+    contactno?: SortOrder
+    accuracy?: SortOrder
+    availableFrom?: SortOrder
+    availableUntil?: SortOrder
+    additionalNotes?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type DonorMinOrderByAggregateInput = {
+    id?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    placename?: SortOrder
+    contactno?: SortOrder
+    accuracy?: SortOrder
+    availableFrom?: SortOrder
+    availableUntil?: SortOrder
+    additionalNotes?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type DonorSumOrderByAggregateInput = {
+    latitude?: SortOrder
+    longitude?: SortOrder
+    accuracy?: SortOrder
+  }
+
+  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type EmergencyCreateneedsInput = {
+    set: string[]
+  }
+
+  export type StringFieldUpdateOperationsInput = {
+    set?: string
+  }
+
+  export type FloatFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type DateTimeFieldUpdateOperationsInput = {
+    set?: Date | string
+  }
+
+  export type EmergencyUpdateneedsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
+  export type DonorCreateitemsInput = {
+    set: string[]
+  }
+
+  export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type DonorUpdateitemsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
+  export type NestedStringFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringFilter<$PrismaModel> | string
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedDateTimeFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type NestedIntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedFloatFilter<$PrismaModel>
+    _min?: NestedFloatFilter<$PrismaModel>
+    _max?: NestedFloatFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
 
 
 
