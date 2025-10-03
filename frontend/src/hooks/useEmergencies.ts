@@ -1,8 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { EmergencyRecord } from '../types';
-import { fetchEmergencies as apiFetchEmergencies } from '../services/api';
-import { getPlaceName } from '../utils/geocoding';
-
+import { useState, useEffect, useCallback } from "react";
+import type { EmergencyRecord } from "../types";
+import { fetchEmergencies as apiFetchEmergencies } from "../services/api";
 interface UseEmergenciesReturn {
   emergencies: EmergencyRecord[];
   setEmergencies: React.Dispatch<React.SetStateAction<EmergencyRecord[]>>;
@@ -13,7 +11,8 @@ interface UseEmergenciesReturn {
 
 export const useEmergencies = (): UseEmergenciesReturn => {
   const [emergencies, setEmergencies] = useState<EmergencyRecord[]>([]);
-  const [isLoadingEmergencies, setIsLoadingEmergencies] = useState<boolean>(false);
+  const [isLoadingEmergencies, setIsLoadingEmergencies] =
+    useState<boolean>(false);
   const [fetchTrigger, setFetchTrigger] = useState<number>(0); // 🚀 trigger flag
 
   const fetchEmergencies = useCallback(async (): Promise<EmergencyRecord[]> => {
@@ -23,9 +22,7 @@ export const useEmergencies = (): UseEmergenciesReturn => {
 
       const formattedEmergencies = await Promise.all(
         data.map(async (emergency) => {
-          const placeName =
-            emergency.placeName ||
-            (await getPlaceName(emergency.latitude, emergency.longitude));
+          const placename = emergency.placename || "Unknown Location";
 
           return {
             id: emergency.id,
@@ -39,19 +36,19 @@ export const useEmergencies = (): UseEmergenciesReturn => {
             needs: emergency.needs,
             numberOfPeople: emergency.numberOfPeople,
             urgencyLevel: emergency.urgencyLevel.toLowerCase() as
-              | 'low'
-              | 'medium'
-              | 'high'
-              | 'critical',
-            additionalNotes: emergency.additionalNotes || '',
-            status: (emergency.status?.toLowerCase() || 'pending') as
-              | 'pending'
-              | 'responded'
-              | 'resolved',
+              | "low"
+              | "medium"
+              | "high"
+              | "critical",
+            additionalNotes: emergency.additionalNotes || "",
+            status: (emergency.status?.toLowerCase() || "pending") as
+              | "pending"
+              | "responded"
+              | "resolved",
             createdAt: emergency.createdAt,
             updatedAt: emergency.updatedAt,
-            contactNo: emergency.contactNo || emergency.contactno || '',
-            placeName,
+            contactNo: emergency.contactNo || emergency.contactno || "",
+            placename,
           };
         })
       );
@@ -59,7 +56,7 @@ export const useEmergencies = (): UseEmergenciesReturn => {
       setEmergencies(formattedEmergencies);
       return formattedEmergencies;
     } catch (error) {
-      console.error('Error fetching emergencies:', error);
+      console.error("Error fetching emergencies:", error);
       return [];
     } finally {
       setIsLoadingEmergencies(false);
@@ -74,5 +71,11 @@ export const useEmergencies = (): UseEmergenciesReturn => {
   // Function to manually trigger fetch
   const triggerFetch = () => setFetchTrigger((prev) => prev + 1);
 
-  return { emergencies, setEmergencies, isLoadingEmergencies, fetchEmergencies, triggerFetch };
+  return {
+    emergencies,
+    setEmergencies,
+    isLoadingEmergencies,
+    fetchEmergencies,
+    triggerFetch,
+  };
 };
