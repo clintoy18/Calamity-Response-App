@@ -44,49 +44,50 @@ const EmergencyApp: React.FC = () => {
   const ZOOM_THRESHOLD = 12;
 
   // Sync markers for all emergencies (real-time) based on zoom
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
+useEffect(() => {
+  const map = mapInstanceRef.current;
+  if (!map) return;
 
-    const updateMarkersByZoom = () => {
-      const zoom = map.getZoom();
+  const updateMarkersByZoomAndBounds = () => {
+    const zoom = map.getZoom();
+    const bounds = map.getBounds();
 
-      if (zoom >= ZOOM_THRESHOLD) {
-        // Show all emergency markers
-        emergencies.forEach((emergency) => {
-          const exists = markersRef.current.some(
-            (m) => m.data.id === emergency.id
-          );
-          if (!exists) {
-            addEmergencyMarker(
-              emergency.latitude,
-              emergency.longitude,
-              emergency.accuracy,
-              emergency.id,
-              emergency
-            );
-          }
-        });
-      } else {
-        // Remove non-TEMP markers
-        markersRef.current = markersRef.current.filter((m) => {
-          if (!m.data.id?.includes("TEMP")) {
-            map.removeLayer(m.marker);
-            map.removeLayer(m.circle);
-            return false;
-          }
-          return true;
-        });
+    // Remove all non-TEMP markers first
+    markersRef.current = markersRef.current.filter((m) => {
+      if (!m.data.id?.includes("TEMP")) {
+        map.removeLayer(m.marker);
+        map.removeLayer(m.circle);
+        return false;
       }
-    };
+      return true;
+    });
 
-    updateMarkersByZoom();
-    map.on("zoomend", updateMarkersByZoom);
+    if (zoom >= ZOOM_THRESHOLD) {
+      emergencies.forEach((emergency) => {
+        const exists = markersRef.current.some((m) => m.data.id === emergency.id);
+        const inBounds = bounds.contains([emergency.latitude, emergency.longitude]);
 
-    return () => {
-      map.off("zoomend", updateMarkersByZoom);
-    };
-  }, [emergencies, addEmergencyMarker, mapInstanceRef, markersRef]);
+        if (!exists && inBounds) {
+          addEmergencyMarker(
+            emergency.latitude,
+            emergency.longitude,
+            emergency.accuracy,
+            emergency.id,
+            emergency
+          );
+        }
+      });
+    }
+  };
+
+  updateMarkersByZoomAndBounds();
+  map.on("zoomend moveend", updateMarkersByZoomAndBounds);
+
+  return () => {
+    map.off("zoomend moveend", updateMarkersByZoomAndBounds);
+  };
+}, [emergencies, addEmergencyMarker, mapInstanceRef, markersRef]);
+
 
   // Manual map click
   useEffect(() => {
