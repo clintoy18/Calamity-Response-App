@@ -13,7 +13,8 @@ interface UseEmergenciesReturn {
 export const useEmergencies = (): UseEmergenciesReturn => {
   const [emergencies, setEmergencies] = useState<EmergencyRecord[]>([]);
   const [isLoadingEmergencies, setIsLoadingEmergencies] = useState(false);
-  const pageRef = useRef(1); // avoid closure issues with setInterval
+  const pageRef = useRef(1);
+  const fetchedIdsRef = useRef<Set<string>>(new Set()); // track fetched IDs
   const limit = 10;
 
   const fetchEmergencies = useCallback(async (page: number) => {
@@ -21,12 +22,10 @@ export const useEmergencies = (): UseEmergenciesReturn => {
     try {
       const data = await apiFetchEmergencies(page, limit);
 
-      // Avoid duplicate emergencies
-      const newEmergencies = data.filter(
-        (e) => !emergencies.some((existing) => existing.id === e.id)
-      );
+      // Filter out already fetched emergencies
+      const newEmergencies = data.filter((e) => !fetchedIdsRef.current.has(e.id));
 
-      // Resolve place names in parallel, memoize if already present
+      // Resolve place names in parallel
       const formattedEmergencies = await Promise.all(
         newEmergencies.map(async (emergency) => {
           const placeName =
@@ -59,6 +58,9 @@ export const useEmergencies = (): UseEmergenciesReturn => {
         })
       );
 
+      // Track fetched IDs to prevent duplicates
+      formattedEmergencies.forEach((e) => fetchedIdsRef.current.add(e.id));
+
       setEmergencies((prev) => [...prev, ...formattedEmergencies]);
       return formattedEmergencies;
     } catch (error) {
@@ -67,17 +69,16 @@ export const useEmergencies = (): UseEmergenciesReturn => {
     } finally {
       setIsLoadingEmergencies(false);
     }
-  }, [emergencies]);
+  }, []);
 
   // Auto-fetch every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      const nextPage = pageRef.current;
-      fetchEmergencies(nextPage);
-      pageRef.current += 1;
-    },10000);
+      fetchEmergencies(pageRef.current);
+      pageRef.current++;
+    }, 10000);
 
-    // initial fetch
+    // Initial fetch
     fetchEmergencies(pageRef.current);
 
     return () => clearInterval(interval);
