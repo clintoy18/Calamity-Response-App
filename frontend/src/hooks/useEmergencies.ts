@@ -75,7 +75,7 @@ export const useEmergencies = (): UseEmergenciesReturn => {
       const nextPage = pageRef.current;
       fetchEmergencies(nextPage);
       pageRef.current += 1;
-    }, 5000);
+    },10000);
 
     // initial fetch
     fetchEmergencies(pageRef.current);
