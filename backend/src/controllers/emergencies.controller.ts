@@ -11,8 +11,8 @@ const generateUUID = (): string => {
 // Emergencies CRUD
 export const getEmergencies = async (req: Request, res: Response) => {
   try {
-    const twelveHoursAgo = new Date();
-    twelveHoursAgo.setHours(twelveHoursAgo.getHours() - 12);
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
     // Fetch all emergencies
     const allEmergencies = await Emergency.find().sort({ createdAt: -1 });
@@ -23,7 +23,7 @@ export const getEmergencies = async (req: Request, res: Response) => {
 
       // If createdAt is already a Date object
       if (createdAt instanceof Date) {
-        return createdAt >= twelveHoursAgo;
+        return createdAt >= twentyFourHoursAgo;
       }
 
       // If createdAt is a string, convert it to Date
@@ -31,7 +31,7 @@ export const getEmergencies = async (req: Request, res: Response) => {
         const createdAtDate = new Date(createdAt);
         // Check if the conversion was successful
         if (!isNaN(createdAtDate.getTime())) {
-          return createdAtDate >= twelveHoursAgo;
+          return createdAtDate >= twentyFourHoursAgo;
         }
       }
 
