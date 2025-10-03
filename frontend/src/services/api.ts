@@ -25,8 +25,8 @@ interface EmergencyApiData {
   updatedAt?: string;
 }
 
-export const fetchEmergencies = async (page = 1, limit = 10): Promise<EmergencyApiData[]> => {
-  const response = await fetch(`${API_URL}/emergencies?page=${page}&limit=${limit}`);
+export const fetchEmergencies = async (): Promise<EmergencyApiData[]> => {
+  const response = await fetch(`${API_URL}/emergencies`);
   const data: ApiResponse<EmergencyApiData[]> = await response.json();
 
   if (data.success && data.data) {
