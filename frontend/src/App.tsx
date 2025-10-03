@@ -28,7 +28,6 @@ const EmergencyApp: React.FC = () => {
   >("medium");
   const [additionalNotes, setAdditionalNotes] = useState("");
 
-  // Manual pin & search
   const [isPinpointMode, setIsPinpointMode] = useState(false);
   const [selectedMapLocation, setSelectedMapLocation] = useState<{
     lat: number;
@@ -42,37 +41,57 @@ const EmergencyApp: React.FC = () => {
   const { addEmergencyMarker, removeTempMarker, markersRef } =
     useEmergencyMarkers(mapInstanceRef, setErrorMessage, setStatus);
 
-  // Sync markers for all emergencies (real-time)
+  const ZOOM_THRESHOLD = 12;
+
+  // Sync markers for all emergencies (real-time) based on zoom
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+    if (!map) return;
 
-    // Remove all non-TEMP markers first
-    markersRef.current = markersRef.current.filter((m) => {
-      if (!m.data.id?.includes("TEMP")) {
-        mapInstanceRef.current?.removeLayer(m.marker);
-        mapInstanceRef.current?.removeLayer(m.circle);
-        return false;
-      }
-      return true;
-    });
+    const updateMarkersByZoom = () => {
+      const zoom = map.getZoom();
 
-    emergencies.forEach((emergency) => {
-      const exists = markersRef.current.some((m) => m.data.id === emergency.id);
-      if (!exists) {
-        addEmergencyMarker(
-          emergency.latitude,
-          emergency.longitude,
-          emergency.accuracy,
-          emergency.id,
-          emergency
-        );
+      if (zoom >= ZOOM_THRESHOLD) {
+        // Show all emergency markers
+        emergencies.forEach((emergency) => {
+          const exists = markersRef.current.some(
+            (m) => m.data.id === emergency.id
+          );
+          if (!exists) {
+            addEmergencyMarker(
+              emergency.latitude,
+              emergency.longitude,
+              emergency.accuracy,
+              emergency.id,
+              emergency
+            );
+          }
+        });
+      } else {
+        // Remove non-TEMP markers
+        markersRef.current = markersRef.current.filter((m) => {
+          if (!m.data.id?.includes("TEMP")) {
+            map.removeLayer(m.marker);
+            map.removeLayer(m.circle);
+            return false;
+          }
+          return true;
+        });
       }
-    });
+    };
+
+    updateMarkersByZoom();
+    map.on("zoomend", updateMarkersByZoom);
+
+    return () => {
+      map.off("zoomend", updateMarkersByZoom);
+    };
   }, [emergencies, addEmergencyMarker, mapInstanceRef, markersRef]);
 
   // Manual map click
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+    if (!map) return;
 
     const handleMapClick = (e: L.LeafletMouseEvent) => {
       if (isPinpointMode) {
@@ -83,9 +102,9 @@ const EmergencyApp: React.FC = () => {
       }
     };
 
-    mapInstanceRef.current.on("click", handleMapClick);
+    map.on("click", handleMapClick);
     return () => {
-      mapInstanceRef.current?.off("click", handleMapClick);
+      map.off("click", handleMapClick);
     };
   }, [isPinpointMode, mapInstanceRef, addEmergencyMarker, removeTempMarker]);
 
