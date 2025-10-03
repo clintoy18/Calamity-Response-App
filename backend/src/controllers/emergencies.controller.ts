@@ -11,7 +11,6 @@ const generateUUID = (): string => {
 // Emergencies CRUD
 export const getEmergencies = async (req: Request, res: Response) => {
   try {
-    // Calculate the date 48 hours ago
     const twelveHoursAgo = new Date();
     twelveHoursAgo.setHours(twelveHoursAgo.getHours() - 12);
 
