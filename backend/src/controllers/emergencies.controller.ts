@@ -3,25 +3,43 @@ import { prisma } from "../config/prisma";
 import { EmergencyRequestBody } from "../types/emergency.types";
 
 // Emergencies CRUD
+
 export const getEmergencies = async (req: Request, res: Response) => {
-    try {
-    const emergencies = await prisma.emergency.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    // Time filter
+    const hoursAgo = parseInt(req.query.hours as string) || 12;
+    const timeThreshold = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
+
+    const filter = { createdAt: { gte: timeThreshold } };
+
+    // Fetch emergencies and total count in parallel
+    const [emergencies, total] = await Promise.all([
+      prisma.emergency.findMany({
+        where: filter,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.emergency.count({ where: filter }),
+    ]);
 
     res.json({
       success: true,
-      count: emergencies.length,
-      data: emergencies
+      page,
+      limit,
+      total,
+      data: emergencies,
     });
   } catch (error) {
     console.error('Error fetching emergencies:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error' 
-    });
+    res.status(500).json({ success: false, message: 'Server error' });
   }
-}
+};
+
 export const getEmergencyById = async (req: Request, res: Response) => {
     try {
     const { id } = req.params;

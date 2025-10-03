@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { EmergencyRecord } from '../types';
 import { fetchEmergencies as apiFetchEmergencies } from '../services/api';
 import { getPlaceName } from '../utils/geocoding';
@@ -7,22 +7,28 @@ interface UseEmergenciesReturn {
   emergencies: EmergencyRecord[];
   setEmergencies: React.Dispatch<React.SetStateAction<EmergencyRecord[]>>;
   isLoadingEmergencies: boolean;
-  fetchEmergencies: () => Promise<EmergencyRecord[]>;
-  triggerFetch: () => void; // 🔥 external trigger
+  triggerFetch: () => void;
 }
 
 export const useEmergencies = (): UseEmergenciesReturn => {
   const [emergencies, setEmergencies] = useState<EmergencyRecord[]>([]);
-  const [isLoadingEmergencies, setIsLoadingEmergencies] = useState<boolean>(false);
-  const [fetchTrigger, setFetchTrigger] = useState<number>(0); // 🚀 trigger flag
+  const [isLoadingEmergencies, setIsLoadingEmergencies] = useState(false);
+  const pageRef = useRef(1); // avoid closure issues with setInterval
+  const limit = 10;
 
-  const fetchEmergencies = useCallback(async (): Promise<EmergencyRecord[]> => {
+  const fetchEmergencies = useCallback(async (page: number) => {
     setIsLoadingEmergencies(true);
     try {
-      const data = await apiFetchEmergencies();
+      const data = await apiFetchEmergencies(page, limit);
 
+      // Avoid duplicate emergencies
+      const newEmergencies = data.filter(
+        (e) => !emergencies.some((existing) => existing.id === e.id)
+      );
+
+      // Resolve place names in parallel, memoize if already present
       const formattedEmergencies = await Promise.all(
-        data.map(async (emergency) => {
+        newEmergencies.map(async (emergency) => {
           const placeName =
             emergency.placeName ||
             (await getPlaceName(emergency.latitude, emergency.longitude));
@@ -32,13 +38,10 @@ export const useEmergencies = (): UseEmergenciesReturn => {
             latitude: emergency.latitude,
             longitude: emergency.longitude,
             accuracy: emergency.accuracy,
-            timestamp:
-              emergency.timestamp ||
-              emergency.createdAt ||
-              new Date().toISOString(),
+            timestamp: emergency.timestamp || emergency.createdAt || new Date().toISOString(),
             needs: emergency.needs,
             numberOfPeople: emergency.numberOfPeople,
-            urgencyLevel: emergency.urgencyLevel.toLowerCase() as
+            urgencyLevel: (emergency.urgencyLevel || 'low').toLowerCase() as
               | 'low'
               | 'medium'
               | 'high'
@@ -56,7 +59,7 @@ export const useEmergencies = (): UseEmergenciesReturn => {
         })
       );
 
-      setEmergencies(formattedEmergencies);
+      setEmergencies((prev) => [...prev, ...formattedEmergencies]);
       return formattedEmergencies;
     } catch (error) {
       console.error('Error fetching emergencies:', error);
@@ -64,15 +67,23 @@ export const useEmergencies = (): UseEmergenciesReturn => {
     } finally {
       setIsLoadingEmergencies(false);
     }
-  }, []);
+  }, [emergencies]);
 
-  // 👇 fetch only when "fetchTrigger" changes
+  // Auto-fetch every 10 seconds
   useEffect(() => {
-    fetchEmergencies();
-  }, [fetchTrigger, fetchEmergencies]);
+    const interval = setInterval(() => {
+      const nextPage = pageRef.current;
+      fetchEmergencies(nextPage);
+      pageRef.current += 1;
+    }, 5000);
 
-  // Function to manually trigger fetch
-  const triggerFetch = () => setFetchTrigger((prev) => prev + 1);
+    // initial fetch
+    fetchEmergencies(pageRef.current);
 
-  return { emergencies, setEmergencies, isLoadingEmergencies, fetchEmergencies, triggerFetch };
+    return () => clearInterval(interval);
+  }, [fetchEmergencies]);
+
+  const triggerFetch = () => fetchEmergencies(pageRef.current);
+
+  return { emergencies, setEmergencies, isLoadingEmergencies, triggerFetch };
 };
