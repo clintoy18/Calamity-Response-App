@@ -48,26 +48,37 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({
       // Add delay to respect Nominatim's usage policy
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?` +
+      // Check if we're in development mode (proxy available) or production
+      const isDev = import.meta.env.DEV;
+      const baseUrl = isDev 
+        ? '/api/nominatim' // Use proxy in development
+        : 'https://nominatim.openstreetmap.org'; // Direct URL in production
+
+      const searchUrl = `${baseUrl}/search?` +
         `format=json&` +
         `q=${encodeURIComponent(query + ', Cebu, Philippines')}&` +
         `limit=5&` +
         `countrycodes=ph&` +
         `viewbox=123.3,9.5,124.5,11.5&` +
-        `bounded=1`,
-        {
-          headers: {
-            'User-Agent': 'EmergencyReliefApp/1.0',
-          },
-        }
-      );
+        `bounded=1`;
+
+      const response = await fetch(searchUrl, {
+        headers: {
+          'User-Agent': 'CalamityResponseApp/1.0',
+          'Accept': 'application/json',
+        },
+      });
 
       if (!response.ok) {
-        throw new Error('Search failed');
+        throw new Error(`Search failed: ${response.status} ${response.statusText}`);
       }
 
       const data: SearchResult[] = await response.json();
+      
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid response format');
+      }
+      
       setSearchResults(data);
 
       if (data.length === 0) {
@@ -75,7 +86,10 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({
       }
     } catch (err) {
       console.error('Search error:', err);
-      setError('Search failed. Please try again.');
+      const errorMessage = err instanceof Error 
+        ? `Search failed: ${err.message}` 
+        : 'Search failed. Please try again.';
+      setError(errorMessage);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
