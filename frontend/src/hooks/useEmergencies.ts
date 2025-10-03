@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import type { EmergencyRecord } from '../types';
-import { fetchEmergencies as apiFetchEmergencies } from '../services/api';
-import { getPlaceName } from '../utils/geocoding';
+import { useState, useEffect, useCallback, useRef } from "react";
+import type { EmergencyRecord } from "../types";
+import { fetchEmergencies as apiFetchEmergencies } from "../services/api";
+import { getPlaceName } from "../utils/geocoding";
 
 interface UseEmergenciesReturn {
   emergencies: EmergencyRecord[];
@@ -19,17 +19,17 @@ export const useEmergencies = (): UseEmergenciesReturn => {
   const placeNameCache = useRef<Map<string, string>>(new Map());
 
   const normalizeStatus = (status?: string) =>
-    status === 'responded' || status === 'resolved' ? status : 'pending';
+    status === "responded" || status === "resolved" ? status : "pending";
 
   const normalizeUrgency = (level?: string) =>
-    ['low', 'medium', 'high', 'critical'].includes(level?.toLowerCase() || '')
-      ? (level!.toLowerCase() as 'low' | 'medium' | 'high' | 'critical')
-      : 'low';
+    ["low", "medium", "high", "critical"].includes(level?.toLowerCase() || "")
+      ? (level!.toLowerCase() as "low" | "medium" | "high" | "critical")
+      : "low";
 
   // Append emergencies in batches to prevent heavy rendering
   const appendEmergenciesInBatches = async (
     items: EmergencyRecord[],
-    batchSize = 1,
+    batchSize = 100,
     delay = 1000
   ) => {
     for (let i = 0; i < items.length; i += batchSize) {
@@ -55,12 +55,12 @@ export const useEmergencies = (): UseEmergenciesReturn => {
         needs: e.needs,
         numberOfPeople: e.numberOfPeople,
         urgencyLevel: normalizeUrgency(e.urgencyLevel),
-        additionalNotes: e.additionalNotes || '',
+        additionalNotes: e.additionalNotes || "",
         status: normalizeStatus(e.status),
         createdAt: e.createdAt,
         updatedAt: e.updatedAt,
-        contactNo: e.contactNo || e.contactno || '',
-        placeName: '', // initially empty
+        contactNo: e.contactNo || e.contactno || "",
+        placeName: "", // initially empty
       }));
 
       // Append in small batches
@@ -70,17 +70,22 @@ export const useEmergencies = (): UseEmergenciesReturn => {
       formattedEmergencies.forEach(async (emergency) => {
         const key = `${emergency.latitude},${emergency.longitude}`;
         if (!placeNameCache.current.has(key)) {
-          const name = await getPlaceName(emergency.latitude, emergency.longitude);
+          const name = await getPlaceName(
+            emergency.latitude,
+            emergency.longitude
+          );
           placeNameCache.current.set(key, name);
           setEmergencies((prev) =>
-            prev.map((e) => (e.id === emergency.id ? { ...e, placeName: name } : e))
+            prev.map((e) =>
+              e.id === emergency.id ? { ...e, placeName: name } : e
+            )
           );
         }
       });
 
       setPage((prev) => prev + 1);
     } catch (error) {
-      console.error('Error fetching emergencies:', error);
+      console.error("Error fetching emergencies:", error);
     } finally {
       setIsLoadingEmergencies(false);
     }
@@ -100,5 +105,11 @@ export const useEmergencies = (): UseEmergenciesReturn => {
     setPage(1);
   };
 
-  return { emergencies, setEmergencies, isLoadingEmergencies, fetchEmergencies, triggerFetch };
+  return {
+    emergencies,
+    setEmergencies,
+    isLoadingEmergencies,
+    fetchEmergencies,
+    triggerFetch,
+  };
 };
