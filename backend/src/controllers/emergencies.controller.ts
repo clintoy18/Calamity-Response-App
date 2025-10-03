@@ -1,56 +1,59 @@
-import { Request, Response } from "express"
-import { prisma } from "../config/prisma";
+import { Request, Response } from "express";
 import { EmergencyRequestBody } from "../types/emergency.types";
+import Emergency from "../models/Emergency";
+import { randomBytes } from "crypto";
+
+// Custom UUID generator
+const generateUUID = (): string => {
+  return randomBytes(16).toString("hex");
+};
 
 // Emergencies CRUD
 export const getEmergencies = async (req: Request, res: Response) => {
-    try {
-    const emergencies = await prisma.emergency.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
+  try {
+    const emergencies = await Emergency.find().sort({ createdAt: -1 });
 
     res.json({
       success: true,
       count: emergencies.length,
-      data: emergencies
+      data: emergencies,
     });
   } catch (error) {
-    console.error('Error fetching emergencies:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error' 
+    console.error("Error fetching emergencies:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
     });
   }
-}
+};
+
 export const getEmergencyById = async (req: Request, res: Response) => {
-    try {
+  try {
     const { id } = req.params;
-    const emergency = await prisma.emergency.findUnique({
-      where: { id }
-    });
-    
+    const emergency = await Emergency.findById(id);
+
     if (!emergency) {
       return res.status(404).json({
         success: false,
-        message: 'Emergency request not found'
+        message: "Emergency request not found",
       });
     }
-    
+
     res.json({
       success: true,
-      data: emergency
+      data: emergency,
     });
   } catch (error) {
-    console.error('Error fetching emergency:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error' 
+    console.error("Error fetching emergency:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
     });
   }
-}
+};
 
 export const createEmergency = async (req: Request, res: Response) => {
-    try {
+  try {
     const {
       latitude,
       longitude,
@@ -60,30 +63,28 @@ export const createEmergency = async (req: Request, res: Response) => {
       needs,
       numberOfPeople,
       urgencyLevel,
-      additionalNotes
+      additionalNotes,
     }: EmergencyRequestBody = req.body;
-
-    console.log(placename)
 
     // Validation
     if (!latitude || !longitude) {
       return res.status(400).json({
         success: false,
-        message: 'Latitude and longitude are required'
+        message: "Latitude and longitude are required",
       });
     }
 
     if (!needs || needs.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'At least one need must be specified'
+        message: "At least one need must be specified",
       });
     }
 
     // Check if location is in Cebu bounds
-    // const isInCebu = latitude >= 9.8 && latitude <= 10.8 && 
+    // const isInCebu = latitude >= 9.8 && latitude <= 10.8 &&
     //                  longitude >= 123.3 && longitude <= 124.4;
-    
+
     // if (!isInCebu) {
     //   return res.status(400).json({
     //     success: false,
@@ -91,143 +92,139 @@ export const createEmergency = async (req: Request, res: Response) => {
     //   });
     // }
 
-    const newEmergency = await prisma.emergency.create({
-      data: {
-        latitude,
-        longitude,
-        placename,
-        contactno,  
-        accuracy: accuracy || 0,
-        timestamp: new Date(),
-        needs: needs, // PostgreSQL supports arrays directly
-        numberOfPeople: numberOfPeople || 1,
-        urgencyLevel: urgencyLevel || 'medium',
-        additionalNotes: additionalNotes || '',
-        status: 'pending'
-      }
+    const newEmergency = await Emergency.create({
+      id: generateUUID(),
+      latitude,
+      longitude,
+      placename,
+      contactno,
+      accuracy: accuracy || 0,
+      timestamp: new Date(),
+      needs: needs,
+      numberOfPeople: numberOfPeople || 1,
+      urgencyLevel: urgencyLevel || "medium",
+      additionalNotes: additionalNotes || "",
+      status: "pending",
     });
 
     res.status(201).json({
       success: true,
-      message: 'Emergency request created successfully',
-      data: newEmergency
+      message: "Emergency request created successfully",
+      data: newEmergency,
     });
   } catch (error) {
-    console.error('Error creating emergency:', error);
+    console.error("Error creating emergency:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: "Server error",
     });
   }
-}
+};
+
 export const updateEmergency = async (req: Request, res: Response) => {
-    try {
+  try {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!['pending', 'responded', 'resolved'].includes(status)) {
+    if (!["pending", "responded", "resolved"].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid status. Must be: pending, responded, or resolved'
+        message: "Invalid status. Must be: pending, responded, or resolved",
       });
     }
 
-    const emergency = await prisma.emergency.update({
-      where: { id },
-      data: { 
-        status, 
-        updatedAt: new Date() 
-      }
-    });
+    const emergency = await Emergency.findByIdAndUpdate(
+      id,
+      {
+        status,
+        updatedAt: new Date(),
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!emergency) {
+      return res.status(404).json({
+        success: false,
+        message: "Emergency request not found",
+      });
+    }
 
     res.json({
       success: true,
-      message: 'Emergency status updated',
-      data: emergency
+      message: "Emergency status updated",
+      data: emergency,
     });
   } catch (error) {
-    console.error('Error updating emergency:', error);
-    res.status(404).json({
+    console.error("Error updating emergency:", error);
+    res.status(500).json({
       success: false,
-      message: 'Emergency request not found'
+      message: "Server error",
     });
   }
-}
+};
+
 export const deleteEmergencyById = async (req: Request, res: Response) => {
-    try {
+  try {
     const { id } = req.params;
-    await prisma.emergency.delete({
-      where: { id }
-    });
+    const emergency = await Emergency.findByIdAndDelete(id);
+
+    if (!emergency) {
+      return res.status(404).json({
+        success: false,
+        message: "Emergency request not found",
+      });
+    }
 
     res.json({
       success: true,
-      message: 'Emergency request deleted'
+      message: "Emergency request deleted",
     });
   } catch (error) {
-    console.error('Error deleting emergency:', error);
-    res.status(404).json({
+    console.error("Error deleting emergency:", error);
+    res.status(500).json({
       success: false,
-      message: 'Emergency request not found'
+      message: "Server error",
     });
   }
-}
-export const deleteAllEmergencies = async (req: Request, res: Response) => {
-    try {
-    await prisma.emergency.deleteMany();
-    res.json({
-      success: true,
-      message: 'All emergency requests cleared'
-    });
-  } catch (error) {
-    console.error('Error clearing emergencies:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error' 
-    });
-  }
-}
+};
 
 // Filtering
 export const getEmergenciesByUrgency = async (req: Request, res: Response) => {
-    try {
+  try {
     const { level } = req.params;
-    const filtered = await prisma.emergency.findMany({
-      where: { urgencyLevel: level },
-      orderBy: { createdAt: 'desc' }
+    const filtered = await Emergency.find({ urgencyLevel: level }).sort({
+      createdAt: -1,
     });
-    
+
     res.json({
       success: true,
       count: filtered.length,
-      data: filtered
+      data: filtered,
     });
   } catch (error) {
-    console.error('Error fetching emergencies by urgency:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error' 
+    console.error("Error fetching emergencies by urgency:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
     });
   }
-}
+};
+
 export const getEmergenciesByStatus = async (req: Request, res: Response) => {
-    try {
+  try {
     const { status } = req.params;
-    const filtered = await prisma.emergency.findMany({
-      where: { status },
-      orderBy: { createdAt: 'desc' }
-    });
-    
+    const filtered = await Emergency.find({ status }).sort({ createdAt: -1 });
+
     res.json({
       success: true,
       count: filtered.length,
-      data: filtered
+      data: filtered,
     });
   } catch (error) {
-    console.error('Error fetching emergencies by status:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error' 
+    console.error("Error fetching emergencies by status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
     });
   }
-}
+};
