@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { EmergencyRecord } from "../types";
 import { fetchEmergencies as apiFetchEmergencies } from "../services/api";
-import { getPlaceName } from "../utils/geocoding";
-
 interface UseEmergenciesReturn {
   emergencies: EmergencyRecord[];
   setEmergencies: React.Dispatch<React.SetStateAction<EmergencyRecord[]>>;
@@ -24,9 +22,7 @@ export const useEmergencies = (): UseEmergenciesReturn => {
 
       const formattedEmergencies = await Promise.all(
         data.map(async (emergency) => {
-          const placeName =
-            emergency.placeName ||
-            (await getPlaceName(emergency.latitude, emergency.longitude));
+          const placename = emergency.placename || "Unknown Location";
 
           return {
             id: emergency.id,
@@ -52,7 +48,7 @@ export const useEmergencies = (): UseEmergenciesReturn => {
             createdAt: emergency.createdAt,
             updatedAt: emergency.updatedAt,
             contactNo: emergency.contactNo || emergency.contactno || "",
-            placeName,
+            placename,
           };
         })
       );

@@ -19,7 +19,7 @@ interface EmergencyApiData {
   additionalNotes?: string;
   contactNo?: string;
   contactno?: string;
-  placeName?: string;
+  placename?: string;
   status?: string;
   createdAt?: string;
   updatedAt?: string;
