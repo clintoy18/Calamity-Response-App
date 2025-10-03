@@ -1,7 +1,7 @@
 // frontend/src/utils/mapUtils.ts
-import L from 'leaflet';
-import { urgencyColors, affectedAreas } from '../constants';
-import type { EmergencyRecord } from '../types';
+import L from "leaflet";
+import { urgencyColors, affectedAreas } from "../constants";
+import type { EmergencyRecord } from "../types";
 
 /**
  * Create popup content for an emergency marker
@@ -18,7 +18,11 @@ export const createPopupContent = (
       <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">
         <strong>ID:</strong> ${id}<br>
         <strong>Location:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}<br>
-        ${emergencyData?.placeName ? `<strong>Place:</strong> ${emergencyData.placeName}<br>` : ''}
+        ${
+          emergencyData?.placename
+            ? `<strong>Place:</strong> ${emergencyData.placename}<br>`
+            : "Place: Unknown Location"
+        }
       </div>
   `;
 
@@ -27,7 +31,7 @@ export const createPopupContent = (
       <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
         <div style="font-size: 12px; margin-bottom: 6px;">
           <strong style="color: #374151;">Relief Items:</strong><br>
-          <span style="color: #6b7280;">${emergencyData.needs.join(', ')}</span>
+          <span style="color: #6b7280;">${emergencyData.needs.join(", ")}</span>
         </div>
         <div style="font-size: 12px; margin-bottom: 6px;">
           <strong style="color: #374151;">People:</strong> 
@@ -35,37 +39,59 @@ export const createPopupContent = (
         </div>
         <div style="font-size: 12px; margin-bottom: 6px;">
           <strong style="color: #374151;">Urgency:</strong>
-          <span style="background: ${urgencyColors[emergencyData.urgencyLevel].light}; color: ${urgencyColors[emergencyData.urgencyLevel].bg}; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 11px; margin-left: 4px;">
+          <span style="background: ${
+            urgencyColors[emergencyData.urgencyLevel].light
+          }; color: ${
+      urgencyColors[emergencyData.urgencyLevel].bg
+    }; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 11px; margin-left: 4px;">
             ${urgencyColors[emergencyData.urgencyLevel].text}
           </span>
         </div>
-      ${emergencyData.contactNo ? `
+      ${
+        emergencyData.contactNo
+          ? `
         <div style="font-size: 12px; margin-bottom: 6px;">
           <strong style="color: #374151;">Contact:</strong>
           <a href="tel:${emergencyData.contactNo}" style="color: #2563eb; margin-left: 4px; text-decoration: underline;">
             ${emergencyData.contactNo}
           </a>
         </div>
-      ` : ''}
-        ${emergencyData.status ? `
+      `
+          : ""
+      }
+        ${
+          emergencyData.status
+            ? `
           <div style="font-size: 12px; margin-bottom: 6px;">
             <strong style="color: #374151;">Status:</strong>
             <span style="color: #6b7280; text-transform: capitalize; margin-left: 4px;">
               ${emergencyData.status}
             </span>
           </div>
-        ` : ''}
-        ${emergencyData.additionalNotes ? `
+        `
+            : ""
+        }
+        ${
+          emergencyData.additionalNotes
+            ? `
           <div style="font-size: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
             <strong style="color: #374151;">Notes:</strong><br>
             <span style="color: #6b7280;">${emergencyData.additionalNotes}</span>
           </div>
-        ` : ''}
-        ${emergencyData.createdAt ? `
+        `
+            : ""
+        }
+        ${
+          emergencyData.createdAt
+            ? `
           <div style="font-size: 11px; margin-top: 8px; color: #9ca3af;">
-            <strong>Created:</strong> ${new Date(emergencyData.createdAt).toLocaleString()}
+            <strong>Created:</strong> ${new Date(
+              emergencyData.createdAt
+            ).toLocaleString()}
           </div>
-        ` : ''}
+        `
+            : ""
+        }
       </div>
       
       <!-- Add Navigation Buttons -->
@@ -131,7 +157,7 @@ export const createMarkerIcon = (color: string): L.DivIcon => {
     iconSize: [32, 32],
     iconAnchor: [16, 16],
     popupAnchor: [0, -16],
-    className: '',
+    className: "",
   });
 };
 
@@ -139,7 +165,7 @@ export const createMarkerIcon = (color: string): L.DivIcon => {
  * Add affected area markers for reference
  */
 export const addAffectedAreaMarkers = (map: L.Map): void => {
-  affectedAreas.forEach(area => {
+  affectedAreas.forEach((area) => {
     const [lat, lng] = area.coords;
 
     const marker = L.marker([lat, lng], {
@@ -175,7 +201,7 @@ export const addAffectedAreaMarkers = (map: L.Map): void => {
         iconSize: [32, 32],
         iconAnchor: [16, 16],
         popupAnchor: [0, -16],
-        className: '',
+        className: "",
       }),
     }).addTo(map);
 

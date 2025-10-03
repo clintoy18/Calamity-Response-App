@@ -1,5 +1,5 @@
-import { API_URL } from '../constants';
-import type { Location, NeedType } from '../types';
+import { API_URL } from "../constants";
+import type { Location, NeedType } from "../types";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -19,7 +19,7 @@ interface EmergencyApiData {
   additionalNotes?: string;
   contactNo?: string;
   contactno?: string;
-  placeName?: string;
+  placename?: string;
   status?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -28,11 +28,11 @@ interface EmergencyApiData {
 export const fetchEmergencies = async (): Promise<EmergencyApiData[]> => {
   const response = await fetch(`${API_URL}/emergencies`);
   const data: ApiResponse<EmergencyApiData[]> = await response.json();
-  
+
   if (data.success && data.data) {
     return data.data;
   }
-  throw new Error('Failed to fetch emergencies');
+  throw new Error("Failed to fetch emergencies");
 };
 
 export const submitEmergency = async (
@@ -45,9 +45,9 @@ export const submitEmergency = async (
   additionalNotes: string
 ): Promise<ApiResponse<EmergencyApiData>> => {
   const response = await fetch(`${API_URL}/emergencies`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       latitude: location.latitude,
@@ -65,7 +65,7 @@ export const submitEmergency = async (
   const data: ApiResponse<EmergencyApiData> = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || 'Failed to submit request');
+    throw new Error(data.message || "Failed to submit request");
   }
 
   return data;

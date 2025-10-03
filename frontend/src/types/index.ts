@@ -1,4 +1,4 @@
-import type * as L from 'leaflet';
+import type * as L from "leaflet";
 
 export interface Location {
   latitude: number;
@@ -7,24 +7,30 @@ export interface Location {
   timestamp: string;
 }
 
-export type Status = 'idle' | 'loading' | 'form' | 'success' | 'error';
+export type Status = "idle" | "loading" | "form" | "success" | "error";
 
-export type NeedType = 'food' | 'water' | 'medical' | 'shelter' | 'clothing' | 'other';
+export type NeedType =
+  | "food"
+  | "water"
+  | "medical"
+  | "shelter"
+  | "clothing"
+  | "other";
 
 export interface EmergencyRequest {
   needs: NeedType[];
   numberOfPeople: number;
-  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
+  urgencyLevel: "low" | "medium" | "high" | "critical";
   additionalNotes: string;
   contactNo?: string;
 }
 
 export interface EmergencyRecord extends Location, EmergencyRequest {
   id: string;
-  status?: 'pending' | 'responded' | 'resolved';
+  status?: "pending" | "responded" | "resolved";
   createdAt?: string;
   updatedAt?: string;
-  placeName?: string;
+  placename?: string;
 }
 
 export interface AffectedArea {

@@ -1,7 +1,7 @@
-import React from 'react';
-import { MapPin, X } from 'lucide-react';
-import type { Location, NeedType } from '../types';
-import { needOptions } from '../constants';
+import React from "react";
+import { MapPin, X } from "lucide-react";
+import type { Location, NeedType } from "../types";
+import { needOptions } from "../constants";
 
 interface EmergencyFormProps {
   location: Location;
@@ -12,8 +12,8 @@ interface EmergencyFormProps {
   toggleNeed: (need: NeedType) => void;
   numberOfPeople: number;
   setNumberOfPeople: (value: number) => void;
-  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
-  setUrgencyLevel: (level: 'low' | 'medium' | 'high' | 'critical') => void;
+  urgencyLevel: "low" | "medium" | "high" | "critical";
+  setUrgencyLevel: (level: "low" | "medium" | "high" | "critical") => void;
   additionalNotes: string;
   setAdditionalNotes: (value: string) => void;
   errorMessage: string;
@@ -51,14 +51,17 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <MapPin className="w-4 h-4" />
           <span>
-            {placeName ? placeName : 'Fetching location name...'}<br />
-            ({location.latitude.toFixed(4)}, {location.longitude.toFixed(4)})
+            {placeName ? placeName : "Fetching location name..."}
+            <br />({location.latitude.toFixed(4)},{" "}
+            {location.longitude.toFixed(4)})
           </span>
         </div>
       </div>
 
       <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-3">What do you need? *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-3">
+          What do you need? *
+        </label>
         <div className="grid grid-cols-3 gap-2">
           {needOptions.map((option) => (
             <button
@@ -66,8 +69,8 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
               onClick={() => toggleNeed(option.value as NeedType)}
               className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all ${
                 selectedNeeds.includes(option.value as NeedType)
-                  ? 'border-red-500 bg-red-50 text-red-700'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  ? "border-red-500 bg-red-50 text-red-700"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
               }`}
             >
               {option.icon}
@@ -78,7 +81,9 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
       </div>
 
       <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Number of People *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Number of People *
+        </label>
         <input
           type="number"
           min="1"
@@ -90,16 +95,18 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
       </div>
 
       <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Urgency Level *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Urgency Level *
+        </label>
         <div className="grid grid-cols-2 gap-2">
-          {(['low', 'medium', 'high', 'critical'] as const).map((level) => (
+          {(["low", "medium", "high", "critical"] as const).map((level) => (
             <button
               key={level}
               onClick={() => setUrgencyLevel(level)}
               className={`px-3 py-2 rounded-lg border font-medium text-sm transition-all ${
                 urgencyLevel === level
-                  ? 'border-red-500 bg-red-50 text-red-700'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  ? "border-red-500 bg-red-50 text-red-700"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
               }`}
             >
               {level.charAt(0).toUpperCase() + level.slice(1)}
@@ -109,7 +116,9 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
       </div>
 
       <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Contact No *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Contact No <p className="inline text-red-600">*</p>
+        </label>
         <input
           type="tel"
           value={contactNo}
@@ -120,7 +129,9 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
       </div>
 
       <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Additional Notes (Optional)
+        </label>
         <textarea
           value={additionalNotes}
           onChange={(e) => setAdditionalNotes(e.target.value)}
@@ -138,7 +149,7 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
 
       <button
         onClick={onSubmit}
-        disabled={selectedNeeds.length === 0}
+        disabled={selectedNeeds.length === 0 || !contactNo.trim()}
         className="w-full bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all"
       >
         Submit Request
