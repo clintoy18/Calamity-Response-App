@@ -105,3 +105,5 @@ coverage/
 # Ignore all dotfiles except .gitignore itself
 .* 
 !.gitignore
+
+/src/generated/prisma

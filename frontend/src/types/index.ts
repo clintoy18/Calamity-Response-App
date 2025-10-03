@@ -17,6 +17,7 @@ export interface EmergencyRequest {
   urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
   additionalNotes: string;
   contactNo?: string;
+  contactPerson?: string;
 }
 
 export interface EmergencyRecord extends Location, EmergencyRequest {

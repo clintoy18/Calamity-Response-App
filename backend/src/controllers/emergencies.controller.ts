@@ -1,6 +1,7 @@
 import { Request, Response } from "express"
 import { prisma } from "../config/prisma";
 import { EmergencyRequestBody } from "../types/emergency.types";
+import { v4 as uuidv4 } from 'uuid';
 
 // Emergencies CRUD
 export const getEmergencies = async (req: Request, res: Response) => {
@@ -60,7 +61,8 @@ export const createEmergency = async (req: Request, res: Response) => {
       needs,
       numberOfPeople,
       urgencyLevel,
-      additionalNotes
+      additionalNotes,
+      contactPerson
     }: EmergencyRequestBody = req.body;
 
     console.log(placename)
@@ -93,6 +95,7 @@ export const createEmergency = async (req: Request, res: Response) => {
 
     const newEmergency = await prisma.emergency.create({
       data: {
+        id: uuidv4(),
         latitude,
         longitude,
         placename,
@@ -103,7 +106,9 @@ export const createEmergency = async (req: Request, res: Response) => {
         numberOfPeople: numberOfPeople || 1,
         urgencyLevel: urgencyLevel || 'medium',
         additionalNotes: additionalNotes || '',
-        status: 'pending'
+        status: 'pending',
+        updatedAt: new Date(),
+        contactPerson
       }
     });
 
