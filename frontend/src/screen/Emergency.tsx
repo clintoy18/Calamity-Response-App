@@ -16,7 +16,8 @@ import { LocationSearch } from "../components/LocationSearch";
 import { ResponderModal } from "../components/ResponderModal";
 import { LoginModal } from "../components/Login";
 import { useAuthActions } from "../hooks/useAuthActions";
-
+import { useAuth } from "../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 const Emergency: React.FC = () => {
   const [status, setStatus] = useState<Status>("idle");
   const [location, setLocation] = useState<Location | null>(null);
@@ -31,6 +32,10 @@ const Emergency: React.FC = () => {
   >("medium");
   const [additionalNotes, setAdditionalNotes] = useState("");
   const { handleLogin } = useAuthActions();
+
+ // Authentication
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   // Responder form state
   const [isResponderModalOpen, setIsResponderModalOpen] = useState(false);
@@ -322,13 +327,18 @@ const Emergency: React.FC = () => {
 
       <div className="absolute w-min top-16 right-4 sm:top-32 sm:left-4 z-20 flex flex-col sm:flex-col space-y-2">
         {/* ✅ Login Button */}
-        <button
-          onClick={() => setIsLoginModalOpen(true)}
-          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white w-24 sm:w-48 px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition transform duration-200 ease-in-out flex items-center justify-center gap-1"
-        >
-          <LogIn className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="leading-none">Login</span>
-        </button>
+          <button
+        onClick={() =>
+          isAuthenticated ? navigate("/admin") : setIsLoginModalOpen(true)
+        }
+        className="bg-gradient-to-r from-blue-500 to-blue-600 text-white w-24 sm:w-48 px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition transform duration-200 ease-in-out flex items-center justify-center gap-1"
+      >
+        <LogIn className="w-4 h-4 sm:w-5 sm:h-5" />
+        <span className="leading-none">
+          {isAuthenticated ? "Go to Dashboard" : "Login"}
+        </span>
+      </button>
+
 
         {/* Be a Responder Button */}
         <button
