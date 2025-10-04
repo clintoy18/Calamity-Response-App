@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
 import User from "../models/User";
 
-
-export const approveResponder = async (req: Request, res: Response): Promise<void> => {
+export const approveResponder = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { userId } = req.params; // or req.body depending on how you send it
 
   try {
@@ -37,12 +39,15 @@ export const approveResponder = async (req: Request, res: Response): Promise<voi
   }
 };
 
-
-export const fetchResponders = async (req: Request, res: Response): Promise<void> => {
+export const fetchResponders = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     // Fetch all users with role "respondent"
-    const responders = await User.find({ role: "respondent" })
-      .select("-password -verificationDocument"); // Exclude sensitive data
+    const responders = await User.find({ role: "respondent" }).select(
+      "-password"
+    ); // Exclude sensitive data
 
     if (!responders || responders.length === 0) {
       res.status(404).json({ message: "No responders found" });
@@ -55,4 +60,3 @@ export const fetchResponders = async (req: Request, res: Response): Promise<void
     res.status(500).json({ message: "Server error" });
   }
 };
-
