@@ -20,6 +20,11 @@ import { useAuthActions } from "../hooks/useAuthActions";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import {
+  AdminOnly,
+  RespondentOnly,
+} from "../components/auth/RoleBasedComponent";
+import { getUserRole } from "../utils/authUtils";
 const Emergency: React.FC = () => {
   const [status, setStatus] = useState<Status>("idle");
   const [location, setLocation] = useState<Location | null>(null);
@@ -33,10 +38,11 @@ const Emergency: React.FC = () => {
     "low" | "medium" | "high" | "critical"
   >("medium");
   const [additionalNotes, setAdditionalNotes] = useState("");
-  const { handleLogin } = useAuthActions();
+  const { handleLogin, errors, isLoading, message } = useAuthActions();
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
+  const { logout } = useAuth();
   // Authentication
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -352,17 +358,35 @@ const Emergency: React.FC = () => {
       <MapHeader emergencyCount={emergencies.length} />
 
       <div className="absolute w-min top-16 right-4 sm:top-32 sm:left-4 z-20 flex flex-col sm:flex-col space-y-2">
-        {/* ✅ Login Button */}
+        {/* ✅ Login/Dashboard/Logout Button */}
         <button
-          onClick={() =>
-            isAuthenticated ? navigate("/admin") : setIsLoginModalOpen(true)
-          }
+          onClick={() => {
+            if (!isAuthenticated) {
+              setIsLoginModalOpen(true);
+            } else {
+              const role = getUserRole();
+              if (role === "admin") {
+                navigate("/admin");
+              } else {
+                logout();
+              }
+            }
+          }}
           className="bg-gradient-to-r from-blue-500 to-blue-600 text-white w-24 sm:w-48 px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition transform duration-200 ease-in-out flex items-center justify-center gap-1"
         >
           <LogIn className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="leading-none">
-            {isAuthenticated ? "Go to Dashboard" : "Login"}
-          </span>
+          {isAuthenticated ? (
+            <>
+              <AdminOnly>
+                <span className="leading-none">Return to Dashboard</span>
+              </AdminOnly>
+              <RespondentOnly>
+                <span className="leading-none">Logout</span>
+              </RespondentOnly>
+            </>
+          ) : (
+            <span className="leading-none">Login</span>
+          )}
         </button>
 
         {/* Be a Responder Button */}
@@ -448,6 +472,9 @@ const Emergency: React.FC = () => {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onLogin={handleLogin}
+        errors={errors}
+        isLoading={isLoading}
+        successMessage={message}
       />
 
       {/* Responder Modal */}

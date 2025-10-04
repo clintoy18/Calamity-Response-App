@@ -1,59 +1,92 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Mail, Lock, Eye, EyeOff, Loader } from "lucide-react";
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLogin: (email: string, password: string) => Promise<void>;
+  errors?: string;
+  isLoading?: boolean;
+  successMessage?: string; // Add success message to detect successful login
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
   onClose,
   onLogin,
+  errors,
+  isLoading: externalIsLoading,
+  successMessage,
 }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [localError, setLocalError] = useState("");
+
+  // Clear local error when external errors change
+  useEffect(() => {
+    if (errors) {
+      setLocalError("");
+    }
+  }, [errors]);
+
+  // Close modal on successful login
+  useEffect(() => {
+    if (successMessage && isOpen) {
+      // Clear form and close
+      setEmail("");
+      setPassword("");
+      setLocalError("");
+      setShowPassword(false);
+      onClose();
+    }
+  }, [successMessage, isOpen, onClose]);
+
+  // Close modal on successful login
+  useEffect(() => {
+    if (successMessage && isOpen) {
+      // Clear form and close
+      setEmail("");
+      setPassword("");
+      setLocalError("");
+      setShowPassword(false);
+      onClose();
+    }
+  }, [successMessage, isOpen, onClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setLocalError("");
 
+    // Client-side validation
     if (!email || !password) {
-      setError("Please fill in all fields");
+      setLocalError("Please fill in all fields");
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address");
+      setLocalError("Please enter a valid email address");
       return;
     }
 
-    setIsLoading(true);
-    try {
-      await onLogin(email, password);
-      setEmail("");
-      setPassword("");
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
-      setIsLoading(false);
-    }
+    // Call the parent's login function
+    // Don't close modal here - let parent handle success navigation
+    await onLogin(email, password);
   };
 
   const handleClose = () => {
     setEmail("");
     setPassword("");
-    setError("");
+    setLocalError("");
     setShowPassword(false);
     onClose();
   };
 
   if (!isOpen) return null;
+
+  // Display either local validation errors or errors from parent
+  const displayError = localError || errors;
+  const isLoading = externalIsLoading || false;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -79,9 +112,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Error Message */}
-          {error && (
+          {displayError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
+              {displayError}
             </div>
           )}
 
@@ -140,17 +173,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               </button>
             </div>
           </div>
-
-          {/* Forgot Password Link */}
-          {/* <div className="text-right">
-            <button
-              type="button"
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-              disabled={isLoading}
-            >
-              Forgot password?
-            </button>
-          </div> */}
 
           {/* Submit Button */}
           <button

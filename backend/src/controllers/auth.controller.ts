@@ -67,10 +67,20 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const user = (await User.findOne({ email })) as typeof User.prototype & {
       _id: any;
       password?: string;
+      isVerified?: boolean;
     };
 
     if (!user) {
       res.status(400).json({ message: "Invalid credentials" });
+      return;
+    }
+
+    // ✅ Check if account is verified
+    if (!user.isVerified) {
+      res.status(403).json({
+        message: "Account not verified. Please wait for admin approval.",
+        code: "ACCOUNT_NOT_VERIFIED",
+      });
       return;
     }
 
@@ -84,6 +94,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const token = generateToken({
       id: user._id.toString(),
       email: user.email,
+      role: user.role,
     });
 
     res.status(200).json({ token });
