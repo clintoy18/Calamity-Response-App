@@ -3,29 +3,21 @@ import bcrypt from "bcryptjs";
 import User from "../models/User";
 import { generateToken } from "../utils/jwt";
 
-
 export const register = async (req: Request, res: Response): Promise<void> => {
-  const {
-    email,
-    password,
-    fullName,
-    contactNo,
-    notes,
-    role,
-    verificationDocument,
-  } = req.body;
+  const { email, password, fullName, contactNo, notes } = req.body;
+
+  // Get uploaded file info from multer-s3
+  const file = req.file as Express.MulterS3.File;
 
   // Validate required fields
-  if (
-    !email ||
-    !password ||
-    !fullName ||
-    !contactNo ||
-    !notes ||
-    !role ||
-    !verificationDocument
-  ) {
+  if (!email || !password || !fullName || !contactNo || !notes) {
     res.status(400).json({ message: "All required fields must be provided" });
+    return;
+  }
+
+  // Check if file was uploaded
+  if (!file) {
+    res.status(400).json({ message: "Verification document is required" });
     return;
   }
 
@@ -40,16 +32,16 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create new user
+    // Create new user with S3 file location
     const newUser = new User({
       email,
       password: hashedPassword,
       fullName,
       contactNo,
       notes,
-      role: role || "respondent",
+      role: "respondent",
       isVerified: false,
-      verificationDocument,
+      verificationDocument: file.location, // S3 URL
     });
     await newUser.save();
 
@@ -57,6 +49,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       message: "User registered successfully",
     });
   } catch (err) {
+    console.error("Registration error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -98,6 +91,3 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
-
