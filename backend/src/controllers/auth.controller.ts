@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import User from "../models/User";
 import { generateToken } from "../utils/jwt";
 
+
 export const register = async (req: Request, res: Response): Promise<void> => {
   const {
     email,
@@ -59,6 +60,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 // Email Login
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
@@ -96,3 +98,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
