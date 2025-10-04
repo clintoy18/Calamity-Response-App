@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
+import { MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import { affectedAreas } from '../constants';
 
 interface AffectedAreasPanelProps {
