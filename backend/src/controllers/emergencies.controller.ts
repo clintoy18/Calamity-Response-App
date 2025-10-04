@@ -14,34 +14,14 @@ export const getEmergencies = async (req: Request, res: Response) => {
     const twentyFourHoursAgo = new Date();
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
-    // Fetch all emergencies
-    const allEmergencies = await Emergency.find().sort({ createdAt: -1 });
+    const emergencies = await Emergency.find({
+      $or: [
+        { dataQualityIssues: { $exists: false } },
+        { dataQualityIssues: "OK" },
+      ],
+    }).sort({ createdAt: -1 });
 
-    // Filter emergencies within the last 48 hours
-    const emergencies = allEmergencies.filter((emergency) => {
-      const createdAt = emergency.createdAt;
-
-      // If createdAt is already a Date object
-      if (createdAt instanceof Date) {
-        return createdAt >= twentyFourHoursAgo;
-      }
-
-      // If createdAt is a string, convert it to Date
-      if (typeof createdAt === "string") {
-        const createdAtDate = new Date(createdAt);
-        // Check if the conversion was successful
-        if (!isNaN(createdAtDate.getTime())) {
-          return createdAtDate >= twentyFourHoursAgo;
-        }
-      }
-
-      // If createdAt is invalid or missing, exclude it
-      return false;
-    });
-
-    console.log(
-      `Total emergencies: ${allEmergencies.length}, Filtered: ${emergencies.length}`
-    );
+    console.log(`Filtered emergencies count: ${emergencies.length}`);
 
     res.json({
       success: true,
