@@ -15,7 +15,15 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   } = req.body;
 
   // Validate required fields
-  if (!email || !password || !fullName || !contactNo || !notes) {
+  if (
+    !email ||
+    !password ||
+    !fullName ||
+    !contactNo ||
+    !notes ||
+    !role ||
+    !verificationDocument
+  ) {
     res.status(400).json({ message: "All required fields must be provided" });
     return;
   }
@@ -44,15 +52,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     });
     await newUser.save();
 
-    // Generate token - cast _id to string
-    const token = generateToken({
-      id: (newUser._id as any).toString(),
-      email: newUser.email,
-    });
-
     res.status(201).json({
       message: "User registered successfully",
-      token,
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
