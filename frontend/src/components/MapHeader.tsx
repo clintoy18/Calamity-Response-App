@@ -12,7 +12,7 @@ export const MapHeader: React.FC<MapHeaderProps> = ({ emergencyCount }) => {
       </div>
       {emergencyCount > 0 && (
         <div className="bg-red-500 text-white px-3 py-1.5 rounded-full shadow-lg text-sm font-semibold">
-          {emergencyCount} Active
+          {emergencyCount} Requests
         </div>
       )}
     </div>

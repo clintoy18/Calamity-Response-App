@@ -271,7 +271,7 @@ useEffect(() => {
       <div ref={mapRef} className="absolute inset-0 w-full h-full z-0"></div>
 
       <MapHeader emergencyCount={emergencies.length} />
-      <AffectedAreasPanel isVisible={isVisible} setIsVisible={setIsVisible} />
+      <AffectedAreasPanel isVisible={isVisible} setIsVisible={setIsVisible} emergencyCount={emergencies.length} />
 
       {isLoadingEmergencies && (
         <div className="absolute top-20 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg z-10">
