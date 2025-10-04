@@ -5,6 +5,7 @@ import express from "express";
 import cors from "cors";
 import reliefRoutes from "./routes/relief.route";
 import emergenciesRoutes from "./routes/emergencies.route"; // <-- import emergencies route
+import authRoutes from "./routes/auth.route";
 import { connectDB } from "./config/db";
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(express.json());
 // Mount routes
 app.use("/api", reliefRoutes);
 app.use("/api/emergencies", emergenciesRoutes); // <-- mount emergencies route
+app.use("/api/auth", authRoutes);
 
 connectDB().then(() => {
   app.listen(PORT, () => {

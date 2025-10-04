@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Loader, Users, MapPin  } from "lucide-react";
+import { Loader, Users, MapPin, LogIn } from "lucide-react";
 import L from "leaflet";
 import type { Status, Location, NeedType, EmergencyRecord } from "../types";
 import { useMapSetup } from "../hooks/useMapSetup";
@@ -14,6 +14,8 @@ import { EmergencyModal } from "../components/EmergencyModal";
 import { ManualPinpoint } from "../components/ManualPinPoint";
 import { LocationSearch } from "../components/LocationSearch";
 import { ResponderModal } from "../components/ResponderModal";
+import { LoginModal } from "../components/Login";
+import { useAuthActions } from "../hooks/useAuthActions";
 
 const Emergency: React.FC = () => {
   const [status, setStatus] = useState<Status>("idle");
@@ -28,8 +30,9 @@ const Emergency: React.FC = () => {
     "low" | "medium" | "high" | "critical"
   >("medium");
   const [additionalNotes, setAdditionalNotes] = useState("");
+  const { handleLogin } = useAuthActions();
 
-  // ✅ Responder form state
+  // Responder form state
   const [isResponderModalOpen, setIsResponderModalOpen] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -37,6 +40,9 @@ const Emergency: React.FC = () => {
   const [contactNumber, setContactNumber] = useState("");
   const [document, setDocument] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
+
+  // ✅ Login modal state
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const [isPinpointMode, setIsPinpointMode] = useState(false);
   const [selectedMapLocation, setSelectedMapLocation] = useState<{
@@ -46,13 +52,14 @@ const Emergency: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const { mapRef, mapInstanceRef } = useMapSetup();
-  const { emergencies, setEmergencies, isLoadingEmergencies } = useEmergencies();
+  const { emergencies, setEmergencies, isLoadingEmergencies } =
+    useEmergencies();
   const { addEmergencyMarker, removeTempMarker, markersRef } =
     useEmergencyMarkers(mapInstanceRef, setErrorMessage, setStatus);
 
   const ZOOM_THRESHOLD = 12;
 
-  // ✅ Sync markers for all emergencies (real-time) based on zoom
+  // Sync markers for all emergencies (real-time) based on zoom
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -61,7 +68,6 @@ const Emergency: React.FC = () => {
       const zoom = map.getZoom();
       const bounds = map.getBounds();
 
-      // Remove all non-TEMP markers first
       markersRef.current = markersRef.current.filter((m) => {
         if (!m.data.id?.includes("TEMP")) {
           map.removeLayer(m.marker);
@@ -73,8 +79,13 @@ const Emergency: React.FC = () => {
 
       if (zoom >= ZOOM_THRESHOLD) {
         emergencies.forEach((emergency) => {
-          const exists = markersRef.current.some((m) => m.data.id === emergency.id);
-          const inBounds = bounds.contains([emergency.latitude, emergency.longitude]);
+          const exists = markersRef.current.some(
+            (m) => m.data.id === emergency.id
+          );
+          const inBounds = bounds.contains([
+            emergency.latitude,
+            emergency.longitude,
+          ]);
 
           if (!exists && inBounds) {
             addEmergencyMarker(
@@ -97,7 +108,7 @@ const Emergency: React.FC = () => {
     };
   }, [emergencies, addEmergencyMarker, mapInstanceRef, markersRef]);
 
-  // ✅ Manual map click
+  // Manual map click
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -274,7 +285,7 @@ const Emergency: React.FC = () => {
     removeTempMarker();
   };
 
-  // ✅ Handle Responder Form Submit
+  // Handle Responder Form Submit
   const handleResponderSubmit = async () => {
     try {
       if (!fullName || !email || !password || !contactNumber || !document) {
@@ -307,8 +318,18 @@ const Emergency: React.FC = () => {
     <div className="relative w-full h-screen overflow-hidden">
       <div ref={mapRef} className="absolute inset-0 w-full h-full z-0"></div>
 
-        <MapHeader emergencyCount={emergencies.length} />
-        <div className="absolute top-16 right-4 sm:top-32 sm:left-4 z-20 flex flex-col sm:flex-col space-y-2">
+      <MapHeader emergencyCount={emergencies.length} />
+
+      <div className="absolute w-min top-16 right-4 sm:top-32 sm:left-4 z-20 flex flex-col sm:flex-col space-y-2">
+        {/* ✅ Login Button */}
+        <button
+          onClick={() => setIsLoginModalOpen(true)}
+          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white w-24 sm:w-48 px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition transform duration-200 ease-in-out flex items-center justify-center gap-1"
+        >
+          <LogIn className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="leading-none">Login</span>
+        </button>
+
         {/* Be a Responder Button */}
         <button
           onClick={() => setIsResponderModalOpen(true)}
@@ -319,18 +340,23 @@ const Emergency: React.FC = () => {
         </button>
 
         {/* Emergency Responder Tracker Button */}
-        <button
-          className="bg-gradient-to-r from-green-400 to-green-600 text-white w-24 sm:w-48 px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition transform duration-200 ease-in-out flex items-center justify-center gap-1"
-        >
+        <button className="bg-gradient-to-r from-green-400 to-green-600 text-white w-24 sm:w-48 px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition transform duration-200 ease-in-out flex items-center justify-center gap-1">
           <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="leading-none" ><a href="https://services.cebu.gov.ph/aidmap/rdm">Response Tracker</a></span>
+          <span className="leading-none">
+            <a href="https://services.cebu.gov.ph/aidmap/rdm">
+              Response Tracker
+            </a>
+          </span>
         </button>
       </div>
+
       {isLoadingEmergencies && (
         <div className="absolute top-20 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg z-10">
           <div className="flex items-center gap-2">
             <Loader className="w-4 h-4 animate-spin text-gray-600" />
-            <span className="text-sm text-gray-600">Loading emergencies...</span>
+            <span className="text-sm text-gray-600">
+              Loading emergencies...
+            </span>
           </div>
         </div>
       )}
@@ -379,13 +405,17 @@ const Emergency: React.FC = () => {
         onReset={handleReset}
         setStatus={setStatus}
       />
-      <AffectedAreasPanel
-          isVisible={isVisible}
-          setIsVisible={setIsVisible}
-        />
 
+      <AffectedAreasPanel isVisible={isVisible} setIsVisible={setIsVisible} />
 
-      {/* ✅ Responder Modal */}
+      {/* ✅ Login Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLogin={handleLogin}
+      />
+
+      {/* Responder Modal */}
       <ResponderModal
         isOpen={isResponderModalOpen}
         setIsOpen={setIsResponderModalOpen}
