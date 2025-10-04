@@ -5,13 +5,11 @@ import { affectedAreas } from '../constants';
 interface AffectedAreasPanelProps {
   isVisible: boolean;
   setIsVisible: (visible: boolean) => void;
-  emergencyCount: number;
 }
 
 export const AffectedAreasPanel: React.FC<AffectedAreasPanelProps> = ({
   isVisible,
   setIsVisible,
-  emergencyCount,
 }) => {
   const [isMinimized, setIsMinimized] = useState(false);
 
@@ -20,13 +18,12 @@ export const AffectedAreasPanel: React.FC<AffectedAreasPanelProps> = ({
        <MapPin className="w-4 h-4" />
         {isVisible ? 'Hide Areas' : 'Show Areas'}
       {/* 📱 Mobile toggle button */}
-      <button
-        className="sm:hidden fixed bottom-4 right-4 z-20 bg-orange-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 hover:bg-orange-600 transition"
+        <button
+        className="fixed bottom-44 right-8 z-20 bg-orange-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 hover:bg-orange-600 transition md:hidden"
         onClick={() => setIsVisible(!isVisible)}
       >
+        View Areas
       </button>
-      
-
       {/* 🗺️ Affected Areas Panel */}
       <div
         className={`
@@ -39,14 +36,7 @@ export const AffectedAreasPanel: React.FC<AffectedAreasPanelProps> = ({
         {/* Header Section */}
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-gray-800">Affected Areas</h3>
-
-            {/* 🔴 Emergency Count Badge */}
-            {emergencyCount > 0 && (
-              <span className="bg-red-500 text-white text-xs font-semibold px-2.5 py-0.5 rounded-full shadow-md">
-                {emergencyCount} Requests
-              </span>
-            )}
+            <h3 className="text-sm lg:hidden font-semibold text-gray-800">Affected Areas</h3>
           </div>
 
           {/* 🔽 Controls */}

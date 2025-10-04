@@ -23,24 +23,27 @@ export const ManualPinpoint: React.FC<ManualPinpointProps> = ({
     <>
       {/* Toggle Buttons */}
       {!isActive && (
-        <div className="flex gap-2">
-          <button
-            onClick={onOpenSearch}
-            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-full shadow-xl transition-all flex items-center justify-center gap-2"
-            title="Search for a location"
-          >
-            <Search className="w-5 h-5" />
-            <span className="text-sm">Search Location</span>
-          </button>
-          <button
-            onClick={onActivate}
-            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-full shadow-xl transition-all flex items-center justify-center gap-2"
-            title="Mark location on map"
-          >
-            <MapPin className="w-5 h-5" />
-            <span className="text-sm">Pin on Map</span>
-          </button>
-        </div>
+     <div className="absolute bottom-1 sm:bottom-8 left-4 right-4 z-10">
+      <div className="max-w-md mx-auto flex gap-2">
+        <button
+          onClick={onOpenSearch}
+          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-full shadow-xl transition-all flex items-center justify-center gap-2"
+          title="Search for a location"
+        >
+          <Search className="w-5 h-5" />
+          <span className="text-sm">Search Location</span>
+        </button>
+        <button
+          onClick={onActivate}
+          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 sm:py-3 px-4 rounded-full shadow-xl transition-all flex items-center justify-center gap-2"
+          title="Mark location on map"
+        >
+          <MapPin className="w-5 h-5" />
+          <span className="text-sm">Pin on Map</span>
+        </button>
+      </div>
+    </div>
+
       )}
 
       {/* Instructions Overlay */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Loader } from "lucide-react";
+import { Loader, Users, MapPin  } from "lucide-react";
 import L from "leaflet";
 import type { Status, Location, NeedType, EmergencyRecord } from "../types";
 import { useMapSetup } from "../hooks/useMapSetup";
@@ -13,6 +13,7 @@ import { ActionButtons } from "../components/ActionButtons";
 import { EmergencyModal } from "../components/EmergencyModal";
 import { ManualPinpoint } from "../components/ManualPinPoint";
 import { LocationSearch } from "../components/LocationSearch";
+import { ResponderModal } from "../components/ResponderModal";
 
 const Emergency: React.FC = () => {
   const [status, setStatus] = useState<Status>("idle");
@@ -28,6 +29,15 @@ const Emergency: React.FC = () => {
   >("medium");
   const [additionalNotes, setAdditionalNotes] = useState("");
 
+  // ✅ Responder form state
+  const [isResponderModalOpen, setIsResponderModalOpen] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [document, setDocument] = useState<File | null>(null);
+  const [notes, setNotes] = useState("");
+
   const [isPinpointMode, setIsPinpointMode] = useState(false);
   const [selectedMapLocation, setSelectedMapLocation] = useState<{
     lat: number;
@@ -36,60 +46,58 @@ const Emergency: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const { mapRef, mapInstanceRef } = useMapSetup();
-  const { emergencies, setEmergencies, isLoadingEmergencies } =
-    useEmergencies();
+  const { emergencies, setEmergencies, isLoadingEmergencies } = useEmergencies();
   const { addEmergencyMarker, removeTempMarker, markersRef } =
     useEmergencyMarkers(mapInstanceRef, setErrorMessage, setStatus);
 
   const ZOOM_THRESHOLD = 12;
 
-  // Sync markers for all emergencies (real-time) based on zoom
-useEffect(() => {
-  const map = mapInstanceRef.current;
-  if (!map) return;
+  // ✅ Sync markers for all emergencies (real-time) based on zoom
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
 
-  const updateMarkersByZoomAndBounds = () => {
-    const zoom = map.getZoom();
-    const bounds = map.getBounds();
+    const updateMarkersByZoomAndBounds = () => {
+      const zoom = map.getZoom();
+      const bounds = map.getBounds();
 
-    // Remove all non-TEMP markers first
-    markersRef.current = markersRef.current.filter((m) => {
-      if (!m.data.id?.includes("TEMP")) {
-        map.removeLayer(m.marker);
-        map.removeLayer(m.circle);
-        return false;
-      }
-      return true;
-    });
-
-    if (zoom >= ZOOM_THRESHOLD) {
-      emergencies.forEach((emergency) => {
-        const exists = markersRef.current.some((m) => m.data.id === emergency.id);
-        const inBounds = bounds.contains([emergency.latitude, emergency.longitude]);
-
-        if (!exists && inBounds) {
-          addEmergencyMarker(
-            emergency.latitude,
-            emergency.longitude,
-            emergency.accuracy,
-            emergency.id,
-            emergency
-          );
+      // Remove all non-TEMP markers first
+      markersRef.current = markersRef.current.filter((m) => {
+        if (!m.data.id?.includes("TEMP")) {
+          map.removeLayer(m.marker);
+          map.removeLayer(m.circle);
+          return false;
         }
+        return true;
       });
-    }
-  };
 
-  updateMarkersByZoomAndBounds();
-  map.on("zoomend moveend", updateMarkersByZoomAndBounds);
+      if (zoom >= ZOOM_THRESHOLD) {
+        emergencies.forEach((emergency) => {
+          const exists = markersRef.current.some((m) => m.data.id === emergency.id);
+          const inBounds = bounds.contains([emergency.latitude, emergency.longitude]);
 
-  return () => {
-    map.off("zoomend moveend", updateMarkersByZoomAndBounds);
-  };
-}, [emergencies, addEmergencyMarker, mapInstanceRef, markersRef]);
+          if (!exists && inBounds) {
+            addEmergencyMarker(
+              emergency.latitude,
+              emergency.longitude,
+              emergency.accuracy,
+              emergency.id,
+              emergency
+            );
+          }
+        });
+      }
+    };
 
+    updateMarkersByZoomAndBounds();
+    map.on("zoomend moveend", updateMarkersByZoomAndBounds);
 
-  // Manual map click
+    return () => {
+      map.off("zoomend moveend", updateMarkersByZoomAndBounds);
+    };
+  }, [emergencies, addEmergencyMarker, mapInstanceRef, markersRef]);
+
+  // ✅ Manual map click
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -266,20 +274,63 @@ useEffect(() => {
     removeTempMarker();
   };
 
+  // ✅ Handle Responder Form Submit
+  const handleResponderSubmit = async () => {
+    try {
+      if (!fullName || !email || !password || !contactNumber || !document) {
+        alert("Please fill out all required fields.");
+        return;
+      }
+      console.log("Responder Application:", {
+        fullName,
+        email,
+        password,
+        contactNumber,
+        notes,
+        document,
+      });
+      alert("Responder application submitted successfully!");
+      setIsResponderModalOpen(false);
+      setFullName("");
+      setEmail("");
+      setPassword("");
+      setContactNumber("");
+      setDocument(null);
+      setNotes("");
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Failed to submit responder application.");
+    }
+  };
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
       <div ref={mapRef} className="absolute inset-0 w-full h-full z-0"></div>
 
-      <MapHeader emergencyCount={emergencies.length} />
-      <AffectedAreasPanel isVisible={isVisible} setIsVisible={setIsVisible} emergencyCount={emergencies.length} />
+        <MapHeader emergencyCount={emergencies.length} />
+        <div className="absolute top-16 right-4 sm:top-32 sm:left-4 z-20 flex flex-col sm:flex-col space-y-2">
+        {/* Be a Responder Button */}
+        <button
+          onClick={() => setIsResponderModalOpen(true)}
+          className="bg-gradient-to-r from-orange-400 to-orange-600 text-white w-24 sm:w-48 px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition transform duration-200 ease-in-out flex items-center justify-center gap-1"
+        >
+          <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="leading-none">Become a responder</span>
+        </button>
 
+        {/* Emergency Responder Tracker Button */}
+        <button
+          className="bg-gradient-to-r from-green-400 to-green-600 text-white w-24 sm:w-48 px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition transform duration-200 ease-in-out flex items-center justify-center gap-1"
+        >
+          <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="leading-none" ><a href="https://services.cebu.gov.ph/aidmap/rdm">Response Tracker</a></span>
+        </button>
+      </div>
       {isLoadingEmergencies && (
         <div className="absolute top-20 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg z-10">
           <div className="flex items-center gap-2">
             <Loader className="w-4 h-4 animate-spin text-gray-600" />
-            <span className="text-sm text-gray-600">
-              Loading emergencies...
-            </span>
+            <span className="text-sm text-gray-600">Loading emergencies...</span>
           </div>
         </div>
       )}
@@ -327,6 +378,32 @@ useEffect(() => {
         onSubmit={handleSubmitRequest}
         onReset={handleReset}
         setStatus={setStatus}
+      />
+      <AffectedAreasPanel
+          isVisible={isVisible}
+          setIsVisible={setIsVisible}
+        />
+
+
+      {/* ✅ Responder Modal */}
+      <ResponderModal
+        isOpen={isResponderModalOpen}
+        setIsOpen={setIsResponderModalOpen}
+        fullName={fullName}
+        setFullName={setFullName}
+        email={email}
+        setEmail={setEmail}
+        password={password}
+        setPassword={setPassword}
+        contactNumber={contactNumber}
+        setContactNumber={setContactNumber}
+        document={document}
+        setDocument={setDocument}
+        notes={notes}
+        setNotes={setNotes}
+        errorMessage={errorMessage}
+        onSubmit={handleResponderSubmit}
+        onClose={() => setIsResponderModalOpen(false)}
       />
     </div>
   );

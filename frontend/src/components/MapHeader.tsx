@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface MapHeaderProps {
   emergencyCount: number;
@@ -6,10 +6,8 @@ interface MapHeaderProps {
 
 export const MapHeader: React.FC<MapHeaderProps> = ({ emergencyCount }) => {
   return (
-    <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
-      <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg">
-        <span className="text-sm font-semibold text-gray-800">Emergency Relief - Cebu</span>
-      </div>
+    <div className="absolute top-4 right-4 md:left-1/2 md:transform md:-translate-x-1/2 z-10 flex items-center justify-center">
+      {/* Emergency Requests Badge */}
       {emergencyCount > 0 && (
         <div className="bg-red-500 text-white px-3 py-1.5 rounded-full shadow-lg text-sm font-semibold">
           {emergencyCount} Requests
