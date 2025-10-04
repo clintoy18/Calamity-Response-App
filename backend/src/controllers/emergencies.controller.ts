@@ -76,6 +76,15 @@ export const createEmergency = async (req: Request, res: Response) => {
       additionalNotes,
     }: EmergencyRequestBody = req.body;
 
+    // Get uploaded file info from multer-s3
+    const file = req.file as Express.MulterS3.File;
+
+    // Check if file was uploaded
+    if (!file) {
+      res.status(400).json({ message: "Verification document is required" });
+      return;
+    }
+
     // Validation
     if (!latitude || !longitude) {
       return res.status(400).json({
@@ -115,6 +124,8 @@ export const createEmergency = async (req: Request, res: Response) => {
       urgencyLevel: urgencyLevel || "medium",
       additionalNotes: additionalNotes || "",
       status: "pending",
+      isVerified: false,
+      imageVerification: file.location,
     });
 
     res.status(201).json({

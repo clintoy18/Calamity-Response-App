@@ -25,7 +25,7 @@ const upload = multer({
     acl: "private",
     key: (req, file, cb) => {
       const uniqueName = Date.now().toString() + "-" + file.originalname;
-      cb(null, uniqueName);
+      cb(null, "user-verification/" + uniqueName);
     },
   }),
   limits: {
