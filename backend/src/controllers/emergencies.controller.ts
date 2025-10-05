@@ -11,10 +11,8 @@ const generateUUID = (): string => {
 // Emergencies CRUD
 export const getEmergencies = async (req: Request, res: Response) => {
   try {
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-
     const emergencies = await Emergency.find({
+      isVerified: true, // only fetch verified emergencies
       $or: [
         { dataQualityIssues: { $exists: false } },
         { dataQualityIssues: "OK" },
