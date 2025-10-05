@@ -4,12 +4,16 @@ import { authenticate } from "../middleware/auth.middleware";
 import { Request, Response } from "express";
 import User from "../models/User";
 import { privateUpload } from "../utils/s3Uploads";
+import { createUploadLimiter } from "../middleware/uploadLimiter.middleware";
 
 const router = express.Router();
+
+const authVerificationUploadLimiter = createUploadLimiter();
 
 // Routes
 router.post(
   "/register",
+  authVerificationUploadLimiter,
   privateUpload.single("verificationDocument"),
   register
 );
