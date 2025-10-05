@@ -4,7 +4,7 @@ import type { AffectedArea, NeedOption, UrgencyColor } from "../types";
 export const API_URL: string =
   import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-export const CEBU_CENTER: [number, number] = [10.3157, 123.8854];
+export const CEBU_CENTER: [number, number] = [11.0462, 124.0029];
 export const CEBU_BOUNDS: [[number, number], [number, number]] = [
   [8.5, 122.5],
   [12.5, 125.5],
