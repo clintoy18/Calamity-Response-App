@@ -7,6 +7,7 @@ import reliefRoutes from "./routes/relief.route";
 import emergenciesRoutes from "./routes/emergencies.route"; // <-- import emergencies route
 import authRoutes from "./routes/auth.route";
 import adminRoutes from "./routes/admin.route";
+import fileRoutes from "./routes/files.route";
 import { connectDB } from "./config/db";
 
 const app = express();
@@ -27,6 +28,7 @@ app.use("/api", reliefRoutes);
 app.use("/api/emergencies", emergenciesRoutes); // <-- mount emergencies route
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes); // <-- mount admin route
+app.use("/api/files", fileRoutes);
 
 connectDB().then(() => {
   app.listen(PORT, () => {

@@ -8,6 +8,7 @@ import {
   // RespondentRoute,
   // RolePrivateRoute,
 } from "./components/auth/RolePrivateRoute";
+import TestAdmin from "./screen/admin/TestAdmin";
 
 export const App = () => {
   return (
@@ -22,6 +23,14 @@ export const App = () => {
         element={
           <AdminRoute>
             <Dashboard />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/test-admin"
+        element={
+          <AdminRoute>
+            <TestAdmin />
           </AdminRoute>
         }
       />
