@@ -14,8 +14,42 @@ export function useAuthActions() {
   const navigate = useNavigate();
   const { setToken } = useAuth();
 
-  const handleRegister = async () => {
-    // Keep your existing implementation
+  const handleRegister = async (
+    email: string,
+    password: string,
+    name?: string,
+    role?: string
+  ) => {
+    setIsLoading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const res = await axios.post(`${API_BASE}/auth/register`, {
+        email,
+        password,
+        name,
+        role,
+      });
+
+      setMessage(
+        res.data.message || 
+        "Registration successful! Please wait for admin approval."
+      );
+      
+      // Optionally redirect to login page after successful registration
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 2000);
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message?: string }>;
+      setError(
+        error.response?.data?.message || 
+        "Registration failed. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogin = async (email: string, password: string) => {
@@ -46,7 +80,7 @@ export function useAuthActions() {
     } catch (err: unknown) {
       const error = err as AxiosError<{ message?: string; code?: string }>;
 
-      // ✅ Handle verification error specifically
+      // Handle verification error specifically
       if (
         error.response?.status === 403 &&
         error.response?.data?.code === "ACCOUNT_NOT_VERIFIED"

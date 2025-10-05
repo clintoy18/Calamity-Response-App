@@ -1,36 +1,40 @@
-import { useContext, useEffect, useCallback } from "react";
-import { AuthContext } from "../context/AuthContext";
-import { setLogoutFunction } from "../services/authService";
+  import { useContext, useEffect, useCallback } from "react";
+  import { AuthContext } from "../context/AuthContext";
+  import { useNavigate } from "react-router-dom";
+  import { setLogoutFunction } from "../services/authService";
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  export const useAuth = () => {
+    const navigate = useNavigate();
+    const context = useContext(AuthContext);
+    if (!context) {
+      throw new Error("useAuth must be used within an AuthProvider");
+    }
 
-  // Memoize logout and login functions to prevent unnecessary re-renders
-  const logout = useCallback(() => {
-    context.setToken(null);
-    localStorage.removeItem("token");
-  }, [context]);
+    // Memoize logout and login functions to prevent unnecessary re-renders
+    const logout = useCallback(() => {
+      context.setToken(null);
+      localStorage.removeItem("token");
+      navigate("/"); // make sure you import useNavigate() from react-router-dom
 
-  const login = useCallback(
-    (token: string) => {
-      context.setToken(token);
-    },
-    [context]
-  );
+    }, [context, navigate]);
 
-  // Register logout function with API interceptor
-  useEffect(() => {
-    setLogoutFunction(logout);
-  }, [logout]);
+    const login = useCallback(
+      (token: string) => {
+        context.setToken(token);
+      },
+      [context]
+    );
 
-  return {
-    token: context.token,
-    setToken: context.setToken,
-    login,
-    logout,
-    isAuthenticated: !!context.token,
+    // Register logout function with API interceptor
+    useEffect(() => {
+      setLogoutFunction(logout);
+    }, [logout]);
+
+    return {
+      token: context.token,
+      setToken: context.setToken,
+      login,
+      logout,
+      isAuthenticated: !!context.token,
+    };
   };
-};

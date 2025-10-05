@@ -1,16 +1,19 @@
 import axios from "axios";
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 // Store logout function reference
 let logoutFunction: (() => void) | null = null;
 
 // Function to set logout function from auth context
-export const setLogoutFunction = (logout: () => void) => {
-  logoutFunction = logout;
-};
+  export const setLogoutFunction = (logout: () => void) => {
+    logoutFunction = logout;
+  };
 
 api.interceptors.request.use(async (config) => {
   const token = localStorage.getItem("token");
