@@ -42,8 +42,43 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
   emergencyDocument,
   setEmergencyDocument,
 }) => {
+  const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+  const handleSubmit = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!contactNo.trim()) {
+      newErrors.contactNo = "Contact number is required.";
+    } else if (!/^09\d{9}$/.test(contactNo)) {
+      newErrors.contactNo = "Contact number must be a valid Philippine mobile number.";
+    }
+
+    if (selectedNeeds.length === 0) {
+      newErrors.selectedNeeds = "Please select at least one need.";
+    }
+
+    if (!numberOfPeople || numberOfPeople < 1) {
+      newErrors.numberOfPeople = "Number of people must be at least 1.";
+    }
+
+    if (!urgencyLevel) {
+      newErrors.urgencyLevel = "Please select urgency level.";
+    }
+
+    if (!emergencyDocument) {
+      newErrors.emergencyDocument = "Verification document is required.";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
+      onSubmit();
+    }
+  };
+
   return (
     <div className="p-6">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900">Request Relief</h3>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -51,17 +86,19 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
         </button>
       </div>
 
+      {/* Location */}
       <div className="mb-5 p-3 bg-gray-50 rounded-lg">
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <MapPin className="w-4 h-4" />
           <span>
-            {placeName ? placeName : "Fetching location name..."}
-            <br />({location.latitude.toFixed(4)},{" "}
-            {location.longitude.toFixed(4)})
+            {placeName || "Fetching location name..."}
+            <br />
+            ({location.latitude.toFixed(4)}, {location.longitude.toFixed(4)})
           </span>
         </div>
       </div>
 
+      {/* Needs */}
       <div className="mb-5">
         <label className="block text-sm font-medium text-gray-700 mb-3">
           What do you need? *
@@ -82,22 +119,26 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
             </button>
           ))}
         </div>
+        {errors.selectedNeeds && <p className="mt-1 text-xs text-red-600">{errors.selectedNeeds}</p>}
       </div>
 
+      {/* Number of People */}
       <div className="mb-5">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Number of People *
         </label>
         <input
           type="number"
-          min="1"
-          max="1000"
+          min={1}
+          max={1000}
           value={numberOfPeople}
           onChange={(e) => setNumberOfPeople(parseInt(e.target.value) || 1)}
           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
         />
+        {errors.numberOfPeople && <p className="mt-1 text-xs text-red-600">{errors.numberOfPeople}</p>}
       </div>
 
+      {/* Urgency */}
       <div className="mb-5">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Urgency Level *
@@ -117,11 +158,13 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
             </button>
           ))}
         </div>
+        {errors.urgencyLevel && <p className="mt-1 text-xs text-red-600">{errors.urgencyLevel}</p>}
       </div>
 
+      {/* Contact No */}
       <div className="mb-5">
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Contact No <p className="inline text-red-600">*</p>
+          Contact No <span className="text-red-600">*</span>
         </label>
         <input
           type="tel"
@@ -130,12 +173,12 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
           placeholder="e.g., 09171234567"
           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
         />
+        {errors.contactNo && <p className="mt-1 text-xs text-red-600">{errors.contactNo}</p>}
       </div>
 
+      {/* Additional Notes */}
       <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Additional Notes (Optional)
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
         <textarea
           value={additionalNotes}
           onChange={(e) => setAdditionalNotes(e.target.value)}
@@ -159,13 +202,13 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
             className="text-sm text-gray-700 w-full"
           />
         </div>
-        {document && (
-          <p className="mt-1 text-xs text-gray-500 truncate">
-            Selected: {emergencyDocument?.name}
-          </p>
+        {emergencyDocument && (
+          <p className="mt-1 text-xs text-gray-500 truncate">Selected: {emergencyDocument.name}</p>
         )}
+        {errors.emergencyDocument && <p className="mt-1 text-xs text-red-600">{errors.emergencyDocument}</p>}
       </div>
 
+      {/* Global Error */}
       {errorMessage && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-sm text-red-700">{errorMessage}</p>
@@ -173,9 +216,8 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
       )}
 
       <button
-        onClick={onSubmit}
-        disabled={selectedNeeds.length === 0 || !contactNo.trim()}
-        className="w-full bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all"
+        onClick={handleSubmit}
+        className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg transition-all"
       >
         Submit Request
       </button>

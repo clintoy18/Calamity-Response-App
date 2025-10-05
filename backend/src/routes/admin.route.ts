@@ -1,5 +1,5 @@
+// admin.route.ts
 import express from "express";
-
 import {
   approveResponder,
   fetchResponders,
@@ -7,23 +7,72 @@ import {
   fetchEmergencyCountByCity,
   verifyEmergencyRequest,
   getEmergencyById,
-//   rejectResponder,
+  // rejectResponders, // uncomment if implemented
 } from "../controllers/admin.controller";
 import { authenticate, checkRole } from "../middleware/auth.middleware";
 
 const router = express.Router();
 
+// ----------------------
+// RESPONDERS ROUTES
+// ----------------------
+// Fetch responders with pagination: ?page=1&limit=20
+router.get(
+  "/responders",
+  authenticate,
+  checkRole("admin"),
+  fetchResponders
+);
 
-//emergencies
-router.get("/emergencies", authenticate,checkRole("admin"),fetchEmergencies);
-router.get("/emergencies/lgu",authenticate, checkRole("admin"),fetchEmergencyCountByCity);
-router.get("/:id", authenticate, checkRole("admin"),getEmergencyById);
-router.put("/emergencies/:id/approve", authenticate, checkRole("admin"),verifyEmergencyRequest);
+// Approve a responder
+router.put(
+  "/responders/:userId/approve",
+  authenticate,
+  checkRole("admin"),
+  approveResponder
+);
 
-//responders
-// router.put("/reject/:userId", rejectResponder); // REJECT responder
-router.get("/", authenticate, checkRole("admin"), fetchResponders);
-router.put("/approve/:userId", authenticate,checkRole("admin"),approveResponder);
+// Reject responder (optional)
+// router.put(
+//   "/responders/:userId/reject",
+//   authenticate,
+//   checkRole("admin"),
+//   rejectResponders
+// );
 
+// ----------------------
+// EMERGENCIES ROUTES
+// ----------------------
+// Fetch emergencies with pagination: ?page=1&limit=20
+router.get(
+  "/emergencies",
+  authenticate,
+  checkRole("admin"),
+  fetchEmergencies
+);
+
+// Fetch emergency counts by city (paginated): ?page=1&limit=20
+router.get(
+  "/emergencies/lgu",
+  authenticate,
+  checkRole("admin"),
+  fetchEmergencyCountByCity
+);
+
+// Get a single emergency by ID
+router.get(
+  "/emergencies/:id",
+  authenticate,
+  checkRole("admin"),
+  getEmergencyById
+);
+
+// Approve/verify an emergency
+router.put(
+  "/emergencies/:id/approve",
+  authenticate,
+  checkRole("admin"),
+  verifyEmergencyRequest
+);
 
 export default router;

@@ -79,28 +79,40 @@ export const verifyEmergencyRequest = async (req: Request, res: Response) => {
   }
 };
 
-
-export const fetchResponders = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+// fetch Responders
+export const fetchResponders = async (req: Request, res: Response) => {
   try {
-    // Fetch all users with role "respondent"
-    const responders = await User.find({ role: "respondent" }).select(
-      "-password"
-    ); // Exclude sensitive data
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
+
+    const total = await User.countDocuments({ role: "respondent" });
+
+    const responders = await User.find({ role: "respondent" })
+      .select("-password")
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
     if (!responders || responders.length === 0) {
       res.status(404).json({ message: "No responders found" });
       return;
     }
 
-    res.status(200).json({ responders });
+    res.status(200).json({
+      success: true,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      data: responders,
+    });
   } catch (error) {
     console.error("Error fetching responders:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 //reject responders
 export const rejectResponders = async (
   req: Request,
@@ -143,21 +155,34 @@ export const rejectResponders = async (
 // Emergencies CRUD
 export const fetchEmergencies = async (req: Request, res: Response) => {
   try {
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
+
+    const total = await Emergency.countDocuments({
+      $or: [
+        { dataQualityIssues: { $exists: false } },
+        { dataQualityIssues: "OK" },
+      ],
+    });
 
     const emergencies = await Emergency.find({
       $or: [
         { dataQualityIssues: { $exists: false } },
         { dataQualityIssues: "OK" },
       ],
-    }).sort({ createdAt: -1 });
-
-    console.log(`Filtered emergencies count: ${emergencies.length}`);
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
     res.json({
       success: true,
-      count: emergencies.length,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
       data: emergencies,
     });
   } catch (error) {
@@ -199,6 +224,10 @@ export const getEmergencyById = async (req: Request, res: Response) => {
 // Fetch count of emergencies grouped by city/municipality
 export const fetchEmergencyCountByCity = async (req: Request, res: Response) => {
   try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
+
     const results = await Emergency.aggregate([
       {
         $match: {
@@ -209,13 +238,9 @@ export const fetchEmergencyCountByCity = async (req: Request, res: Response) => 
         },
       },
       {
-        // Extract city/municipality name from placename
         $project: {
           city: {
-            $arrayElemAt: [
-              { $split: ["$placename", ", "] },
-              2, // adjust this index depending on your address format
-            ],
+            $arrayElemAt: [{ $split: ["$placename", ", "] }, 2],
           },
         },
       },
@@ -225,9 +250,9 @@ export const fetchEmergencyCountByCity = async (req: Request, res: Response) => 
           count: { $sum: 1 },
         },
       },
-      {
-        $sort: { count: -1 }, // highest first
-      },
+      { $sort: { count: -1 } },
+      { $skip: skip },
+      { $limit: limit },
     ]);
 
     const formatted = results.map((r) => ({
@@ -235,11 +260,35 @@ export const fetchEmergencyCountByCity = async (req: Request, res: Response) => 
       count: r.count,
     }));
 
-    console.log("Emergency counts by city:", formatted);
+    // For total count of unique cities
+    const totalCitiesAgg = await Emergency.aggregate([
+      {
+        $match: {
+          $or: [
+            { dataQualityIssues: { $exists: false } },
+            { dataQualityIssues: "OK" },
+          ],
+        },
+      },
+      {
+        $project: {
+          city: { $arrayElemAt: [{ $split: ["$placename", ", "] }, 2] },
+        },
+      },
+      {
+        $group: { _id: "$city" },
+      },
+      { $count: "total" },
+    ]);
+
+    const total = totalCitiesAgg[0]?.total || 0;
 
     res.json({
       success: true,
-      message: "Emergency counts by city/municipality",
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
       data: formatted,
     });
   } catch (error) {
@@ -250,6 +299,3 @@ export const fetchEmergencyCountByCity = async (req: Request, res: Response) => 
     });
   }
 };
-
-
-

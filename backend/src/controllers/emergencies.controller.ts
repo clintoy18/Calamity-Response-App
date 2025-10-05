@@ -12,10 +12,17 @@ const generateUUID = (): string => {
 // GET all emergencies (last 24h, filtered)
 export const getEmergencies = async (req: Request, res: Response) => {
   try {
-    // Only fetch emergencies that are verified  isVerified: true
-    const emergencies = await Emergency.find({ isVerified: true }).sort({
-      createdAt: -1,
-    });
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+    const emergencies = await Emergency.find({
+      $or: [
+        { dataQualityIssues: { $exists: false } },
+        { dataQualityIssues: "OK" },
+      ],
+    }).sort({ createdAt: -1 });
+
+    console.log(`Filtered emergencies count: ${emergencies.length}`);
 
     res.json({
       success: true,
@@ -24,7 +31,10 @@ export const getEmergencies = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching emergencies:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
 // -----------------

@@ -34,10 +34,12 @@ function TestAdmin() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/admin`, {
+        const res = await axios.get(`${API_BASE}/admin/responders`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setUsers(res.data.responders);
+
+        console.log(res.data.data)
+        setUsers(res.data.data);
       } catch (err) {
         console.error("Error fetching users:", err);
       }
