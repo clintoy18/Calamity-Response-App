@@ -11,12 +11,9 @@ import {
   deleteEmergencyById,
   getEmergenciesByUrgency,
   getEmergenciesByStatus,
-
-
 } from "../controllers/emergencies.controller";
 import { authenticate, checkRole } from "../middleware/auth.middleware";
 const router = Router();
-
 
 // Configure S3 client with AWS SDK v3
 const s3 = new S3Client({
@@ -59,7 +56,7 @@ const upload = multer({
 // CRUD Routes
 router.get("/", getEmergencies); // GET all emergencies
 router.get("/:id", getEmergencyById); // GET emergency by id
-router.post("/", createEmergency); // POST new emergency
+router.post("/", upload.single("imageVerification"), createEmergency); // POST new emergency
 router.put("/:id", authenticate, checkRole("respondent"), updateEmergency);
 
 // Filtering Routes

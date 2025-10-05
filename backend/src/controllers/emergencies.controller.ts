@@ -13,8 +13,9 @@ const generateUUID = (): string => {
 export const getEmergencies = async (req: Request, res: Response) => {
   try {
     // Only fetch emergencies that are verified  isVerified: true
-    const emergencies = await Emergency.find({ isVerified: true })
-      .sort({ createdAt: -1 });
+    const emergencies = await Emergency.find({ isVerified: true }).sort({
+      createdAt: -1,
+    });
 
     res.json({
       success: true,
@@ -66,7 +67,9 @@ export const createEmergency = async (req: Request, res: Response) => {
     const file = req.file as Express.MulterS3.File;
 
     if (!file) {
-      return res.status(400).json({ message: "Verification document is required" });
+      return res
+        .status(400)
+        .json({ message: "Verification document is required" });
     }
 
     if (!latitude || !longitude || !needs || needs.length === 0) {
@@ -168,7 +171,9 @@ export const deleteEmergencyById = async (req: Request, res: Response) => {
 export const getEmergenciesByUrgency = async (req: Request, res: Response) => {
   try {
     const { level } = req.params;
-    const filtered = await Emergency.find({ urgencyLevel: level }).sort({ createdAt: -1 });
+    const filtered = await Emergency.find({ urgencyLevel: level }).sort({
+      createdAt: -1,
+    });
 
     res.json({ success: true, count: filtered.length, data: filtered });
   } catch (error) {
