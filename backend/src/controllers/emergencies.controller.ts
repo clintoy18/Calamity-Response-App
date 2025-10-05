@@ -13,7 +13,7 @@ const generateUUID = (): string => {
 export const getEmergencies = async (req: Request, res: Response) => {
   try {
     // Only fetch emergencies that are verified  isVerified: true
-    const emergencies = await Emergency.find({ isVerified: true })
+    const emergencies = await Emergency.find({ })
       .sort({ createdAt: -1 });
 
     res.json({
