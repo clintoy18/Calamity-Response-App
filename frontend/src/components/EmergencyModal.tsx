@@ -55,7 +55,7 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-20 flex items-center justify-center p-4">
+    <div className="z-50 absolute inset-0 bg-black/40 backdrop-blur-sm  flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-y-auto">
         {status === 'loading' && <LoadingState hasLocation={!!location} />}
 
