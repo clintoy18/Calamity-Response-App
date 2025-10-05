@@ -2,16 +2,26 @@
 import L from "leaflet";
 import { urgencyColors, affectedAreas } from "../constants";
 import type { EmergencyRecord } from "../types";
+import { hasRole } from "./authUtils";
+import { updateEmergencyStatus } from "../services/api";
 
 /**
  * Create popup content for an emergency marker
  */
+const isResponder = hasRole("respondent");
+const API_BASE = import.meta.env.VITE_API_URL;
+
 export const createPopupContent = (
   lat: number,
   lng: number,
   id: string,
-  emergencyData?: EmergencyRecord
+  emergencyData?: EmergencyRecord,
+  respondUrl?: string
 ): string => {
+  // Compute respondUrl here if not provided
+  if (!respondUrl && emergencyData?.id) {
+    respondUrl = `${API_BASE}/emergencies/${emergencyData.id}/respond`;
+  }
   let popupContent = `
     <div style="min-width: 200px;">
       <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #1f2937;">Emergency Request</div>
@@ -39,9 +49,7 @@ export const createPopupContent = (
         </div>
         <div style="font-size: 12px; margin-bottom: 6px;">
           <strong style="color: #374151;">Urgency:</strong>
-          <span style="background: ${
-            urgencyColors[emergencyData.urgencyLevel].light
-          }; color: ${
+          <span style="background: ${urgencyColors[emergencyData.urgencyLevel].light}; color: ${
       urgencyColors[emergencyData.urgencyLevel].bg
     }; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 11px; margin-left: 4px;">
             ${urgencyColors[emergencyData.urgencyLevel].text}
@@ -49,49 +57,39 @@ export const createPopupContent = (
         </div>
       ${
         emergencyData.contactNo
-          ? `
-        <div style="font-size: 12px; margin-bottom: 6px;">
-          <strong style="color: #374151;">Contact:</strong>
-          <a href="tel:${emergencyData.contactNo}" style="color: #2563eb; margin-left: 4px; text-decoration: underline;">
-            ${emergencyData.contactNo}
-          </a>
-        </div>
-      `
+          ? `<div style="font-size: 12px; margin-bottom: 6px;">
+               <strong style="color: #374151;">Contact:</strong>
+               <a href="tel:${emergencyData.contactNo}" style="color: #2563eb; margin-left: 4px; text-decoration: underline;">
+                 ${emergencyData.contactNo}
+               </a>
+             </div>`
           : ""
       }
-        ${
-          emergencyData.status
-            ? `
-          <div style="font-size: 12px; margin-bottom: 6px;">
-            <strong style="color: #374151;">Status:</strong>
-            <span style="color: #6b7280; text-transform: capitalize; margin-left: 4px;">
-              ${emergencyData.status}
-            </span>
-          </div>
-        `
-            : ""
-        }
-        ${
-          emergencyData.additionalNotes
-            ? `
-          <div style="font-size: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
-            <strong style="color: #374151;">Notes:</strong><br>
-            <span style="color: #6b7280;">${emergencyData.additionalNotes}</span>
-          </div>
-        `
-            : ""
-        }
-        ${
-          emergencyData.createdAt
-            ? `
-          <div style="font-size: 11px; margin-top: 8px; color: #9ca3af;">
-            <strong>Created:</strong> ${new Date(
-              emergencyData.createdAt
-            ).toLocaleString()}
-          </div>
-        `
-            : ""
-        }
+      ${
+        emergencyData.status
+          ? `<div style="font-size: 12px; margin-bottom: 6px;">
+               <strong style="color: #374151;">Status:</strong>
+               <span style="color: #6b7280; text-transform: capitalize; margin-left: 4px;">
+                 ${emergencyData.status}
+               </span>
+             </div>`
+          : ""
+      }
+      ${
+        emergencyData.additionalNotes
+          ? `<div style="font-size: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
+               <strong style="color: #374151;">Notes:</strong><br>
+               <span style="color: #6b7280;">${emergencyData.additionalNotes}</span>
+             </div>`
+          : ""
+      }
+      ${
+        emergencyData.createdAt
+          ? `<div style="font-size: 11px; margin-top: 8px; color: #9ca3af;">
+               <strong>Created:</strong> ${new Date(emergencyData.createdAt).toLocaleString()}
+             </div>`
+          : ""
+      }
       </div>
       
       <!-- Add Navigation Buttons -->
@@ -108,6 +106,7 @@ export const createPopupContent = (
           </svg>
           Google Maps
         </a>
+
         <a 
           href="https://waze.com/ul?ll=${lat},${lng}&navigate=yes" 
           target="_blank"
@@ -122,8 +121,36 @@ export const createPopupContent = (
         </a>
       </div>
     `;
+   
+    if (isResponder && emergencyData?.status === "pending" && emergencyData.id) {
+    popupContent += `
+      <div style="margin-top: 8px; display: flex; justify-content: center;">
+        <button id="resolve-btn-${emergencyData.id}" 
+          style="padding: 6px 12px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+          Mark as Resolved
+        </button>
+      </div>
+    `;
+    // Schedule attaching the event after popup is added to DOM
+    setTimeout(() => {
+      const btn = document.getElementById(`resolve-btn-${emergencyData.id}`);
+      if (btn) {
+        btn.addEventListener("click", async () => {
+          try {
+            await updateEmergencyStatus(emergencyData.id, "resolved");
+            alert("Emergency marked as resolved");
+            // Optionally refresh the map or reload markers
+            location.reload();
+          } catch (err) {
+            console.error(err);
+            alert("Failed to update status");
+          }
+        });
+      }
+    }, 0);
+  }
   } else {
-    // For non-emergency markers (like manual pin), still show navigation
+    // For non-emergency markers (like manual pin), show only Google Maps button
     popupContent += `
       <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
         <a 
@@ -211,10 +238,3 @@ export const addAffectedAreaMarkers = (map: L.Map): void => {
     `);
   });
 };
-
-/**
- * Check if a coordinate is inside Cebu bounds
- */
-// export const isInCebu = (lat: number, lng: number): boolean => {
-//   return lat >= 9.55 && lat <= 11.35 && lng >= 123.35 && lng <= 124.65;
-// };

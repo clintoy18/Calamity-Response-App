@@ -70,3 +70,29 @@ export const submitEmergency = async (
 
   return data;
 };
+
+// ✅ Update emergency status (e.g., mark as resolved)
+export const updateEmergencyStatus = async (
+  id: string,
+  status: "pending" | "resolved"
+): Promise<ApiResponse<EmergencyApiData>> => {
+  const token = localStorage.getItem("token"); // include auth token if needed
+  const response = await fetch(`${API_URL}/emergencies/${id}`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify({ status }),
+});
+console.log("API URL:", `${API_URL}/emergencies/${id}`);
+
+  const data: ApiResponse<EmergencyApiData> = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to update emergency status");
+  }
+
+  return data;
+};
+

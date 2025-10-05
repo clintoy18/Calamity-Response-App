@@ -3,6 +3,7 @@ import L from "leaflet";
 import type { EmergencyRecord, MarkerData, Status } from "../types";
 import { urgencyColors } from "../constants";
 import { createMarkerIcon, createPopupContent } from "../utils/mapUtils";
+import { updateEmergencyStatus } from "../services/api";
 
 interface UseEmergencyMarkersReturn {
   addEmergencyMarker: (
@@ -34,7 +35,6 @@ export const useEmergencyMarkers = (
       if (!mapInstanceRef.current) return false;
 
       const map = mapInstanceRef.current;
-
       const color = emergencyData
         ? urgencyColors[emergencyData.urgencyLevel].bg
         : "#6366f1";
@@ -52,10 +52,31 @@ export const useEmergencyMarkers = (
       marker.on("click", () => {
         // @ts-expect-error - Leaflet allows custom properties
         const currentData = marker.emergencyData as EmergencyRecord | undefined;
+
         const popupContent = createPopupContent(lat, lng, id, currentData);
 
         marker.bindPopup(popupContent, { maxWidth: 300 });
         marker.openPopup();
+
+        // Attach listener for "Mark as Resolved" button after popup opens
+        marker.once("popupopen", () => {
+          if (currentData?.status === "resolved" && currentData.id) {
+            const btn = document.getElementById(`resolve-btn-${currentData.id}`);
+            if (btn) {
+              btn.addEventListener("click", async () => {
+                try {
+                  await updateEmergencyStatus(currentData.id, "resolved");
+                  alert("Marked as resolved");
+                  marker.closePopup();
+                  location.reload(); // Optional: refresh your map or emergencies
+                } catch (err) {
+                  console.error(err);
+                  alert("Failed to update status");
+                }
+              });
+            }
+          }
+        });
       });
 
       marker.addTo(map);

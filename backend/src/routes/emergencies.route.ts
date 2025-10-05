@@ -1,18 +1,28 @@
 import { Router } from "express";
+import multer from "multer";
+import multerS3 from "multer-s3";
+import { S3Client } from "@aws-sdk/client-s3";
+
 import {
   getEmergencies,
   getEmergencyById,
   createEmergency,
   updateEmergency,
+  deleteEmergencyById,
   getEmergenciesByUrgency,
   getEmergenciesByStatus,
+
+
 } from "../controllers/emergencies.controller";
 import { authenticate, checkRole } from "../middleware/auth.middleware";
-import multer from "multer";
-import multerS3 from "multer-s3";
-import { S3Client } from "@aws-sdk/client-s3";
-
 const router = Router();
+
+// CRUD Routes
+router.get("/", getEmergencies); // GET all emergencies
+router.get("/:id", getEmergencyById); // GET emergency by id
+router.post("/", createEmergency); // POST new emergency
+router.put("/:id", authenticate, checkRole("respondent"), updateEmergency);
+
 
 // Configure S3 client with AWS SDK v3
 const s3 = new S3Client({
@@ -52,11 +62,6 @@ const upload = multer({
   },
 });
 
-// CRUD Routes
-router.get("/", getEmergencies); // GET all emergencies
-router.get("/:id", getEmergencyById); // GET emergency by id
-router.post("/", upload.single("imageVerification"), createEmergency); // POST new emergency
-router.put("/:id", authenticate, checkRole("admin"), updateEmergency); // UPDATE status
 
 // Filtering Routes
 router.get("/filter/urgency/:level", getEmergenciesByUrgency);
