@@ -54,6 +54,7 @@ const Emergency: React.FC = () => {
   const [password, setPassword] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [document, setDocument] = useState<File | null>(null);
+  const [emergencyDocument, setEmergencyDocument] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
 
   // ✅ Login modal state
@@ -239,7 +240,8 @@ const Emergency: React.FC = () => {
         selectedNeeds,
         numberOfPeople,
         urgencyLevel,
-        additionalNotes
+        additionalNotes,
+        emergencyDocument
       );
       const newEmergency: EmergencyRecord = {
         ...location,
@@ -463,6 +465,8 @@ const Emergency: React.FC = () => {
         onSubmit={handleSubmitRequest}
         onReset={handleReset}
         setStatus={setStatus}
+        emergencyDocument={emergencyDocument}
+        setEmergencyDocument={setEmergencyDocument}
       />
 
       <AffectedAreasPanel isVisible={isVisible} setIsVisible={setIsVisible} />

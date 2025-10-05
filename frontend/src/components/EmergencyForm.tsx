@@ -1,5 +1,5 @@
 import React from "react";
-import { MapPin, X } from "lucide-react";
+import { FileText, MapPin, X } from "lucide-react";
 import type { Location, NeedType } from "../types";
 import { needOptions } from "../constants";
 
@@ -19,6 +19,8 @@ interface EmergencyFormProps {
   errorMessage: string;
   onSubmit: () => void;
   onClose: () => void;
+  emergencyDocument: File | null;
+  setEmergencyDocument: (file: File | null) => void;
 }
 
 export const EmergencyForm: React.FC<EmergencyFormProps> = ({
@@ -37,6 +39,8 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
   errorMessage,
   onSubmit,
   onClose,
+  emergencyDocument,
+  setEmergencyDocument,
 }) => {
   return (
     <div className="p-6">
@@ -139,6 +143,27 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
           rows={3}
           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none text-sm"
         />
+      </div>
+
+      {/* Verification Document */}
+      <div className="mb-7">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Verification Document <span className="text-red-500">*</span>
+        </label>
+        <div className="flex items-center gap-3 bg-gray-50 border border-gray-300 rounded-lg p-2">
+          <FileText className="w-5 h-5 text-gray-500" />
+          <input
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={(e) => setEmergencyDocument(e.target.files?.[0] || null)}
+            className="text-sm text-gray-700 w-full"
+          />
+        </div>
+        {document && (
+          <p className="mt-1 text-xs text-gray-500 truncate">
+            Selected: {emergencyDocument?.name}
+          </p>
+        )}
       </div>
 
       {errorMessage && (
