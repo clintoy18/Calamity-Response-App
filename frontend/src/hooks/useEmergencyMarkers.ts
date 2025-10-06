@@ -26,15 +26,23 @@ export const useEmergencyMarkers = (
 
   // Utility function: Get marker color based on status or urgency
   const getMarkerColor = (emergency: EmergencyRecord | undefined) => {
-    if (!emergency) return "#6366f1"; // default
-    switch (emergency.status) {
-      case "resolved":
-        return "#10b981"; // green
-      case "responded":
-        return "#f59e0b"; // orange
-      case "pending":
+    if (!emergency) return "#6366f1"; // default blue for temp markers
+
+    // Only resolved is green
+    if (emergency.status === "resolved") return "#10b981"; // green
+
+    // Otherwise, color by urgency
+    switch (emergency.urgencyLevel) {
+      case "low":
+        return "#facc15"; // yellow
+      case "medium":
+        return "#f97316"; // orange
+      case "high":
+        return "#ef4444"; // red
+      case "critical":
+        return "#b91c1c"; // dark red
       default:
-        return urgencyColors[emergency.urgencyLevel]?.bg || "#6366f1";
+        return "#6366f1"; // fallback blue
     }
   };
 
@@ -57,91 +65,100 @@ export const useEmergencyMarkers = (
   };
 
   // Add a marker to the map
-  const addEmergencyMarker = useCallback(
-    (
-      lat: number,
-      lng: number,
-      accuracy: number,
-      id: string,
-      emergencyData?: EmergencyRecord
-    ): boolean => {
-      if (!mapInstanceRef.current) return false;
+ const addEmergencyMarker = useCallback(
+  (
+    lat: number,
+    lng: number,
+    accuracy: number,
+    id: string,
+    emergencyData?: EmergencyRecord
+  ): boolean => {
+    if (!mapInstanceRef.current) return false;
 
-      const map = mapInstanceRef.current;
-      const color = getMarkerColor(emergencyData);
-      const userIcon = createMarkerIcon(color);
+    const map = mapInstanceRef.current;
 
-      const marker = L.marker([lat, lng], { icon: userIcon });
+    // Determine marker color
+    const color = getMarkerColor(emergencyData);
 
-      // Store emergency data reference with the marker
+    // Create the marker icon
+    const markerIcon = createMarkerIcon(color);
+
+    const marker = L.marker([lat, lng], { icon: markerIcon });
+
+    // Store emergency data with the marker
+    // @ts-expect-error
+    marker.emergencyId = id;
+    // @ts-expect-error
+    marker.emergencyData = emergencyData;
+
+    // Create accuracy circle with same color
+    const accuracyCircle = L.circle([lat, lng], {
+      radius: accuracy,
+      color: color,
+      fillColor: color,
+      fillOpacity: 0.1,
+      weight: 2,
+    }).addTo(map);
+
+    // Create popup with dynamic content
+    marker.on("click", () => {
       // @ts-expect-error
-      marker.emergencyId = id;
-      // @ts-expect-error
-      marker.emergencyData = emergencyData;
+      const currentData = marker.emergencyData as EmergencyRecord | undefined;
 
-      // Create popup dynamically on marker click
-      marker.on("click", () => {
-        // @ts-expect-error
-        const currentData = marker.emergencyData as EmergencyRecord | undefined;
+      const popupContent = createPopupContent(lat, lng, id, currentData);
 
-        const popupContent = createPopupContent(lat, lng, id, currentData);
+      marker.bindPopup(popupContent, { maxWidth: 300 });
+      marker.openPopup();
 
-        marker.bindPopup(popupContent, { maxWidth: 300 });
-        marker.openPopup();
+      // Only show "Mark as Resolved" if not already resolved
+      marker.once("popupopen", () => {
+        if (currentData?.status !== "resolved" && currentData?.id) {
+          const btn = document.getElementById(`resolve-btn-${currentData.id}`);
+          if (btn) {
+            btn.addEventListener("click", async () => {
+              try {
+                const updatedData = await updateEmergencyStatus(currentData.id, "resolved");
 
-        // Attach listener for "Mark as Resolved" button
-        marker.once("popupopen", () => {
-          if (currentData?.id) {
-            const btn = document.getElementById(`resolve-btn-${currentData.id}`);
-            if (btn) {
-              btn.addEventListener("click", async () => {
-                try {
-                  // Update status on the server
-                  const updatedData = await updateEmergencyStatus(currentData.id, "resolved");
-
-                  // Update marker color dynamically
-                  const markerData = markersRef.current.find(m => m.data.id === currentData.id);
-                  if (markerData) {
-                    updateMarkerColor(markerData, { ...markerData.data, status: "resolved" });
-                  }
-
-                  alert("Marked as resolved");
-                  marker.closePopup();
-                } catch (err) {
-                  console.error(err);
-                  alert("Failed to update status");
+                const markerData = markersRef.current.find(
+                  (m) => m.data.id === currentData.id
+                );
+                if (markerData) {
+                  // Update the color to green when resolved
+                  updateMarkerColor(markerData, { ...markerData.data, status: "resolved" });
                 }
-              });
-            }
+
+                alert("Marked as resolved");
+                marker.closePopup();
+              } catch (err) {
+                console.error(err);
+                alert("Failed to update status");
+              }
+            });
           }
-        });
+        }
       });
+    });
 
-      marker.addTo(map);
+    marker.addTo(map);
 
-      const accuracyCircle = L.circle([lat, lng], {
-        radius: accuracy,
-        color: color,
-        fillColor: color,
-        fillOpacity: 0.1,
-        weight: 2,
-      }).addTo(map);
+    // Store marker data
+    const markerData: MarkerData = {
+      marker,
+      circle: accuracyCircle,
+      data: emergencyData || ({} as EmergencyRecord),
+    };
+    markersRef.current.push(markerData);
 
-      const markerData: MarkerData = {
-        marker,
-        circle: accuracyCircle,
-        data: emergencyData || ({} as EmergencyRecord),
-      };
-      markersRef.current.push(markerData);
+    // Center the map if it's a new temporary marker
+    if (!emergencyData?.createdAt) {
+      map.setView([lat, lng], 15, { animate: true });
+    }
 
-      if (!emergencyData?.createdAt) {
-        map.setView([lat, lng], 15, { animate: true });
-      }
+    return true;
+  },
+  [mapInstanceRef]
+);
 
-      return true;
-    },
-    [mapInstanceRef]
-  );
 
   // Remove temporary marker
   const removeTempMarker = useCallback((): void => {
