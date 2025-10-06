@@ -9,8 +9,6 @@ interface EmergencyModalProps {
   status: Status;
   location: Location | null;
   placeName: string;
-  contactName: string;
-  setContactName: (value: string) => void;
   contactNo: string;
   setContactNo: (value: string) => void;
   selectedNeeds: NeedType[];
@@ -33,8 +31,6 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
   status,
   location,
   placeName,
-  contactName,
-  setContactName,
   contactNo,
   setContactNo,
   selectedNeeds,
@@ -67,8 +63,6 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
 
           {status === "form" && location && (
             <EmergencyForm
-              contactName={contactName}
-              setContactName={setContactName}
               location={location}
               placeName={placeName}
               contactNo={contactNo}

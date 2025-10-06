@@ -5,8 +5,6 @@ import { needOptions } from "../constants";
 import { TextInput, TextArea, FileInput, Button } from "../components/form";
 
 interface EmergencyFormProps {
-  contactName: string;
-  setContactName: (value: string) => void;
   location: Location;
   placeName: string;
   contactNo: string;
@@ -27,8 +25,6 @@ interface EmergencyFormProps {
 }
 
 export const EmergencyForm: React.FC<EmergencyFormProps> = ({
-  contactName,
-  setContactName,
   location,
   placeName,
   contactNo,
@@ -48,12 +44,12 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
   setEmergencyDocument,
 }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
-
+  const [contactName, setContactName] = useState("");
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     // if (!(contactName?.trim())) newErrors.contactName = "Contact name is required.";
-    if (!(contactNo?.trim())) newErrors.contactNo = "Contact number is required.";
+    if (!contactNo?.trim()) newErrors.contactNo = "Contact number is required.";
     else if (!/^09\d{9}$/.test(contactNo))
       newErrors.contactNo = "Must be a valid Philippine mobile number.";
 
@@ -65,7 +61,8 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
 
     if (!urgencyLevel) newErrors.urgencyLevel = "Select urgency level.";
 
-    if (!emergencyDocument) newErrors.emergencyDocument = "Verification document is required.";
+    if (!emergencyDocument)
+      newErrors.emergencyDocument = "Verification document is required.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -125,7 +122,9 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
 
       {/* Needs */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">What do you need? *</label>
+        <label className="block text-sm font-medium text-gray-700">
+          What do you need? *
+        </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {needOptions.map((option) => (
             <button
@@ -143,7 +142,9 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
             </button>
           ))}
         </div>
-        {errors.selectedNeeds && <p className="text-xs text-red-600">{errors.selectedNeeds}</p>}
+        {errors.selectedNeeds && (
+          <p className="text-xs text-red-600">{errors.selectedNeeds}</p>
+        )}
       </div>
 
       {/* Number of People & Urgency */}
@@ -157,7 +158,9 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
         />
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Urgency Level *</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Urgency Level *
+          </label>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {(["low", "medium", "high", "critical"] as const).map((level) => {
               const colorMap = {
@@ -182,7 +185,9 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
               );
             })}
           </div>
-          {errors.urgencyLevel && <p className="text-xs text-red-600">{errors.urgencyLevel}</p>}
+          {errors.urgencyLevel && (
+            <p className="text-xs text-red-600">{errors.urgencyLevel}</p>
+          )}
         </div>
       </div>
 
@@ -210,7 +215,10 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
       )}
 
       {/* Submit Button */}
-      <Button onClick={handleSubmit} className="w-full py-3 text-sm font-semibold">
+      <Button
+        onClick={handleSubmit}
+        className="w-full py-3 text-sm font-semibold"
+      >
         Submit Request
       </Button>
     </div>

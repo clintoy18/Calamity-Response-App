@@ -406,8 +406,6 @@ const Emergency: React.FC = () => {
         setStatus={setStatus}
         emergencyDocument={emergencyDocument}
         setEmergencyDocument={setEmergencyDocument}
-        contactName={""}
-        setContactName={() => {}}
       />
 
       <LoginModal
