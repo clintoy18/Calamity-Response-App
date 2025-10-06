@@ -55,6 +55,8 @@ export const Dashboard: React.FC = () => {
     { label: "Pending", value: "pending" },
     { label: "In Progress", value: "in-progress" },
     { label: "Resolved", value: "resolved" },
+    { label: "Verified", value: "verified" },
+
   ];
 
   // Urgency level filters
@@ -90,7 +92,7 @@ export const Dashboard: React.FC = () => {
           }),
           isLoading: isLoadingEmergencies,
           searchPlaceholder: "Search by location, needs, or status...",
-          filterKey: "status" as keyof IEmergency,
+          filterKey: "isVerified" as keyof IEmergency,
           filterOptions: emergencyFilters,
         };
 
