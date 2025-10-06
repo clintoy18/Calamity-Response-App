@@ -5,7 +5,8 @@
   "type": "module",
   "main": "dist/server.ts",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite preview",
+    "start": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

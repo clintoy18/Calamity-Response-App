@@ -1,7 +1,7 @@
 // src/hooks/useEmergencyMarkers.ts
 import { useRef, useCallback } from "react";
 import L from "leaflet";
-import type { EmergencyRecord, MarkerData, Status } from "../types";
+import type { EmergencyRecord, MarkerData } from "../types";
 import { createMarkerIcon, createPopupContent } from "../utils/mapUtils";
 import { updateEmergencyStatus } from "../services/api";
 
@@ -24,9 +24,7 @@ interface EmergencyMarker extends L.Marker {
 }
 
 export const useEmergencyMarkers = (
-  mapInstanceRef: React.RefObject<L.Map | null>,
-  setErrorMessage?: (msg: string) => void,
-  setStatus?: (status: Status) => void
+  mapInstanceRef: React.RefObject<L.Map | null>
 ): UseEmergencyMarkersReturn => {
   const markersRef = useRef<MarkerData[]>([]);
 
@@ -51,7 +49,10 @@ export const useEmergencyMarkers = (
   };
 
   // Update marker icon and circle color
-  const updateMarkerColor = (markerData: MarkerData, newEmergencyData: EmergencyRecord) => {
+  const updateMarkerColor = (
+    markerData: MarkerData,
+    newEmergencyData: EmergencyRecord
+  ) => {
     const newColor = getMarkerColor(newEmergencyData);
 
     markerData.marker.setIcon(createMarkerIcon(newColor));
@@ -78,7 +79,9 @@ export const useEmergencyMarkers = (
       const color = getMarkerColor(emergencyData);
       const markerIcon = createMarkerIcon(color);
 
-      const marker: EmergencyMarker = L.marker([lat, lng], { icon: markerIcon }) as EmergencyMarker;
+      const marker: EmergencyMarker = L.marker([lat, lng], {
+        icon: markerIcon,
+      }) as EmergencyMarker;
 
       // Attach custom properties
       marker.emergencyData = emergencyData;
@@ -100,20 +103,31 @@ export const useEmergencyMarkers = (
 
         marker.once("popupopen", () => {
           if (currentData?.status !== "resolved" && currentData?.id) {
-            const btn = document.getElementById(`resolve-btn-${currentData.id}`);
+            const btn = document.getElementById(
+              `resolve-btn-${currentData.id}`
+            );
             if (btn) {
               btn.addEventListener("click", async () => {
-                const confirmed = confirm("Are you sure you want to mark this emergency as resolved?");
+                const confirmed = confirm(
+                  "Are you sure you want to mark this emergency as resolved?"
+                );
                 if (!confirmed) return;
 
                 try {
-                  const updatedData = await updateEmergencyStatus(currentData.id, "resolved");
+                  const updatedData = await updateEmergencyStatus(
+                    currentData.id,
+                    "resolved"
+                  );
+                  console.log(updatedData);
 
                   const markerData = markersRef.current.find(
                     (m) => m.data.id === currentData.id
                   );
                   if (markerData) {
-                    updateMarkerColor(markerData, { ...markerData.data, status: "resolved" });
+                    updateMarkerColor(markerData, {
+                      ...markerData.data,
+                      status: "resolved",
+                    });
                   }
 
                   alert("Marked as resolved");

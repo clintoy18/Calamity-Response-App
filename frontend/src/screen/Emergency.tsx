@@ -65,7 +65,7 @@ const Emergency: React.FC = () => {
   const { emergencies, setEmergencies, isLoadingEmergencies } =
     useEmergencies();
   const { addEmergencyMarker, removeTempMarker, markersRef } =
-    useEmergencyMarkers(mapInstanceRef, setErrorMessage, setStatus);
+    useEmergencyMarkers(mapInstanceRef);
 
   const ZOOM_THRESHOLD = 8;
 
@@ -406,6 +406,8 @@ const Emergency: React.FC = () => {
         setStatus={setStatus}
         emergencyDocument={emergencyDocument}
         setEmergencyDocument={setEmergencyDocument}
+        contactName={""}
+        setContactName={() => {}}
       />
 
       <LoginModal
