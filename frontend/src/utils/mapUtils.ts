@@ -156,13 +156,13 @@ export const addAffectedAreaMarkers = (map: L.Map): void => {
     const marker = L.marker([lat, lng], {
       icon: L.divIcon({
         html: `
-        <div style="position: relative; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">
+        <div style="position: relative; width:28px; height:28px; display:flex; align-items:center; justify-content:center;">
           <span style="position:absolute; width:100%; height:100%; background:#f97316; border-radius:50%; opacity:0.5; animation:ping 1s cubic-bezier(0,0,0.2,1) infinite;"></span>
           <div style="width:16px; height:16px; border-radius:50%; background:#f97316; border:2px solid white; display:flex; align-items:center; justify-content:center;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="white"><path d="M12 2 C6 2, 2 6, 2 12 s4 10, 10 10 s10 -4, 10 -10 s-4 -10, -10 -10zm0 18 c-4.418 0 -8 -3.582 -8 -8 s3.582 -8, 8 -8 s8 3.582, 8 8 s-3.582 8 -8 8zm0 -14 c-3.314 0 -6 2.686 -6 6 s2.686 6, 6 6 s6 -2.686, 6 -6 s-2.686 -6 -6 -6z"/></svg>
           </div>
         </div>`,
-        iconSize: [32, 32],
+        iconSize: [28, 28],
         iconAnchor: [16, 16],
         popupAnchor: [0, -16],
         className: "",
