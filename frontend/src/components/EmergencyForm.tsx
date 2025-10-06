@@ -1,4 +1,3 @@
-// EmergencyForm.tsx
 import React, { useState } from "react";
 import { X, MapPin, AlertCircle } from "lucide-react";
 import type { Location, NeedType } from "../types";
@@ -52,15 +51,22 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!contactName.trim()) newErrors.contactName = "Contact name is required.";
-    if (!contactNo.trim()) newErrors.contactNo = "Contact number is required.";
+
+    // if (!(contactName?.trim())) newErrors.contactName = "Contact name is required.";
+    if (!(contactNo?.trim())) newErrors.contactNo = "Contact number is required.";
     else if (!/^09\d{9}$/.test(contactNo))
       newErrors.contactNo = "Must be a valid Philippine mobile number.";
-    if (selectedNeeds.length === 0) newErrors.selectedNeeds = "Select at least one need.";
+
+    if (!selectedNeeds || selectedNeeds.length === 0)
+      newErrors.selectedNeeds = "Select at least one need.";
+
     if (!numberOfPeople || numberOfPeople < 1)
       newErrors.numberOfPeople = "Number of people must be at least 1.";
+
     if (!urgencyLevel) newErrors.urgencyLevel = "Select urgency level.";
+
     if (!emergencyDocument) newErrors.emergencyDocument = "Verification document is required.";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -90,7 +96,9 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
       <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-3">
         <MapPin className="w-5 h-5 text-red-500 flex-shrink-0" />
         <div>
-          <p className="text-sm font-medium text-gray-900">{placeName || "Fetching location..."}</p>
+          <p className="text-sm font-medium text-gray-900">
+            {placeName || "Fetching location..."}
+          </p>
           <p className="text-xs text-gray-500">
             {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
           </p>
@@ -101,7 +109,7 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
       <TextInput
         label="Contact Name *"
         value={contactName}
-        onChange={setContactName}
+        onChange={(val) => setContactName(val)}
         placeholder="Full Name"
         error={errors.contactName}
       />
@@ -110,7 +118,7 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
       <TextInput
         label="Contact Number *"
         value={contactNo}
-        onChange={setContactNo}
+        onChange={(val) => setContactNo(val)}
         placeholder="09171234567"
         error={errors.contactNo}
       />
@@ -190,7 +198,7 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
       <TextArea
         label="Additional Notes (Optional)"
         value={additionalNotes}
-        onChange={setAdditionalNotes}
+        onChange={(val) => setAdditionalNotes(val)}
         placeholder="Special needs, medical conditions, etc."
       />
 

@@ -1,5 +1,4 @@
-// EmergencyModal.tsx
-import React from "react";
+import React, { useState } from "react";
 import type { Status, Location, NeedType } from "../types";
 import { LoadingState } from "./LoadingState";
 import { SuccessState } from "./SuccessState";
@@ -10,6 +9,8 @@ interface EmergencyModalProps {
   status: Status;
   location: Location | null;
   placeName: string;
+  contactName: string;
+  setContactName: (value: string) => void;
   contactNo: string;
   setContactNo: (value: string) => void;
   selectedNeeds: NeedType[];
@@ -32,6 +33,8 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
   status,
   location,
   placeName,
+  contactName,
+  setContactName,
   contactNo,
   setContactNo,
   selectedNeeds,
@@ -51,12 +54,9 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
 }) => {
   if (status === "idle") return null;
 
-  const handleRetry = (): void => {
-    if (location) {
-      setStatus("form");
-    } else {
-      setStatus("idle");
-    }
+  const handleRetry = () => {
+    if (location) setStatus("form");
+    else setStatus("idle");
   };
 
   return (
@@ -67,6 +67,8 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
 
           {status === "form" && location && (
             <EmergencyForm
+              contactName={contactName}
+              setContactName={setContactName}
               location={location}
               placeName={placeName}
               contactNo={contactNo}
