@@ -24,6 +24,39 @@ export const useEmergencyMarkers = (
 ): UseEmergencyMarkersReturn => {
   const markersRef = useRef<MarkerData[]>([]);
 
+  // Utility function: Get marker color based on status or urgency
+  const getMarkerColor = (emergency: EmergencyRecord | undefined) => {
+    if (!emergency) return "#6366f1"; // default
+    switch (emergency.status) {
+      case "resolved":
+        return "#10b981"; // green
+      case "responded":
+        return "#f59e0b"; // orange
+      case "pending":
+      default:
+        return urgencyColors[emergency.urgencyLevel]?.bg || "#6366f1";
+    }
+  };
+
+  // Utility function: Update marker icon and circle color dynamically
+  const updateMarkerColor = (markerData: MarkerData, newEmergencyData: EmergencyRecord) => {
+    const newColor = getMarkerColor(newEmergencyData);
+
+    // Update marker icon
+    const newIcon = createMarkerIcon(newColor);
+    markerData.marker.setIcon(newIcon);
+
+    // Update accuracy circle color
+    markerData.circle.setStyle({
+      color: newColor,
+      fillColor: newColor,
+    });
+
+    // Update stored data
+    markerData.data = newEmergencyData;
+  };
+
+  // Add a marker to the map
   const addEmergencyMarker = useCallback(
     (
       lat: number,
@@ -35,22 +68,20 @@ export const useEmergencyMarkers = (
       if (!mapInstanceRef.current) return false;
 
       const map = mapInstanceRef.current;
-      const color = emergencyData
-        ? urgencyColors[emergencyData.urgencyLevel].bg
-        : "#6366f1";
+      const color = getMarkerColor(emergencyData);
       const userIcon = createMarkerIcon(color);
 
       const marker = L.marker([lat, lng], { icon: userIcon });
 
       // Store emergency data reference with the marker
-      // @ts-expect-error - Leaflet allows custom properties
+      // @ts-expect-error
       marker.emergencyId = id;
-      // @ts-expect-error - Leaflet allows custom properties
+      // @ts-expect-error
       marker.emergencyData = emergencyData;
 
       // Create popup dynamically on marker click
       marker.on("click", () => {
-        // @ts-expect-error - Leaflet allows custom properties
+        // @ts-expect-error
         const currentData = marker.emergencyData as EmergencyRecord | undefined;
 
         const popupContent = createPopupContent(lat, lng, id, currentData);
@@ -58,17 +89,24 @@ export const useEmergencyMarkers = (
         marker.bindPopup(popupContent, { maxWidth: 300 });
         marker.openPopup();
 
-        // Attach listener for "Mark as Resolved" button after popup opens
+        // Attach listener for "Mark as Resolved" button
         marker.once("popupopen", () => {
-          if (currentData?.status === "resolved" && currentData.id) {
+          if (currentData?.id) {
             const btn = document.getElementById(`resolve-btn-${currentData.id}`);
             if (btn) {
               btn.addEventListener("click", async () => {
                 try {
-                  await updateEmergencyStatus(currentData.id, "resolved");
+                  // Update status on the server
+                  const updatedData = await updateEmergencyStatus(currentData.id, "resolved");
+
+                  // Update marker color dynamically
+                  const markerData = markersRef.current.find(m => m.data.id === currentData.id);
+                  if (markerData) {
+                    updateMarkerColor(markerData, { ...markerData.data, status: "resolved" });
+                  }
+
                   alert("Marked as resolved");
                   marker.closePopup();
-                  location.reload(); // Optional: refresh your map or emergencies
                 } catch (err) {
                   console.error(err);
                   alert("Failed to update status");
@@ -102,9 +140,10 @@ export const useEmergencyMarkers = (
 
       return true;
     },
-    [mapInstanceRef, setErrorMessage, setStatus]
+    [mapInstanceRef]
   );
 
+  // Remove temporary marker
   const removeTempMarker = useCallback((): void => {
     if (markersRef.current.length > 0) {
       const tempMarkerIndex = markersRef.current.findIndex((m) =>
