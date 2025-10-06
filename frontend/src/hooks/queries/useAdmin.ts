@@ -2,6 +2,8 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../services/authService";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 
 // -------------------
 // Types
@@ -123,3 +125,27 @@ export const useFetchEmergencyCountsByCity = (
     },
     refetchInterval: 5000, // poll every 5 seconds
   });
+
+// -------------------
+// Verify Emergency Hook
+// -------------------
+export const verifyEmergency = async (id: string): Promise<void> => {
+  await api.put(`/admin/emergencies/${id}/verify`);
+};
+
+export const useVerifyEmergency = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => verifyEmergency(id),
+    onSuccess: () => {
+      // Refresh related data when verification succeeds
+      queryClient.invalidateQueries({ queryKey: ["emergencies"] });
+      queryClient.invalidateQueries({ queryKey: ["emergency"] });
+    },
+    onError: (error: any) => {
+      console.error("Error verifying emergency:", error);
+    },
+  });
+};
+

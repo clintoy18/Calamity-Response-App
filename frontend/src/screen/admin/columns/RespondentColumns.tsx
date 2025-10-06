@@ -66,7 +66,7 @@ export const getRespondentColumns = ({
             <VerifyRespondentModal
               respondent={modalRow}
               onClose={() => setModalRow(null)}
-              onConfirm={() => {
+              onSuccess={() => {
                 handleToggleVerify(respondent);
                 setModalRow(null);
               }}
