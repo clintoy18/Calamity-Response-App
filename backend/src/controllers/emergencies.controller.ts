@@ -12,8 +12,8 @@ const generateUUID = (): string => {
 // GET all emergencies (last 24h, filtered)
 export const getEmergencies = async (req: Request, res: Response) => {
 try {
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    // const twentyFourHoursAgo = new Date();
+    // twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
     const emergencies = await Emergency.find({
       isVerified: true, // ✅ fetch only verified emergencies
@@ -21,7 +21,7 @@ try {
         { dataQualityIssues: { $exists: false } },
         { dataQualityIssues: "OK" },
       ],
-      createdAt: { $gte: twentyFourHoursAgo }, // optional: last 24h
+      // createdAt: { $gte: twentyFourHoursAgo }, // optional: last 24h
     })
       .sort({ createdAt: -1 }) // newest first
       .lean(); // better performance
