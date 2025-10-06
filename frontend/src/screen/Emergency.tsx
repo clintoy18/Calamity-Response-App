@@ -391,15 +391,16 @@ const Emergency: React.FC = () => {
           )}
         </button>
 
-        {/* Be a Responder Button */}
-        <button
-          onClick={() => setIsResponderModalOpen(true)}
-          className="bg-gradient-to-r from-orange-400 to-orange-600 text-white w-24 sm:w-48 px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition transform duration-200 ease-in-out flex items-center justify-center gap-1"
-        >
-          <Users className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="leading-none">Become a responder</span>
-        </button>
-
+       {/* Be a Responder Button */}
+      {(!isAuthenticated || getUserRole() !== "respondent") && (
+          <button
+            onClick={() => setIsResponderModalOpen(true)}
+            className="bg-gradient-to-r from-orange-400 to-orange-600 text-white w-24 sm:w-48 px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition transform duration-200 ease-in-out flex items-center justify-center gap-1"
+          >
+            <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="leading-none">Become a responder</span>
+          </button>
+        )}
         {/* Emergency Responder Tracker Button */}
         <button className="bg-gradient-to-r from-green-400 to-green-600 text-white w-24 sm:w-48 px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full shadow-md hover:shadow-lg hover:scale-105 transition transform duration-200 ease-in-out flex items-center justify-center gap-1">
           <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
