@@ -142,8 +142,8 @@ export const createPopupContent = (
 
 export const createMarkerIcon = (color: string): L.DivIcon => {
   return L.divIcon({
-    html: `<div style="background: ${color}; width:32px; height:32px; border-radius:50%; border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;"><div style="color:white; font-size:16px;">📍</div></div>`,
-    iconSize: [32, 32],
+    html: `<div style="background: ${color}; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;"><div style="color:white; font-size:16px;">📍</div></div>`,
+    iconSize: [24, 24],
     iconAnchor: [16, 16],
     popupAnchor: [0, -16],
     className: "",
