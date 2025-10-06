@@ -7,6 +7,7 @@ import {
   fetchEmergencyCountByCity,
   verifyEmergencyRequest,
   getEmergencyById,
+  deleteEmergencyById
   // rejectResponders, // uncomment if implemented
 } from "../controllers/admin.controller";
 import { authenticate, checkRole } from "../middleware/auth.middleware";
@@ -74,5 +75,12 @@ router.put(
   checkRole("admin"),
   verifyEmergencyRequest
 );
+
+router.delete(
+  "/emergencies/:id/delete",
+  authenticate,
+  checkRole("admin"),
+  deleteEmergencyById
+)
 
 export default router;

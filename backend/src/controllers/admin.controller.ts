@@ -320,3 +320,22 @@ export const fetchEmergencyCountByCity = async (req: Request, res: Response) => 
 };
 
 
+export const deleteEmergencyById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const emergency = await Emergency.findOneAndDelete({ id });
+
+    if (!emergency) {
+      return res.status(404).json({
+        success: false,
+        message: "Emergency request not found",
+      });
+    }
+
+    res.json({ success: true, message: "Emergency request deleted" });
+  } catch (error) {
+    console.error("Error deleting emergency:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
