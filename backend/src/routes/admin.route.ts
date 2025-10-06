@@ -8,7 +8,7 @@ import {
   verifyEmergencyRequest,
   getEmergencyById,
   deleteEmergencyById, 
-  unverifyEmergencyById,
+  unverifyEmergency,
   // rejectResponders, // uncomment if implemented
 } from "../controllers/admin.controller";
 import { authenticate, checkRole } from "../middleware/auth.middleware";
@@ -85,11 +85,11 @@ router.delete(
 )
 
 router.put(
-  "/emergencies/unverify",
-  authenticate,
+  "/emergencies/:id/unverify",
+   authenticate,
   checkRole("admin"),
-  unverifyEmergencyById
-);
+ unverifyEmergency);
+
 
 
 export default router;
