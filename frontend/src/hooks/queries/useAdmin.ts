@@ -143,7 +143,7 @@ export const useVerifyEmergency = () => {
       queryClient.invalidateQueries({ queryKey: ["emergencies"] });
       queryClient.invalidateQueries({ queryKey: ["emergency"] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error("Error verifying emergency:", error);
     },
   });

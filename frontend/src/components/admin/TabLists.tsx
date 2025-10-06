@@ -1,11 +1,11 @@
 // TabLists.tsx
 import React from "react";
 
-type TabType = "requests" | "respondents";
+export type TabType = "emergencies" | "respondents";
 
 interface TabListsProps {
   activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
+  setActiveTab: React.Dispatch<React.SetStateAction<TabType>>;
 }
 
 export const TabLists: React.FC<TabListsProps> = ({ activeTab, setActiveTab }) => {
@@ -13,7 +13,7 @@ export const TabLists: React.FC<TabListsProps> = ({ activeTab, setActiveTab }) =
     <div className="px-6 py-4">
       <div className="bg-white border border-gray-200 rounded-lg">
         <div className="flex border-b border-gray-200">
-          {["requests", "respondents"].map((tab) => (
+          {["emergencies", "respondents"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as TabType)}
@@ -23,10 +23,9 @@ export const TabLists: React.FC<TabListsProps> = ({ activeTab, setActiveTab }) =
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              {tab === "requests"
-                ? "Emergency Requests for Verification "
-                :
-                 "Respondents for Verification"}
+              {tab === "emergencies"
+                ? "Emergency Requests for Verification"
+                : "Respondents for Verification"}
             </button>
           ))}
         </div>

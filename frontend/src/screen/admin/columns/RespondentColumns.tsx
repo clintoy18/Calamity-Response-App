@@ -58,7 +58,7 @@ export const getRespondentColumns = ({
               onClick={() => setModalRow(respondent)}
               className="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
             >
-              Approve
+              Verify
             </button>
           )}
 

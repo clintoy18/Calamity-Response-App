@@ -1,6 +1,7 @@
+// Dashboard.tsx
 import React, { useState } from "react";
 import { Header } from "../../components/admin/Header";
-import { TabLists } from "../../components/admin/TabLists";
+import { TabLists, type TabType } from "../../components/admin/TabLists";
 import { DataTable, type FilterOption } from "../../components/admin/Table";
 import { getRespondentColumns } from "./columns/RespondentColumns";
 import { getEmergencyColumns } from "./columns/EmergencyColumns";
@@ -11,11 +12,9 @@ import {
   useFetchResponders,
 } from "../../hooks/queries/useAdmin";
 
-type TabType = "respondents" | "emergencies";
-
 export const Dashboard: React.FC = () => {
   const { logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>("respondents");
+  const [activeTab, setActiveTab] = useState<TabType>("emergencies");
   const [modalResponder, setModalResponder] = useState<IUser | null>(null);
   const [modalEmergency, setModalEmergency] = useState<IEmergency | null>(null);
 
@@ -23,36 +22,35 @@ export const Dashboard: React.FC = () => {
   const {
     data: responderData,
     isLoading: isLoadingResponders,
+    isError: isErrorResponders,
     refetch: refetchResponders,
   } = useFetchResponders(1, 99999);
 
   const {
     data: emergencyData,
     isLoading: isLoadingEmergencies,
+    isError: isErrorEmergencies,
     refetch: refetchEmergencies,
   } = useFetchEmergencies(1, 99999);
 
   // Verification handlers
   const handleToggleResponderVerify = (row: IUser) => {
     console.log("Toggle responder verification:", row);
-    // call API to verify responder
-    refetchResponders(); // refresh after verification
+    refetchResponders();
   };
 
   const handleToggleEmergencyVerify = (row: IEmergency) => {
     console.log("Toggle emergency verification:", row);
-    // call API to verify emergency
-    refetchEmergencies(); // refresh after verification
+    refetchEmergencies();
   };
 
-  // Filter options for respondents
+  // Filter options
   const responderFilters: FilterOption[] = [
     { label: "All", value: "all" },
     { label: "Pending", value: "pending" },
     { label: "Verified", value: "verified" },
   ];
 
-  // Filter options for emergencies
   const emergencyFilters: FilterOption[] = [
     { label: "All", value: "all" },
     { label: "Pending", value: "pending" },
@@ -61,64 +59,49 @@ export const Dashboard: React.FC = () => {
     { label: "Verified", value: "verified" },
   ];
 
-  // Urgency level filters
-  // const urgencyFilters: FilterOption[] = [
-  //   { label: "All", value: "all" },
-  //   { label: "Critical", value: "CRITICAL" },
-  //   { label: "High", value: "HIGH" },
-  //   { label: "Medium", value: "MEDIUM" },
-  //   { label: "Low", value: "LOW" },
-  // ];
-
-  // Determine table data and columns based on active tab
-  const tableProps =
-    activeTab === "respondents"
-      ? {
-          data: responderData?.data || [],
-          columns: getRespondentColumns({
-            modalRow: modalResponder,
-            setModalRow: setModalResponder,
-            handleToggleVerify: handleToggleResponderVerify,
-          }),
-          isLoading: isLoadingResponders,
-          searchPlaceholder: "Search by name, email, or contact...",
-          filterKey: "isVerified" as keyof IUser,
-          filterOptions: responderFilters,
-        }
-      : {
-          data: emergencyData?.data || [],
-          columns: getEmergencyColumns({
-            modalRow: modalEmergency,
-            setModalRow: setModalEmergency,
-            handleToggleVerify: handleToggleEmergencyVerify,
-          }),
-          isLoading: isLoadingEmergencies,
-          searchPlaceholder: "Search by location, needs, or status...",
-          filterKey: "isVerified" as keyof IEmergency,
-          filterOptions: emergencyFilters,
-        };
-
+  // Render DataTable depending on the active tab
   return (
     <div className="min-h-screen bg-gray-100">
       <Header logout={logout} />
       <TabLists activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="px-6 py-4">
-        {tableProps.isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
-              <p className="text-sm text-gray-600 font-medium">
-                Loading data...
-              </p>
+        {activeTab === "respondents" ? (
+          isLoadingResponders ? (
+            <div className="text-center py-10">Loading responders...</div>
+          ) : isErrorResponders ? (
+            <div className="text-center py-10 text-red-500">
+              Failed to load responders. Please try again.
             </div>
+          ) : (
+            <DataTable<IUser>
+              columns={getRespondentColumns({
+                modalRow: modalResponder,
+                setModalRow: setModalResponder,
+                handleToggleVerify: handleToggleResponderVerify,
+              })}
+              data={responderData?.data || []}
+              searchPlaceholder="Search by name, email, or contact..."
+              filterKey="isVerified"
+              filterOptions={responderFilters}
+            />
+          )
+        ) : isLoadingEmergencies ? (
+          <div className="text-center py-10">Loading emergencies...</div>
+        ) : isErrorEmergencies ? (
+          <div className="text-center py-10 text-red-500">
+            Failed to load emergencies. Please try again.
           </div>
         ) : (
-          <DataTable
-            columns={tableProps.columns}
-            data={tableProps.data}
-            searchPlaceholder={tableProps.searchPlaceholder}
-            filterKey={tableProps.filterKey}
-            filterOptions={tableProps.filterOptions}
+          <DataTable<IEmergency>
+            columns={getEmergencyColumns({
+              modalRow: modalEmergency,
+              setModalRow: setModalEmergency,
+              handleToggleVerify: handleToggleEmergencyVerify,
+            })}
+            data={emergencyData?.data || []}
+            searchPlaceholder="Search by location, needs, or status..."
+            filterKey="isVerified"
+            filterOptions={emergencyFilters}
           />
         )}
       </div>
