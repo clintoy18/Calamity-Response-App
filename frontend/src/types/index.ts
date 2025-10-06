@@ -56,3 +56,13 @@ export interface UrgencyColor {
   text: string;
   light: string;
 }
+
+
+export interface Respondent {
+  id: string;
+  fullName: string;
+  email: string;
+  contactNo: string;
+  isVerified: boolean;
+  notes?: string;
+}

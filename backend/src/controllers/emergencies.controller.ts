@@ -8,39 +8,50 @@ const generateUUID = (): string => {
   return randomBytes(16).toString("hex");
 };
 
-// Emergencies CRUD
+// -----------------
+// GET all emergencies (last 24h, filtered)
 export const getEmergencies = async (req: Request, res: Response) => {
   try {
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    // const twentyFourHoursAgo = new Date();
+    // twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
     const emergencies = await Emergency.find({
-      $or: [
-        { dataQualityIssues: { $exists: false } },
-        { dataQualityIssues: "OK" },
+      $and: [
+        {
+          $or: [{ isVerified: { $exists: false } }, { isVerified: true }],
+        },
+        {
+          $or: [
+            { dataQualityIssues: { $exists: false } },
+            { dataQualityIssues: "OK" },
+          ],
+        },
       ],
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 }) // newest first
+      .lean(); // better performance
 
-    console.log(`Filtered emergencies count: ${emergencies.length}`);
+    console.log(`Verified emergencies count: ${emergencies.length}`);
 
     res.json({
       success: true,
       count: emergencies.length,
       data: emergencies,
     });
-  } catch (error) {
-    console.error("Error fetching emergencies:", error);
+  } catch (error: any) {
+    console.error("Error fetching verified emergencies:", error);
     res.status(500).json({
       success: false,
       message: "Server error",
     });
   }
 };
-
+// -----------------
+// GET emergency by UUID
 export const getEmergencyById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const emergency = await Emergency.findById(id);
+    const emergency = await Emergency.findOne({ id });
 
     if (!emergency) {
       return res.status(404).json({
@@ -49,19 +60,15 @@ export const getEmergencyById = async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
-      success: true,
-      data: emergency,
-    });
+    res.json({ success: true, data: emergency });
   } catch (error) {
     console.error("Error fetching emergency:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
+// -----------------
+// CREATE emergency
 export const createEmergency = async (req: Request, res: Response) => {
   try {
     const {
@@ -76,45 +83,36 @@ export const createEmergency = async (req: Request, res: Response) => {
       additionalNotes,
     }: EmergencyRequestBody = req.body;
 
-    // Validation
-    if (!latitude || !longitude) {
-      return res.status(400).json({
-        success: false,
-        message: "Latitude and longitude are required",
-      });
+    const file = req.file as Express.MulterS3.File;
+
+    if (!file) {
+      return res
+        .status(400)
+        .json({ message: "Verification document is required" });
     }
 
-    if (!needs || needs.length === 0) {
+    if (!latitude || !longitude || !needs || needs.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "At least one need must be specified",
+        message: "Latitude, longitude, and needs are required",
       });
     }
-
-    // Check if location is in Cebu bounds
-    // const isInCebu = latitude >= 9.8 && latitude <= 10.8 &&
-    //                  longitude >= 123.3 && longitude <= 124.4;
-
-    // if (!isInCebu) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'Location is outside Cebu area'
-    //   });
-    // }
 
     const newEmergency = await Emergency.create({
       id: generateUUID(),
       latitude,
       longitude,
       placename,
-      contactno,
+      contactno: contactno || "",
       accuracy: accuracy || 0,
       timestamp: new Date(),
-      needs: needs,
+      needs,
       numberOfPeople: numberOfPeople || 1,
-      urgencyLevel: urgencyLevel || "medium",
+      urgencyLevel: urgencyLevel || "MEDIUM",
       additionalNotes: additionalNotes || "",
       status: "pending",
+      isVerified: false,
+      imageVerification: file.location,
     });
 
     res.status(201).json({
@@ -124,13 +122,12 @@ export const createEmergency = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error creating emergency:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
+// -----------------
+// UPDATE emergency status
 export const updateEmergency = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -143,12 +140,9 @@ export const updateEmergency = async (req: Request, res: Response) => {
       });
     }
 
-    const emergency = await Emergency.findByIdAndUpdate(
-      id,
-      {
-        status,
-        updatedAt: new Date(),
-      },
+    const emergency = await Emergency.findOneAndUpdate(
+      { id }, // query by UUID
+      { status, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
 
@@ -166,17 +160,16 @@ export const updateEmergency = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error updating emergency:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
+// -----------------
+// DELETE emergency by UUID
 export const deleteEmergencyById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const emergency = await Emergency.findByIdAndDelete(id);
+    const emergency = await Emergency.findOneAndDelete({ id });
 
     if (!emergency) {
       return res.status(404).json({
@@ -185,20 +178,15 @@ export const deleteEmergencyById = async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
-      success: true,
-      message: "Emergency request deleted",
-    });
+    res.json({ success: true, message: "Emergency request deleted" });
   } catch (error) {
     console.error("Error deleting emergency:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// Filtering
+// -----------------
+// GET emergencies by urgency
 export const getEmergenciesByUrgency = async (req: Request, res: Response) => {
   try {
     const { level } = req.params;
@@ -206,35 +194,23 @@ export const getEmergenciesByUrgency = async (req: Request, res: Response) => {
       createdAt: -1,
     });
 
-    res.json({
-      success: true,
-      count: filtered.length,
-      data: filtered,
-    });
+    res.json({ success: true, count: filtered.length, data: filtered });
   } catch (error) {
     console.error("Error fetching emergencies by urgency:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
+// -----------------
+// GET emergencies by status
 export const getEmergenciesByStatus = async (req: Request, res: Response) => {
   try {
     const { status } = req.params;
     const filtered = await Emergency.find({ status }).sort({ createdAt: -1 });
 
-    res.json({
-      success: true,
-      count: filtered.length,
-      data: filtered,
-    });
+    res.json({ success: true, count: filtered.length, data: filtered });
   } catch (error) {
     console.error("Error fetching emergencies by status:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };

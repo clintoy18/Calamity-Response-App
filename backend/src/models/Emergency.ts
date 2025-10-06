@@ -16,6 +16,8 @@ export interface IEmergency extends Document {
   status: "pending" | "in-progress" | "resolved";
   createdAt: Date;
   updatedAt: Date;
+  isVerified: boolean;
+  imageVerification: string;
 }
 
 // Schema definition
@@ -41,6 +43,8 @@ const emergencySchema = new Schema<IEmergency>(
       enum: ["pending", "in-progress", "resolved"],
       default: "pending",
     },
+    isVerified: { type: Boolean, default: false },
+    imageVerification: { type: String }, // URL or path to the image
   },
   { timestamps: true } // Auto-manages createdAt & updatedAt
 );
