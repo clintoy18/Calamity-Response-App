@@ -49,21 +49,21 @@ export const getEmergencyColumns = ({
     },
   },
   {
-    accessorKey: 'status',
+    accessorKey: 'isVerified',
     header: 'Status',
     cell: ({ getValue }) => {
-      const status = getValue() as IEmergency['status'];
-      const colors = {
-        pending: 'bg-yellow-100 text-yellow-800',
-        'in-progress': 'bg-blue-100 text-blue-800',
-        resolved: 'bg-green-100 text-green-800',
-      };
+      const isVerified = getValue() as boolean;
       return (
-        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${colors[status]}`}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-semibold ${
+            isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+          }`}
+        >
+          {isVerified ? 'Verified' : 'Pending'}
         </span>
       );
     },
+    enableSorting: true,
   },
   {
     id: 'actions',

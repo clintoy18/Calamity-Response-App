@@ -79,17 +79,20 @@ export const verifyEmergencyRequest = async (req: Request, res: Response) => {
   }
 };
 
-// fetch Responders
+// fetch Responders -uverified first, then verified
 export const fetchResponders = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const skip = (page - 1) * limit;
 
+    // Total count of responders
     const total = await User.countDocuments({ role: "respondent" });
 
+    // Fetch responders, sorted: unverified first, then verified, newest first within each group
     const responders = await User.find({ role: "respondent" })
       .select("-password")
+      .sort({ isVerified: 1, createdAt: -1 }) // ⬅️ unverified first
       .skip(skip)
       .limit(limit)
       .lean();
@@ -112,6 +115,7 @@ export const fetchResponders = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 //reject responders
 export const rejectResponders = async (
@@ -153,43 +157,58 @@ export const rejectResponders = async (
 };
 
 // Emergencies CRUD
+
 export const fetchEmergencies = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    // ✅ Parse pagination safely
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Number(req.query.limit) || 20, 99999);
     const skip = (page - 1) * limit;
 
-    const total = await Emergency.countDocuments({
+    // ✅ Parse optional filters
+    const status = req.query.status as string | undefined;
+    const urgencyLevel = req.query.urgencyLevel as string | undefined;
+
+    // ✅ Base query: include emergencies with good data quality
+    const query: Record<string, any> = {
       $or: [
         { dataQualityIssues: { $exists: false } },
         { dataQualityIssues: "OK" },
       ],
-    });
+    };
 
-    const emergencies = await Emergency.find({
-      $or: [
-        { dataQualityIssues: { $exists: false } },
-        { dataQualityIssues: "OK" },
-      ],
-    })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    if (status) query.status = status;
+    if (urgencyLevel) query.urgencyLevel = urgencyLevel;
 
-    res.json({
+    // ✅ Sorting: unverified first, then verified; newest first within each group
+    const sortCriteria: Record<string, 1 | -1> = {
+      isVerified: 1, // false (0) comes first, true (1) next
+      createdAt: -1, // newest first
+    };
+
+    // ✅ Execute queries in parallel
+    const [emergencies, total] = await Promise.all([
+      Emergency.find(query)
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Emergency.countDocuments(query),
+    ]);
+
+    res.status(200).json({
       success: true,
       page,
-      limit,
-      total,
       totalPages: Math.ceil(total / limit),
+      total,
+      count: emergencies.length,
       data: emergencies,
     });
-  } catch (error) {
-    console.error("Error fetching emergencies:", error);
+  } catch (error: any) {
+    console.error("❌ Error fetching emergencies:", error.message);
     res.status(500).json({
       success: false,
-      message: "Server error",
+      message: "An error occurred while fetching emergencies.",
     });
   }
 };
@@ -299,3 +318,5 @@ export const fetchEmergencyCountByCity = async (req: Request, res: Response) => 
     });
   }
 };
+
+
