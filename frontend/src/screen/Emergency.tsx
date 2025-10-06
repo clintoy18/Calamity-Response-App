@@ -67,7 +67,7 @@ const Emergency: React.FC = () => {
   const { addEmergencyMarker, removeTempMarker, markersRef } =
     useEmergencyMarkers(mapInstanceRef);
 
-  const ZOOM_THRESHOLD = 10;
+  const ZOOM_THRESHOLD = 12;
 
   // Sync markers for all emergencies (real-time) based on zoom
   useEffect(() => {

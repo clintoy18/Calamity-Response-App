@@ -339,3 +339,42 @@ export const deleteEmergencyById = async (req: Request, res: Response) => {
   }
 };
 
+
+export const unverifyEmergencyById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.body
+    console.log(id);
+
+    // Find and update the emergency to set isVerified = false
+    const emergency = await Emergency.findByIdAndUpdate(
+      id,
+      { isVerified: false, updatedAt: new Date() },
+      { new: true, runValidators: false } // skip other required field validations
+    );
+
+    if (!emergency) {
+      return res.status(404).json({
+        success: false,
+        message: "Emergency request not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Emergency unverified successfully", // corrected message
+      data: {
+        id: emergency.id,
+        placename: emergency.placename,
+        needs: emergency.needs,
+        isVerified: emergency.isVerified,
+        updatedAt: emergency.updatedAt,
+      },
+    });
+  } catch (error: any) {
+    console.error("Error unverifying emergency:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

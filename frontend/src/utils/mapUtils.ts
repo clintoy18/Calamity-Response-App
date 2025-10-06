@@ -3,9 +3,10 @@ import L from "leaflet";
 import { urgencyColors, affectedAreas } from "../constants";
 import type { EmergencyRecord } from "../types";
 import { hasRole } from "./authUtils";
-import { updateEmergencyStatus } from "../services/api";
+import { updateEmergencyStatus, unverifyEmergencyById } from "../services/api"; // Use the unverify function
 
 const isResponder = hasRole("respondent");
+const isAdmin = hasRole("admin");
 const API_BASE = import.meta.env.VITE_API_URL;
 
 export const createPopupContent = (
@@ -73,6 +74,24 @@ export const createPopupContent = (
       popupContent += `</div>`;
     }
 
+    // ✅ Unverify button for admins only
+    if (isAdmin && emergencyData.id) {
+      popupContent += `<button id="unverify-btn-${emergencyData.id}" style="margin-top:6px; padding:6px 12px; background:#ef4444; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; width:100%;">Mark as Unverified</button>`;
+      setTimeout(() => {
+        const unverifyBtn = document.getElementById(`unverify-btn-${emergencyData.id}`);
+        if (unverifyBtn) unverifyBtn.addEventListener("click", async () => {
+          if (!confirm("Are you sure you want to mark this emergency as unverified?")) return;
+          try {
+            await unverifyEmergencyById(emergencyData.id);
+            alert("Emergency marked as unverified");
+            location.reload();
+          } catch {
+            alert("Failed to update status");
+          }
+        });
+      }, 0);
+    }
+
     // ✅ View Donation Details for everyone if resolved
     if (emergencyData.status === "resolved" && emergencyData.id) {
       popupContent += `<a href="#" target="_blank" style="margin-top:6px; padding:6px 12px; background:#3b82f6; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none; display:flex; justify-content:center; width:100%;"> View Donation Details</a>`;
@@ -80,6 +99,7 @@ export const createPopupContent = (
   }
 
   popupContent += `</div>`;
+
   return popupContent;
 };
 
