@@ -1,9 +1,13 @@
-import React from "react";
-import { FileText, MapPin, X } from "lucide-react";
+// EmergencyForm.tsx
+import React, { useState } from "react";
+import { X, MapPin, AlertCircle } from "lucide-react";
 import type { Location, NeedType } from "../types";
 import { needOptions } from "../constants";
+import { TextInput, TextArea, FileInput, Button } from "../components/form";
 
 interface EmergencyFormProps {
+  contactName: string;
+  setContactName: (value: string) => void;
   location: Location;
   placeName: string;
   contactNo: string;
@@ -16,7 +20,7 @@ interface EmergencyFormProps {
   setUrgencyLevel: (level: "low" | "medium" | "high" | "critical") => void;
   additionalNotes: string;
   setAdditionalNotes: (value: string) => void;
-  errorMessage: string;
+  errorMessage?: string;
   onSubmit: () => void;
   onClose: () => void;
   emergencyDocument: File | null;
@@ -24,6 +28,8 @@ interface EmergencyFormProps {
 }
 
 export const EmergencyForm: React.FC<EmergencyFormProps> = ({
+  contactName,
+  setContactName,
   location,
   placeName,
   contactNo,
@@ -42,185 +48,163 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
   emergencyDocument,
   setEmergencyDocument,
 }) => {
-  const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    if (!contactName.trim()) newErrors.contactName = "Contact name is required.";
+    if (!contactNo.trim()) newErrors.contactNo = "Contact number is required.";
+    else if (!/^09\d{9}$/.test(contactNo))
+      newErrors.contactNo = "Must be a valid Philippine mobile number.";
+    if (selectedNeeds.length === 0) newErrors.selectedNeeds = "Select at least one need.";
+    if (!numberOfPeople || numberOfPeople < 1)
+      newErrors.numberOfPeople = "Number of people must be at least 1.";
+    if (!urgencyLevel) newErrors.urgencyLevel = "Select urgency level.";
+    if (!emergencyDocument) newErrors.emergencyDocument = "Verification document is required.";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!contactNo.trim()) {
-      newErrors.contactNo = "Contact number is required.";
-    } else if (!/^09\d{9}$/.test(contactNo)) {
-      newErrors.contactNo = "Contact number must be a valid Philippine mobile number.";
-    }
-
-    if (selectedNeeds.length === 0) {
-      newErrors.selectedNeeds = "Please select at least one need.";
-    }
-
-    if (!numberOfPeople || numberOfPeople < 1) {
-      newErrors.numberOfPeople = "Number of people must be at least 1.";
-    }
-
-    if (!urgencyLevel) {
-      newErrors.urgencyLevel = "Please select urgency level.";
-    }
-
-    if (!emergencyDocument) {
-      newErrors.emergencyDocument = "Verification document is required.";
-    }
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      onSubmit();
-    }
+    if (validateForm()) onSubmit();
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6 space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Request Relief</h3>
+      <div className="flex justify-between items-center pb-4 border-b">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-red-50 rounded-md">
+            <AlertCircle className="w-5 h-5 text-red-500" />
+          </div>
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+            Emergency Relief Request
+          </h2>
+        </div>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
           <X className="w-5 h-5" />
         </button>
       </div>
 
       {/* Location */}
-      <div className="mb-5 p-3 bg-gray-50 rounded-lg">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <MapPin className="w-4 h-4" />
-          <span>
-            {placeName || "Fetching location name..."}
-            <br />
-            ({location.latitude.toFixed(4)}, {location.longitude.toFixed(4)})
-          </span>
+      <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-3">
+        <MapPin className="w-5 h-5 text-red-500 flex-shrink-0" />
+        <div>
+          <p className="text-sm font-medium text-gray-900">{placeName || "Fetching location..."}</p>
+          <p className="text-xs text-gray-500">
+            {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+          </p>
         </div>
       </div>
 
+      {/* Contact Name */}
+      <TextInput
+        label="Contact Name *"
+        value={contactName}
+        onChange={setContactName}
+        placeholder="Full Name"
+        error={errors.contactName}
+      />
+
+      {/* Contact Number */}
+      <TextInput
+        label="Contact Number *"
+        value={contactNo}
+        onChange={setContactNo}
+        placeholder="09171234567"
+        error={errors.contactNo}
+      />
+
       {/* Needs */}
-      <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          What do you need? *
-        </label>
-        <div className="grid grid-cols-3 gap-2">
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">What do you need? *</label>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {needOptions.map((option) => (
             <button
               key={option.value}
+              type="button"
               onClick={() => toggleNeed(option.value as NeedType)}
-              className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all ${
+              className={`flex flex-col items-center gap-1 p-3 rounded-lg border transition-all text-sm font-medium ${
                 selectedNeeds.includes(option.value as NeedType)
                   ? "border-red-500 bg-red-50 text-red-700"
                   : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
               }`}
             >
               {option.icon}
-              <span className="text-xs font-medium">{option.label}</span>
+              <span>{option.label}</span>
             </button>
           ))}
         </div>
-        {errors.selectedNeeds && <p className="mt-1 text-xs text-red-600">{errors.selectedNeeds}</p>}
+        {errors.selectedNeeds && <p className="text-xs text-red-600">{errors.selectedNeeds}</p>}
       </div>
 
-      {/* Number of People */}
-      <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Number of People *
-        </label>
-        <input
+      {/* Number of People & Urgency */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <TextInput
+          label="Number of People *"
           type="number"
-          min={1}
-          max={1000}
-          value={numberOfPeople}
-          onChange={(e) => setNumberOfPeople(parseInt(e.target.value) || 1)}
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          value={numberOfPeople.toString()}
+          onChange={(val) => setNumberOfPeople(Number(val))}
+          error={errors.numberOfPeople}
         />
-        {errors.numberOfPeople && <p className="mt-1 text-xs text-red-600">{errors.numberOfPeople}</p>}
-      </div>
 
-      {/* Urgency */}
-      <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Urgency Level *
-        </label>
-        <div className="grid grid-cols-2 gap-2">
-          {(["low", "medium", "high", "critical"] as const).map((level) => (
-            <button
-              key={level}
-              onClick={() => setUrgencyLevel(level)}
-              className={`px-3 py-2 rounded-lg border font-medium text-sm transition-all ${
-                urgencyLevel === level
-                  ? "border-red-500 bg-red-50 text-red-700"
-                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
-              }`}
-            >
-              {level.charAt(0).toUpperCase() + level.slice(1)}
-            </button>
-          ))}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Urgency Level *</label>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {(["low", "medium", "high", "critical"] as const).map((level) => {
+              const colorMap = {
+                low: "bg-green-50 border-green-500 text-green-700",
+                medium: "bg-yellow-50 border-yellow-500 text-yellow-700",
+                high: "bg-orange-50 border-orange-500 text-orange-700",
+                critical: "bg-red-50 border-red-500 text-red-700",
+              };
+              return (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setUrgencyLevel(level)}
+                  className={`px-3 py-2 rounded-md border text-sm font-medium transition-all ${
+                    urgencyLevel === level
+                      ? colorMap[level]
+                      : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  {level.charAt(0).toUpperCase() + level.slice(1)}
+                </button>
+              );
+            })}
+          </div>
+          {errors.urgencyLevel && <p className="text-xs text-red-600">{errors.urgencyLevel}</p>}
         </div>
-        {errors.urgencyLevel && <p className="mt-1 text-xs text-red-600">{errors.urgencyLevel}</p>}
-      </div>
-
-      {/* Contact No */}
-      <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Contact No <span className="text-red-600">*</span>
-        </label>
-        <input
-          type="tel"
-          value={contactNo}
-          onChange={(e) => setContactNo(e.target.value)}
-          placeholder="e.g., 09171234567"
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
-        />
-        {errors.contactNo && <p className="mt-1 text-xs text-red-600">{errors.contactNo}</p>}
-      </div>
-
-      {/* Additional Notes */}
-      <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
-        <textarea
-          value={additionalNotes}
-          onChange={(e) => setAdditionalNotes(e.target.value)}
-          placeholder="Special needs, medical conditions, number of children, etc."
-          rows={3}
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none text-sm"
-        />
       </div>
 
       {/* Verification Document */}
-      <div className="mb-7">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Verification Document <span className="text-red-500">*</span>
-        </label>
-        <div className="flex items-center gap-3 bg-gray-50 border border-gray-300 rounded-lg p-2">
-          <FileText className="w-5 h-5 text-gray-500" />
-          <input
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={(e) => setEmergencyDocument(e.target.files?.[0] || null)}
-            className="text-sm text-gray-700 w-full"
-          />
-        </div>
-        {emergencyDocument && (
-          <p className="mt-1 text-xs text-gray-500 truncate">Selected: {emergencyDocument.name}</p>
-        )}
-        {errors.emergencyDocument && <p className="mt-1 text-xs text-red-600">{errors.emergencyDocument}</p>}
-      </div>
+      <FileInput
+        label="Verification Document *"
+        file={emergencyDocument}
+        onChange={setEmergencyDocument}
+        error={errors.emergencyDocument}
+      />
 
-      {/* Global Error */}
+      {/* Additional Notes */}
+      <TextArea
+        label="Additional Notes (Optional)"
+        value={additionalNotes}
+        onChange={setAdditionalNotes}
+        placeholder="Special needs, medical conditions, etc."
+      />
+
+      {/* Error Message */}
       {errorMessage && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">{errorMessage}</p>
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-xs text-red-700">{errorMessage}</p>
         </div>
       )}
 
-      <button
-        onClick={handleSubmit}
-        className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg transition-all"
-      >
+      {/* Submit Button */}
+      <Button onClick={handleSubmit} className="w-full py-3 text-sm font-semibold">
         Submit Request
-      </button>
+      </Button>
     </div>
   );
 };

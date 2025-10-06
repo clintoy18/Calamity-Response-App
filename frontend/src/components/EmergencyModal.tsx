@@ -1,3 +1,4 @@
+// EmergencyModal.tsx
 import React from "react";
 import type { Status, Location, NeedType } from "../types";
 import { LoadingState } from "./LoadingState";
@@ -59,43 +60,45 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({
   };
 
   return (
-    <div className="z-50 absolute inset-0 bg-black/40 backdrop-blur-sm  flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-y-auto">
-        {status === "loading" && <LoadingState hasLocation={!!location} />}
+    <div className="z-50 fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white w-full sm:max-w-3xl mx-auto rounded-xl shadow-xl max-h-[90vh] overflow-hidden">
+        <div className="overflow-y-auto max-h-[90vh] p-4 sm:p-6">
+          {status === "loading" && <LoadingState hasLocation={!!location} />}
 
-        {status === "form" && location && (
-          <EmergencyForm
-            location={location}
-            placeName={placeName}
-            contactNo={contactNo}
-            setContactNo={setContactNo}
-            selectedNeeds={selectedNeeds}
-            toggleNeed={toggleNeed}
-            numberOfPeople={numberOfPeople}
-            setNumberOfPeople={setNumberOfPeople}
-            urgencyLevel={urgencyLevel}
-            setUrgencyLevel={setUrgencyLevel}
-            additionalNotes={additionalNotes}
-            setAdditionalNotes={setAdditionalNotes}
-            errorMessage={errorMessage}
-            onSubmit={onSubmit}
-            onClose={onReset}
-            emergencyDocument={emergencyDocument}
-            setEmergencyDocument={setEmergencyDocument}
-          />
-        )}
+          {status === "form" && location && (
+            <EmergencyForm
+              location={location}
+              placeName={placeName}
+              contactNo={contactNo}
+              setContactNo={setContactNo}
+              selectedNeeds={selectedNeeds}
+              toggleNeed={toggleNeed}
+              numberOfPeople={numberOfPeople}
+              setNumberOfPeople={setNumberOfPeople}
+              urgencyLevel={urgencyLevel}
+              setUrgencyLevel={setUrgencyLevel}
+              additionalNotes={additionalNotes}
+              setAdditionalNotes={setAdditionalNotes}
+              errorMessage={errorMessage}
+              onSubmit={onSubmit}
+              onClose={onReset}
+              emergencyDocument={emergencyDocument}
+              setEmergencyDocument={setEmergencyDocument}
+            />
+          )}
 
-        {status === "success" && (
-          <SuccessState onReset={onReset} onClose={() => setStatus("idle")} />
-        )}
+          {status === "success" && (
+            <SuccessState onReset={onReset} onClose={() => setStatus("idle")} />
+          )}
 
-        {status === "error" && (
-          <ErrorState
-            errorMessage={errorMessage}
-            hasLocation={!!location}
-            onRetry={handleRetry}
-          />
-        )}
+          {status === "error" && (
+            <ErrorState
+              errorMessage={errorMessage}
+              hasLocation={!!location}
+              onRetry={handleRetry}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

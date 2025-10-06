@@ -1,5 +1,8 @@
+// ResponderForm.tsx
 import React, { useState } from "react";
-import { X, FileText } from "lucide-react";
+import { TextInput, TextArea, FileInput, Button } from "../components/form";
+import { isEmailValid, isPasswordValid, isPhoneValid, isFileValid } from "../hooks/useFormValidation";
+import { UserCheck, X } from "lucide-react";
 
 interface ResponderFormProps {
   fullName: string;
@@ -14,9 +17,17 @@ interface ResponderFormProps {
   setDocument: (file: File | null) => void;
   notes: string;
   setNotes: (value: string) => void;
-  errorMessage: string;
+  errorMessage?: string;
   onSubmit: () => void;
   onClose: () => void;
+}
+
+interface FormErrors {
+  fullName?: string;
+  email?: string;
+  password?: string;
+  contactNumber?: string;
+  document?: string;
 }
 
 export const ResponderForm: React.FC<ResponderFormProps> = ({
@@ -36,42 +47,22 @@ export const ResponderForm: React.FC<ResponderFormProps> = ({
   onSubmit,
   onClose,
 }) => {
-  const [fieldErrors, setFieldErrors] = useState<{
-    fullName?: string;
-    email?: string;
-    password?: string;
-    contactNumber?: string;
-    document?: string;
-  }>({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  // Validation helpers
-  const validateEmail = (value: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  const validatePassword = (value: string) =>
-    value.length >= 6; // Example: min 6 characters
-  const validateContact = (value: string) =>
-    /^\d{10,15}$/.test(value); // Example: 10-15 digits
-  const validateDocument = (file: File | null) =>
-    file && ["application/pdf", "image/jpeg", "image/png"].includes(file.type);
+  const handleValidation = (): boolean => {
+    const newErrors: FormErrors = {};
+    if (!fullName.trim()) newErrors.fullName = "Full name is required.";
+    if (!email.trim()) newErrors.email = "Email is required.";
+    else if (!isEmailValid(email)) newErrors.email = "Invalid email format.";
+    if (!password) newErrors.password = "Password is required.";
+    else if (!isPasswordValid(password)) newErrors.password = "Password must be at least 6 characters.";
+    if (!contactNumber) newErrors.contactNumber = "Contact number is required.";
+    else if (!isPhoneValid(contactNumber)) newErrors.contactNumber = "Must be a valid Philippine mobile number.";
+    if (!document) newErrors.document = "Verification document is required.";
+    else if (!isFileValid(document)) newErrors.document = "Invalid document type (PDF/JPG/PNG only).";
 
-  const handleValidation = () => {
-    const errors: typeof fieldErrors = {};
-
-    if (!fullName.trim()) errors.fullName = "Full Name is required.";
-    if (!email.trim()) errors.email = "Email is required.";
-    else if (!validateEmail(email)) errors.email = "Invalid email format.";
-    if (!password) errors.password = "Password is required.";
-    else if (!validatePassword(password))
-      errors.password = "Password must be at least 6 characters.";
-    if (!contactNumber) errors.contactNumber = "Contact Number is required.";
-    else if (!validateContact(contactNumber))
-      errors.contactNumber = "Invalid contact number.";
-    if (!document) errors.document = "Verification Document is required.";
-    else if (!validateDocument(document))
-      errors.document = "Invalid document type (PDF/JPG/PNG).";
-
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = () => {
@@ -79,157 +70,92 @@ export const ResponderForm: React.FC<ResponderFormProps> = ({
   };
 
   return (
-    <div className="p-6 bg-white rounded-2xl">
+    <div className="p-4 sm:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-semibold text-gray-800">
-          Apply as Responder
-        </h3>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition"
-        >
-          <X className="w-5 h-5" />
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-red-50 rounded-lg">
+            <UserCheck className="w-6 h-6 text-red-500" />
+          </div>
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Responder Registration</h2>
+        </div>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <X className="w-6 h-6" />
         </button>
       </div>
 
-      <div className="space-y-5">
-        {/* Full Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Full Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            onBlur={handleValidation}
-            placeholder="e.g. Juan Dela Cruz"
-            className={`w-full px-4 py-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              fieldErrors.fullName ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {fieldErrors.fullName && (
-            <p className="text-xs text-red-600 mt-1">{fieldErrors.fullName}</p>
-          )}
-        </div>
-
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onBlur={handleValidation}
-            placeholder="e.g. juan@email.com"
-            className={`w-full px-4 py-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              fieldErrors.email ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {fieldErrors.email && (
-            <p className="text-xs text-red-600 mt-1">{fieldErrors.email}</p>
-          )}
-        </div>
-
-        {/* Password */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Password <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onBlur={handleValidation}
-            placeholder="••••••••"
-            className={`w-full px-4 py-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              fieldErrors.password ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {fieldErrors.password && (
-            <p className="text-xs text-red-600 mt-1">{fieldErrors.password}</p>
-          )}
-        </div>
-
-        {/* Contact Number */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Contact Number <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="tel"
-            value={contactNumber}
-            onChange={(e) => setContactNumber(e.target.value)}
-            onBlur={handleValidation}
-            placeholder="e.g., 09171234567"
-            className={`w-full px-4 py-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              fieldErrors.contactNumber ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {fieldErrors.contactNumber && (
-            <p className="text-xs text-red-600 mt-1">
-              {fieldErrors.contactNumber}
-            </p>
-          )}
-        </div>
-
-        {/* Verification Document */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Verification Document <span className="text-red-500">*</span>
-          </label>
-          <div className="flex items-center gap-3 bg-gray-50 border rounded-lg p-2 border-gray-300">
-            <FileText className="w-5 h-5 text-gray-500" />
-            <input
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={(e) => setDocument(e.target.files?.[0] || null)}
-              onBlur={handleValidation}
-              className="text-sm text-gray-700 w-full"
-            />
-          </div>
-          {document && (
-            <p className="mt-1 text-xs text-gray-500 truncate">
-              Selected: {document.name}
-            </p>
-          )}
-          {fieldErrors.document && (
-            <p className="text-xs text-red-600 mt-1">{fieldErrors.document}</p>
-          )}
-        </div>
-
-        {/* Notes */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Notes (Why do you want to be a responder?)
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            placeholder="Tell us your motivation..."
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-800"
-          />
-        </div>
-
-        {/* Global Error */}
-        {errorMessage && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700 font-medium">{errorMessage}</p>
-          </div>
-        )}
-
-        {/* Submit */}
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all shadow-sm"
-        >
-          Submit Application
-        </button>
+      {/* Info Banner */}
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm text-blue-700">
+          Register as a responder to help coordinate relief efforts in your area. All applications are reviewed for verification.
+        </p>
       </div>
+
+      {/* Full Name */}
+      <TextInput
+        label="Full Name *"
+        value={fullName}
+        onChange={setFullName}
+        placeholder="Juan Dela Cruz"
+        error={errors.fullName}
+      />
+
+      {/* Email & Password */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <TextInput
+          label="Email *"
+          type="email"
+          value={email}
+          onChange={setEmail}
+          placeholder="juan@example.com"
+          error={errors.email}
+        />
+        <TextInput
+          label="Password *"
+          type="password"
+          value={password}
+          onChange={setPassword}
+          placeholder="Min. 6 characters"
+          error={errors.password}
+        />
+      </div>
+
+      {/* Contact Number */}
+      <TextInput
+        label="Contact Number *"
+        value={contactNumber}
+        onChange={setContactNumber}
+        placeholder="09171234567"
+        error={errors.contactNumber}
+      />
+
+      {/* Verification Document */}
+      <FileInput
+        label="Verification Document *"
+        file={document}
+        onChange={setDocument}
+        error={errors.document}
+      />
+
+      {/* Additional Notes */}
+      <TextArea
+        label="Additional Notes (Optional)"
+        value={notes}
+        onChange={setNotes}
+        placeholder="Experience, skills, availability, or other relevant information..."
+      />
+
+      {/* Global Error */}
+      {errorMessage && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-700">{errorMessage}</p>
+        </div>
+      )}
+
+      {/* Submit */}
+      <Button onClick={handleSubmit} className="w-full py-3 text-sm sm:text-base font-semibold">
+        Submit Application
+      </Button>
     </div>
   );
 };

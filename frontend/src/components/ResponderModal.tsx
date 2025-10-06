@@ -1,3 +1,4 @@
+// ResponderModal.tsx
 import React from "react";
 import { ResponderForm } from "./ResponderForm";
 
@@ -16,7 +17,7 @@ interface ResponderModalProps {
   setDocument: (file: File | null) => void;
   notes: string;
   setNotes: (value: string) => void;
-  errorMessage: string;
+  errorMessage?: string;
   onSubmit: () => void;
   onClose: () => void;
 }
@@ -43,8 +44,8 @@ export const ResponderModal: React.FC<ResponderModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
         <ResponderForm
           fullName={fullName}
           setFullName={setFullName}
