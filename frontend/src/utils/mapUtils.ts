@@ -3,7 +3,7 @@ import L from "leaflet";
 import { urgencyColors, affectedAreas } from "../constants";
 import type { EmergencyRecord } from "../types";
 import { hasRole } from "./authUtils";
-import { updateEmergencyStatus, unverifyEmergencyById } from "../services/api"; // Use the unverify function
+import { updateEmergencyStatus, unverifyEmergencyById } from "../services/api"; // Make sure deleteEmergency exists
 
 const isResponder = hasRole("respondent");
 const isAdmin = hasRole("admin");
@@ -61,7 +61,7 @@ export const createPopupContent = (
           const btn = document.getElementById(`resolve-btn-${emergencyData.id}`);
           if (btn) btn.addEventListener("click", async () => {
             try {
-              await updateEmergencyStatus(emergencyData.id, "resolved");
+              await unverifyEmergencyById(emergencyData.id);
               alert("Emergency marked as resolved");
               location.reload();
             } catch {
@@ -74,19 +74,19 @@ export const createPopupContent = (
       popupContent += `</div>`;
     }
 
-    // ✅ Unverify button for admins only
+    // Delete button for admins only
     if (isAdmin && emergencyData.id) {
-      popupContent += `<button id="unverify-btn-${emergencyData.id}" style="margin-top:6px; padding:6px 12px; background:#ef4444; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; width:100%;">Mark as Unverified</button>`;
+      popupContent += `<button id="delete-btn-${emergencyData.id}" style="margin-top:6px; padding:6px 12px; background:#ef4444; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; width:100%;">Delete Emergency</button>`;
       setTimeout(() => {
-        const unverifyBtn = document.getElementById(`unverify-btn-${emergencyData.id}`);
-        if (unverifyBtn) unverifyBtn.addEventListener("click", async () => {
-          if (!confirm("Are you sure you want to mark this emergency as unverified?")) return;
+        const deleteBtn = document.getElementById(`delete-btn-${emergencyData.id}`);
+        if (deleteBtn) deleteBtn.addEventListener("click", async () => {
+          if (!confirm("Are you sure you want to delete this emergency?")) return;
           try {
             await unverifyEmergencyById(emergencyData.id);
-            alert("Emergency marked as unverified");
+            alert("Emergency deleted successfully");
             location.reload();
           } catch {
-            alert("Failed to update status");
+            alert("Failed to delete emergency");
           }
         });
       }, 0);
