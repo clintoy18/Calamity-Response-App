@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { CEBU_CENTER } from '../constants';
-import { addAffectedAreaMarkers } from '../utils/mapUtils';
+import { useEffect, useRef } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { CEBU_CENTER } from "../constants";
+import { addAffectedAreaMarkers } from "../utils/mapUtils";
 
 interface UseMapSetupReturn {
   mapRef: React.RefObject<HTMLDivElement | null>;
@@ -22,17 +22,20 @@ export const useMapSetup = (): UseMapSetupReturn => {
       // Removed maxBounds and maxBoundsViscosity to allow global access
       minZoom: 2,
       maxZoom: 18,
-      zoomControl: true,
+      zoomControl: false,
       worldCopyJump: true,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap',
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap",
       maxZoom: 19,
     }).addTo(map);
 
     mapInstanceRef.current = map;
-    mapInstanceRef.current.flyTo(CEBU_CENTER, 12, { duration: 2, easeLinearity: 0.2 });
+    mapInstanceRef.current.flyTo(CEBU_CENTER, 12, {
+      duration: 2,
+      easeLinearity: 0.2,
+    });
 
     addAffectedAreaMarkers(map);
 
