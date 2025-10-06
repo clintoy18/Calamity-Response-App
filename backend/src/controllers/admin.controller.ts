@@ -40,7 +40,6 @@ export const approveResponder = async (
   }
 };
 
-
 export const verifyEmergencyRequest = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -116,7 +115,6 @@ export const fetchResponders = async (req: Request, res: Response) => {
   }
 };
 
-
 //reject responders
 export const rejectResponders = async (
   req: Request,
@@ -133,7 +131,7 @@ export const rejectResponders = async (
     }
 
     if (user.isVerified) {
-      res.status(400).json({ message: "User is rejected already"});
+      res.status(400).json({ message: "User is rejected already" });
       return;
     }
 
@@ -188,11 +186,7 @@ export const fetchEmergencies = async (req: Request, res: Response) => {
 
     // ✅ Execute queries in parallel
     const [emergencies, total] = await Promise.all([
-      Emergency.find(query)
-        .sort(sortCriteria)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+      Emergency.find(query).sort(sortCriteria).skip(skip).limit(limit).lean(),
       Emergency.countDocuments(query),
     ]);
 
@@ -239,9 +233,11 @@ export const getEmergencyById = async (req: Request, res: Response) => {
   }
 };
 
-
 // Fetch count of emergencies grouped by city/municipality
-export const fetchEmergencyCountByCity = async (req: Request, res: Response) => {
+export const fetchEmergencyCountByCity = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
@@ -319,7 +315,6 @@ export const fetchEmergencyCountByCity = async (req: Request, res: Response) => 
   }
 };
 
-
 export const deleteEmergencyById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -339,14 +334,27 @@ export const deleteEmergencyById = async (req: Request, res: Response) => {
   }
 };
 
-
 export const unverifyEmergency = async (req: Request, res: Response) => {
   const { id } = req.params;
+
   try {
-    const emergency = await Emergency.findByIdAndUpdate(id, { isVerified: false }, { new: true });
-    if (!emergency) return res.status(404).json({ success: false, message: "Emergency not found" });
-    res.json({ success: true, data: emergency });
+    // Find the emergency by its _id
+    const emergency = await Emergency.findOne({ id: id });
+
+    if (!emergency) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Emergency not found" });
+    }
+
+    // Update the field manually
+    emergency.isVerified = false;
+
+    // Save the updated document
+    const updatedEmergency = await emergency.save();
+
+    res.json({ success: true, data: updatedEmergency });
   } catch (err) {
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ success: false, message: err });
   }
 };

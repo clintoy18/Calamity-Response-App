@@ -116,16 +116,25 @@ export const unverifyEmergencyById = async (
   id: string
 ): Promise<ApiResponse<null>> => {
   try {
-    const response = await api.put(
-      `/admin/emergencies/${id}/unverify`,
-      { isVerified: false } // should be false to unverify
-    );
-
-    return response.data;
-  } catch (error: any) {
-    // Axios errors have response.data.message
-    const message =
-      error.response?.data?.message || "Failed to unverify emergency";
+    const response = await api.put(`admin/emergencies/${id}/unverify`);
+    // The server returns { success: true, data: emergency }
+    return {
+      success: response.data.success,
+      data: null, // we only care about the action, not the updated object
+      message: response.data.message,
+    };
+  } catch (error: unknown) {
+    let message = "Failed to unverify emergency";
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error &&
+      typeof (error as { response?: { data?: { message?: string } } }).response
+        ?.data?.message === "string"
+    ) {
+      message = (error as { response: { data: { message: string } } }).response
+        .data.message;
+    }
     throw new Error(message);
   }
 };

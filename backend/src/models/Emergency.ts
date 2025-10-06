@@ -44,7 +44,7 @@ const emergencySchema = new Schema<IEmergency>(
       default: "pending",
     },
     isVerified: { type: Boolean, default: false },
-    imageVerification: { type: String, required: true }, // URL or path to the image
+    imageVerification: { type: String }, // URL or path to the image
   },
   { timestamps: true } // Auto-manages createdAt & updatedAt
 );

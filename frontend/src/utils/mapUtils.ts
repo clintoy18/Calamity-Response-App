@@ -3,7 +3,7 @@ import L from "leaflet";
 import { urgencyColors, affectedAreas } from "../constants";
 import type { EmergencyRecord } from "../types";
 import { hasRole } from "./authUtils";
-import { updateEmergencyStatus, unverifyEmergencyById } from "../services/api"; // Make sure deleteEmergency exists
+import { unverifyEmergencyById } from "../services/api"; // Make sure deleteEmergency exists
 
 const isResponder = hasRole("respondent");
 const isAdmin = hasRole("admin");
@@ -20,7 +20,9 @@ export const createPopupContent = (
     respondUrl = `${API_BASE}/emergencies/${emergencyData.id}/respond`;
   }
 
-  const urgency = emergencyData ? urgencyColors[emergencyData.urgencyLevel] : null;
+  const urgency = emergencyData
+    ? urgencyColors[emergencyData.urgencyLevel]
+    : null;
 
   let popupContent = `
     <div style="min-width: 220px; font-family: 'Inter', sans-serif; color: #374151;">
@@ -28,20 +30,48 @@ export const createPopupContent = (
       <div style="font-size: 13px; color: #6b7280; line-height: 1.4;">
         <strong>ID:</strong> ${id}<br>
         <strong>Location:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}<br>
-        <strong>Place:</strong> ${emergencyData?.placename || "Unknown Location"}
+        <strong>Place:</strong> ${
+          emergencyData?.placename || "Unknown Location"
+        }
       </div>
   `;
 
   if (emergencyData) {
     popupContent += `
       <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
-        <div style="font-size: 12px; margin-bottom: 6px;"><strong style="color: #374151;">Relief Items:</strong> <span style="color: #6b7280;">${emergencyData.needs.join(", ")}</span></div>
-        <div style="font-size: 12px; margin-bottom: 6px;"><strong style="color: #374151;">People:</strong> <span style="color: #6b7280;">${emergencyData.numberOfPeople}</span></div>
-        ${urgency ? `<div style="font-size: 12px; margin-bottom: 6px;"><strong style="color: #374151;">Urgency:</strong> <span style="background:${urgency.light}; color:${urgency.bg}; padding:2px 8px; border-radius:12px; font-weight:600; font-size:11px; margin-left:4px;">${urgency.text}</span></div>` : ""}
-        ${emergencyData.contactNo ? `<div style="font-size: 12px; margin-bottom:6px;"><strong style="color:#374151;">Contact:</strong> <a href="tel:${emergencyData.contactNo}" style="color:#2563eb; margin-left:4px; text-decoration:underline;">${emergencyData.contactNo}</a></div>` : ""}
-        ${emergencyData.status ? `<div style="font-size:12px; margin-bottom:6px;"><strong style="color:#374151;">Status:</strong> <span style="color:#6b7280; text-transform:capitalize; margin-left:4px;">${emergencyData.status}</span></div>` : ""}
-        ${emergencyData.additionalNotes ? `<div style="font-size:12px; margin-top:8px; padding-top:8px; border-top:1px solid #e5e7eb;"><strong style="color:#374151;">Notes:</strong> <span style="color:#6b7280;">${emergencyData.additionalNotes}</span></div>` : ""}
-        ${emergencyData.createdAt ? `<div style="font-size:11px; margin-top:8px; color:#9ca3af;"><strong>Created:</strong> ${new Date(emergencyData.createdAt).toLocaleString()}</div>` : ""}
+        <div style="font-size: 12px; margin-bottom: 6px;"><strong style="color: #374151;">Relief Items:</strong> <span style="color: #6b7280;">${emergencyData.needs.join(
+          ", "
+        )}</span></div>
+        <div style="font-size: 12px; margin-bottom: 6px;"><strong style="color: #374151;">People:</strong> <span style="color: #6b7280;">${
+          emergencyData.numberOfPeople
+        }</span></div>
+        ${
+          urgency
+            ? `<div style="font-size: 12px; margin-bottom: 6px;"><strong style="color: #374151;">Urgency:</strong> <span style="background:${urgency.light}; color:${urgency.bg}; padding:2px 8px; border-radius:12px; font-weight:600; font-size:11px; margin-left:4px;">${urgency.text}</span></div>`
+            : ""
+        }
+        ${
+          emergencyData.contactNo
+            ? `<div style="font-size: 12px; margin-bottom:6px;"><strong style="color:#374151;">Contact:</strong> <a href="tel:${emergencyData.contactNo}" style="color:#2563eb; margin-left:4px; text-decoration:underline;">${emergencyData.contactNo}</a></div>`
+            : ""
+        }
+        ${
+          emergencyData.status
+            ? `<div style="font-size:12px; margin-bottom:6px;"><strong style="color:#374151;">Status:</strong> <span style="color:#6b7280; text-transform:capitalize; margin-left:4px;">${emergencyData.status}</span></div>`
+            : ""
+        }
+        ${
+          emergencyData.additionalNotes
+            ? `<div style="font-size:12px; margin-top:8px; padding-top:8px; border-top:1px solid #e5e7eb;"><strong style="color:#374151;">Notes:</strong> <span style="color:#6b7280;">${emergencyData.additionalNotes}</span></div>`
+            : ""
+        }
+        ${
+          emergencyData.createdAt
+            ? `<div style="font-size:11px; margin-top:8px; color:#9ca3af;"><strong>Created:</strong> ${new Date(
+                emergencyData.createdAt
+              ).toLocaleString()}</div>`
+            : ""
+        }
       </div>
 
       <!-- Navigation Buttons -->
@@ -58,16 +88,19 @@ export const createPopupContent = (
       if (emergencyData.status === "pending" && emergencyData.id) {
         popupContent += `<button id="resolve-btn-${emergencyData.id}" style="padding:6px 12px; background:#f59e0b; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; width:100%;">Mark as Resolved</button>`;
         setTimeout(() => {
-          const btn = document.getElementById(`resolve-btn-${emergencyData.id}`);
-          if (btn) btn.addEventListener("click", async () => {
-            try {
-              await unverifyEmergencyById(emergencyData.id);
-              alert("Emergency marked as resolved");
-              location.reload();
-            } catch {
-              alert("Failed to update status");
-            }
-          });
+          const btn = document.getElementById(
+            `resolve-btn-${emergencyData.id}`
+          );
+          if (btn)
+            btn.addEventListener("click", async () => {
+              try {
+                await unverifyEmergencyById(emergencyData.id);
+                alert("Emergency marked as resolved");
+                location.reload();
+              } catch {
+                alert("Failed to update status");
+              }
+            });
         }, 0);
       }
 
@@ -78,17 +111,21 @@ export const createPopupContent = (
     if (isAdmin && emergencyData.id) {
       popupContent += `<button id="delete-btn-${emergencyData.id}" style="margin-top:6px; padding:6px 12px; background:#ef4444; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; width:100%;">Delete Emergency</button>`;
       setTimeout(() => {
-        const deleteBtn = document.getElementById(`delete-btn-${emergencyData.id}`);
-        if (deleteBtn) deleteBtn.addEventListener("click", async () => {
-          if (!confirm("Are you sure you want to delete this emergency?")) return;
-          try {
-            await unverifyEmergencyById(emergencyData.id);
-            alert("Emergency deleted successfully");
-            location.reload();
-          } catch {
-            alert("Failed to delete emergency");
-          }
-        });
+        const deleteBtn = document.getElementById(
+          `delete-btn-${emergencyData.id}`
+        );
+        if (deleteBtn)
+          deleteBtn.addEventListener("click", async () => {
+            if (!confirm("Are you sure you want to delete this emergency?"))
+              return;
+            try {
+              await unverifyEmergencyById(emergencyData.id);
+              alert("Emergency deleted successfully");
+              location.reload();
+            } catch {
+              alert("Failed to delete emergency");
+            }
+          });
       }, 0);
     }
 
