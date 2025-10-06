@@ -6,7 +6,10 @@ import { getRespondentColumns } from "./columns/RespondentColumns";
 import { getEmergencyColumns } from "./columns/EmergencyColumns";
 import type { IUser, IEmergency } from "../../hooks/queries/useAdmin";
 import { useAuth } from "../../hooks/useAuth";
-import { useFetchEmergencies, useFetchResponders } from "../../hooks/queries/useAdmin";
+import {
+  useFetchEmergencies,
+  useFetchResponders,
+} from "../../hooks/queries/useAdmin";
 
 type TabType = "respondents" | "emergencies";
 
@@ -56,17 +59,16 @@ export const Dashboard: React.FC = () => {
     { label: "In Progress", value: "in-progress" },
     { label: "Resolved", value: "resolved" },
     { label: "Verified", value: "verified" },
-
   ];
 
   // Urgency level filters
-  const urgencyFilters: FilterOption[] = [
-    { label: "All", value: "all" },
-    { label: "Critical", value: "CRITICAL" },
-    { label: "High", value: "HIGH" },
-    { label: "Medium", value: "MEDIUM" },
-    { label: "Low", value: "LOW" },
-  ];
+  // const urgencyFilters: FilterOption[] = [
+  //   { label: "All", value: "all" },
+  //   { label: "Critical", value: "CRITICAL" },
+  //   { label: "High", value: "HIGH" },
+  //   { label: "Medium", value: "MEDIUM" },
+  //   { label: "Low", value: "LOW" },
+  // ];
 
   // Determine table data and columns based on active tab
   const tableProps =
@@ -105,12 +107,14 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
               <div className="w-10 h-10 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
-              <p className="text-sm text-gray-600 font-medium">Loading data...</p>
+              <p className="text-sm text-gray-600 font-medium">
+                Loading data...
+              </p>
             </div>
           </div>
         ) : (
-          <DataTable 
-            columns={tableProps.columns} 
+          <DataTable
+            columns={tableProps.columns}
             data={tableProps.data}
             searchPlaceholder={tableProps.searchPlaceholder}
             filterKey={tableProps.filterKey}
