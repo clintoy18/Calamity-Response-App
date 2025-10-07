@@ -3,7 +3,8 @@ import L from "leaflet";
 import { urgencyColors, affectedAreas } from "../constants";
 import type { EmergencyRecord } from "../types";
 import { hasRole } from "./authUtils";
-import { unverifyEmergencyById } from "../services/api"; // Make sure deleteEmergency exists
+import { unverifyEmergencyById, updateEmergencyStatus } from "../services/api"; // Make sure deleteEmergency exists
+import "leaflet.markercluster";
 
 const isResponder = hasRole("respondent");
 const isAdmin = hasRole("admin");
@@ -81,31 +82,49 @@ export const createPopupContent = (
       </div>
     `;
 
-    // Buttons for responders only
+   // Buttons for responders only
     if (isResponder) {
-      popupContent += `<div style="margin-top:10px; display:flex; flex-direction:column; gap:6px;">`;
+    popupContent += `
+      <div style="margin-top:10px; display:flex; flex-direction:column; gap:6px;">
+    `;
 
-      if (emergencyData.status === "pending" && emergencyData.id) {
-        popupContent += `<button id="resolve-btn-${emergencyData.id}" style="padding:6px 12px; background:#f59e0b; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; width:100%;">Mark as Resolved</button>`;
-        setTimeout(() => {
-          const btn = document.getElementById(
-            `resolve-btn-${emergencyData.id}`
-          );
-          if (btn)
-            btn.addEventListener("click", async () => {
-              try {
-                await unverifyEmergencyById(emergencyData.id);
-                alert("Emergency marked as resolved");
-                location.reload();
-              } catch {
-                alert("Failed to update status");
-              }
-            });
-        }, 0);
-      }
+    if (emergencyData.status === "pending" && emergencyData.id) {
+      popupContent += `
+        <button 
+          id="resolve-btn-${emergencyData.id}" 
+          style="padding:6px 12px; background:#f59e0b; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; width:100%;">
+          Mark as Resolved
+        </button>
+      `;
 
-      popupContent += `</div>`;
+      setTimeout(() => {
+        const btn = document.getElementById(`resolve-btn-${emergencyData.id}`);
+        if (btn && !btn.dataset.bound) {
+          btn.dataset.bound = "true";
+          btn.addEventListener("click", async () => {
+            // 🟡 Ask for confirmation first
+            const confirmAction = confirm(
+              "Are you sure you want to mark this emergency as resolved?"
+            );
+            if (!confirmAction) return;
+
+            try {
+              await updateEmergencyStatus(emergencyData.id, "resolved");
+              alert("Emergency marked as resolved ✅");
+              // ✅ Redirect to your desired website
+              window.location.href = "https://services.cebu.gov.ph/aidmap/donations";
+            } catch {
+              alert("❌ Failed to update status");
+            }
+          });
+        }
+      }, 0);
     }
+
+    popupContent += `</div>`;
+  }
+
+
 
     // Delete button for admins only
     if (isAdmin && emergencyData.id) {
@@ -142,36 +161,61 @@ export const createPopupContent = (
 
 export const createMarkerIcon = (color: string): L.DivIcon => {
   return L.divIcon({
-    html: `<div style="background: ${color}; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;"><div style="color:white; font-size:16px;">📍</div></div>`,
+    html: `
+      <div style="
+        background:${color};
+        width:26px;
+        height:26px;
+        border-radius:50%;
+        border:3px solid white;
+        box-shadow:0 2px 6px rgba(0,0,0,0.3);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      ">
+        <div style="color:white; font-size:14px; line-height:1;">📍</div>
+      </div>
+    `,
     iconSize: [24, 24],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -16],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -14],
     className: "",
   });
 };
 
+
 export const addAffectedAreaMarkers = (map: L.Map): void => {
+  const markerCluster = L.markerClusterGroup({
+    maxClusterRadius: 60, // adjust how tightly they group
+    spiderfyOnEveryZoom: false, // optional: avoid “spider” expansion
+    disableClusteringAtZoom: 12, // show all individual markers beyond zoom level 12
+  });
+
   affectedAreas.forEach((area) => {
     const [lat, lng] = area.coords;
     const marker = L.marker([lat, lng], {
       icon: L.divIcon({
         html: `
-        <div style="position: relative; width:28px; height:28px; display:flex; align-items:center; justify-content:center;">
-          <span style="position:absolute; width:100%; height:100%; background:#f97316; border-radius:50%; opacity:0.5; animation:ping 1s cubic-bezier(0,0,0.2,1) infinite;"></span>
-          <div style="width:16px; height:16px; border-radius:50%; background:#f97316; border:2px solid white; display:flex; align-items:center; justify-content:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="white"><path d="M12 2 C6 2, 2 6, 2 12 s4 10, 10 10 s10 -4, 10 -10 s-4 -10, -10 -10zm0 18 c-4.418 0 -8 -3.582 -8 -8 s3.582 -8, 8 -8 s8 3.582, 8 8 s-3.582 8 -8 8zm0 -14 c-3.314 0 -6 2.686 -6 6 s2.686 6, 6 6 s6 -2.686, 6 -6 s-2.686 -6 -6 -6z"/></svg>
-          </div>
-        </div>`,
+          <div style="position: relative; width:28px; height:28px; display:flex; align-items:center; justify-content:center;">
+            <span style="position:absolute; width:100%; height:100%; background:#f97316; border-radius:50%; opacity:0.5; animation:ping 1s cubic-bezier(0,0,0.2,1) infinite;"></span>
+            <div style="width:14px; height:14px; border-radius:50%; background:#f97316; border:2px solid white; display:flex; align-items:center; justify-content:center;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="10" height="10" fill="white"><path d="M12 2C6 2 2 6 2 12s4 10 10 10 10-4 10-10S18 2 12 2z"/></svg>
+            </div>
+          </div>`,
         iconSize: [28, 28],
-        iconAnchor: [16, 16],
-        popupAnchor: [0, -16],
+        iconAnchor: [10, 10],
+        popupAnchor: [0, -12],
         className: "",
       }),
-    }).addTo(map);
+    });
 
     marker.bindPopup(`
       <div style="font-weight:bold; font-size:14px;">Earthquake Affected Area</div>
       <div style="font-size:12px; color:#6b7280;">${area.name}</div>
     `);
+
+    markerCluster.addLayer(marker);
   });
+
+  map.addLayer(markerCluster);
 };
