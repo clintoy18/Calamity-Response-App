@@ -1,5 +1,5 @@
 // App.tsx
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Loader } from "lucide-react";
 import Emergency from "./screen/Emergency";
