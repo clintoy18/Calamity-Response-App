@@ -37,12 +37,10 @@ const Emergency: React.FC = () => {
   const { handleLogin, errors, isLoading, message } = useAuthActions();
 
   const API_BASE = import.meta.env.VITE_API_URL;
-
-  const { logout } = useAuth();
-  const { isAuthenticated } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Responder form state
+  // Responder modal state
   const [isResponderModalOpen, setIsResponderModalOpen] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -53,7 +51,6 @@ const Emergency: React.FC = () => {
   const [notes, setNotes] = useState("");
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
   const [isPinpointMode, setIsPinpointMode] = useState(false);
   const [selectedMapLocation, setSelectedMapLocation] = useState<{
     lat: number;
@@ -62,22 +59,33 @@ const Emergency: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const { mapRef, mapInstanceRef } = useMapSetup();
-  const { emergencies, setEmergencies, isLoadingEmergencies } =
-    useEmergencies();
+  const { emergencies, setEmergencies, isLoadingEmergencies } = useEmergencies();
   const { addEmergencyMarker, removeTempMarker, markersRef } =
     useEmergencyMarkers(mapInstanceRef);
 
-  const ZOOM_THRESHOLD = 11;
+  const ZOOM_THRESHOLD = 13;
 
-  // Sync markers for all emergencies (real-time) based on zoom
+  // 🧭 Sync markers with map zoom + bounds
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
+    // Handle map clicks when in pinpoint mode
+    const handleMapClick = (e: L.LeafletMouseEvent) => {
+      if (isPinpointMode) {
+        const { lat, lng } = e.latlng;
+        setSelectedMapLocation({ lat, lng });
+        removeTempMarker();
+        addEmergencyMarker(lat, lng, 50, "EMG-TEMP-" + Date.now());
+      }
+    };
+
+    // Dynamically update markers when moving/zooming
     const updateMarkersByZoomAndBounds = () => {
       const zoom = map.getZoom();
       const bounds = map.getBounds();
 
+      // Remove non-temp markers first
       markersRef.current = markersRef.current.filter((m) => {
         if (!m.data.id?.includes("TEMP")) {
           map.removeLayer(m.marker);
@@ -87,7 +95,31 @@ const Emergency: React.FC = () => {
         return true;
       });
 
-      if (zoom >= ZOOM_THRESHOLD) {
+      // 🔹 Show fewer markers when zoomed out
+      if (zoom < ZOOM_THRESHOLD) {
+        const limitedEmergencies = emergencies.slice(0, 10);
+
+        limitedEmergencies.forEach((emergency) => {
+          const exists = markersRef.current.some(
+            (m) => m.data.id === emergency.id
+          );
+          const inBounds = bounds.contains([
+            emergency.latitude,
+            emergency.longitude,
+          ]);
+
+          if (!exists && inBounds) {
+            addEmergencyMarker(
+              emergency.latitude,
+              emergency.longitude,
+              emergency.accuracy,
+              emergency.id,
+              emergency
+            );
+          }
+        });
+      } else {
+        // 🔹 Show all when zoomed in close enough
         emergencies.forEach((emergency) => {
           const exists = markersRef.current.some(
             (m) => m.data.id === emergency.id
@@ -110,40 +142,30 @@ const Emergency: React.FC = () => {
       }
     };
 
-    updateMarkersByZoomAndBounds();
-    map.on("zoomend moveend", updateMarkersByZoomAndBounds);
-
-    return () => {
-      map.off("zoomend moveend", updateMarkersByZoomAndBounds);
-    };
-  }, [emergencies, addEmergencyMarker, mapInstanceRef, markersRef]);
-
-  // Manual map click
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    const handleMapClick = (e: L.LeafletMouseEvent) => {
-      if (isPinpointMode) {
-        const { lat, lng } = e.latlng;
-        setSelectedMapLocation({ lat, lng });
-        removeTempMarker();
-        addEmergencyMarker(lat, lng, 50, "EMG-TEMP-" + Date.now());
-      }
-    };
-
+    // Attach listeners
     map.on("click", handleMapClick);
+    map.on("moveend", updateMarkersByZoomAndBounds);
+    map.on("zoomend", updateMarkersByZoomAndBounds);
+
+    // Initial load
+    updateMarkersByZoomAndBounds();
+
+    // Cleanup
     return () => {
       map.off("click", handleMapClick);
+      map.off("moveend", updateMarkersByZoomAndBounds);
+      map.off("zoomend", updateMarkersByZoomAndBounds);
     };
-  }, [isPinpointMode, mapInstanceRef, addEmergencyMarker, removeTempMarker]);
+  }, [isPinpointMode, emergencies]);
 
+  // ✅ Need selection toggle
   const toggleNeed = (need: NeedType) => {
     setSelectedNeeds((prev) =>
       prev.includes(need) ? prev.filter((n) => n !== need) : [...prev, need]
     );
   };
 
+  // 📍 Auto-detect location and show form
   const handleEmergency = () => {
     setStatus("loading");
     setErrorMessage("");
@@ -237,6 +259,7 @@ const Emergency: React.FC = () => {
         additionalNotes,
         emergencyDocument
       );
+
       const newEmergency: EmergencyRecord = {
         ...location,
         id: data.data.id,
@@ -286,17 +309,6 @@ const Emergency: React.FC = () => {
     removeTempMarker();
   };
 
-  const handleActivatePinpoint = () => {
-    setIsPinpointMode(true);
-    setSelectedMapLocation(null);
-  };
-
-  const handleDeactivatePinpoint = () => {
-    setIsPinpointMode(false);
-    setSelectedMapLocation(null);
-    removeTempMarker();
-  };
-
   const handleResponderSubmit = async () => {
     try {
       if (!fullName || !email || !password || !contactNumber || !document) {
@@ -314,15 +326,10 @@ const Emergency: React.FC = () => {
       formData.append("verificationDocument", document);
 
       const response = await axios.post(`${API_BASE}/auth/register`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      alert(
-        response.data.message || "Responder application submitted successfully!"
-      );
-
+      alert(response.data.message || "Responder application submitted!");
       setIsResponderModalOpen(false);
       setFullName("");
       setEmail("");
@@ -373,8 +380,8 @@ const Emergency: React.FC = () => {
 
       <ManualPinpoint
         isActive={isPinpointMode}
-        onActivate={handleActivatePinpoint}
-        onDeactivate={handleDeactivatePinpoint}
+        onActivate={() => setIsPinpointMode(true)}
+        onDeactivate={() => setIsPinpointMode(false)}
         onConfirm={handleManualPinpointConfirm}
         onOpenSearch={() => setIsSearchOpen(true)}
         selectedLocation={selectedMapLocation}
