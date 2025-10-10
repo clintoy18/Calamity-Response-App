@@ -10,6 +10,13 @@ export const CEBU_BOUNDS: [[number, number], [number, number]] = [
   [12.5, 125.5],
 ];
 
+
+export const DAVAO_ORIENTAL_CENTER: [number, number] = [6.9175, 126.2227];
+export const DAVAO_ORIENTAL_BOUNDS: [[number, number], [number, number]] = [
+  [5.5, 125.0],
+  [7.5, 127.0],
+];
+
 export const needOptions: NeedOption[] = [
   { value: "food", label: "Food", icon: <Package className="w-5 h-5" /> },
   { value: "water", label: "Water", icon: <Droplet className="w-5 h-5" /> },
