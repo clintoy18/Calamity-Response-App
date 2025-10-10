@@ -7,6 +7,7 @@ import { addAffectedAreaMarkers } from "../utils/mapUtils";
 interface UseMapSetupReturn {
   mapRef: React.RefObject<HTMLDivElement | null>;
   mapInstanceRef: React.MutableRefObject<L.Map | null>;
+  flyToLocation: (coords: [number, number], zoom?: number) => void;
 }
 
 export const useMapSetup = (): UseMapSetupReturn => {
@@ -19,7 +20,6 @@ export const useMapSetup = (): UseMapSetupReturn => {
     const map = L.map(mapRef.current, {
       center: [0, 0],
       zoom: 1,
-      // Removed maxBounds and maxBoundsViscosity to allow global access
       minZoom: 2,
       maxZoom: 18,
       zoomControl: false,
@@ -32,7 +32,7 @@ export const useMapSetup = (): UseMapSetupReturn => {
     }).addTo(map);
 
     mapInstanceRef.current = map;
-    mapInstanceRef.current.flyTo(CEBU_CENTER, 12, {
+    map.flyTo(CEBU_CENTER, 12, {
       duration: 2,
       easeLinearity: 0.2,
     });
@@ -47,5 +47,14 @@ export const useMapSetup = (): UseMapSetupReturn => {
     };
   }, []);
 
-  return { mapRef, mapInstanceRef };
+  const flyToLocation = (coords: [number, number], zoom = 12) => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo(coords, zoom, {
+        duration: 2,
+        easeLinearity: 0.2,
+      });
+    }
+  };
+
+  return { mapRef, mapInstanceRef, flyToLocation };
 };

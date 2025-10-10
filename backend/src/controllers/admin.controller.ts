@@ -155,7 +155,6 @@ export const rejectResponders = async (
 };
 
 // Emergencies CRUD
-
 export const fetchEmergencies = async (req: Request, res: Response) => {
   try {
     // ✅ Parse pagination safely
@@ -178,10 +177,10 @@ export const fetchEmergencies = async (req: Request, res: Response) => {
     if (status) query.status = status;
     if (urgencyLevel) query.urgencyLevel = urgencyLevel;
 
-    // ✅ Sorting: unverified first, then verified; newest first within each group
+    // ✅ Sort newest first, optionally grouping by verification
     const sortCriteria: Record<string, 1 | -1> = {
-      isVerified: 1, // false (0) comes first, true (1) next
       createdAt: -1, // newest first
+      isVerified: 1, // unverified first if same timestamp
     };
 
     // ✅ Execute queries in parallel
@@ -206,6 +205,7 @@ export const fetchEmergencies = async (req: Request, res: Response) => {
     });
   }
 };
+
 
 // get emergency by id
 export const getEmergencyById = async (req: Request, res: Response) => {

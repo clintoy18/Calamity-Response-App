@@ -22,6 +22,10 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { getUserRole } from "../utils/authUtils";
 
+// 🗺️ Cebu and Davao Coordinates
+const CEBU_CENTER: [number, number] = [10.3157, 123.8854];
+const DAVAO_ORIENTAL_CENTER: [number, number] = [7.1136, 126.3436];
+
 const Emergency: React.FC = () => {
   const [status, setStatus] = useState<Status>("idle");
   const [location, setLocation] = useState<Location | null>(null);
@@ -58,7 +62,7 @@ const Emergency: React.FC = () => {
   } | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  const { mapRef, mapInstanceRef } = useMapSetup();
+  const { mapRef, mapInstanceRef, flyToLocation } = useMapSetup();
   const { emergencies, setEmergencies, isLoadingEmergencies } = useEmergencies();
   const { addEmergencyMarker, removeTempMarker, markersRef } =
     useEmergencyMarkers(mapInstanceRef);
@@ -70,7 +74,6 @@ const Emergency: React.FC = () => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Handle map clicks when in pinpoint mode
     const handleMapClick = (e: L.LeafletMouseEvent) => {
       if (isPinpointMode) {
         const { lat, lng } = e.latlng;
@@ -80,12 +83,10 @@ const Emergency: React.FC = () => {
       }
     };
 
-    // Dynamically update markers when moving/zooming
     const updateMarkersByZoomAndBounds = () => {
       const zoom = map.getZoom();
       const bounds = map.getBounds();
 
-      // Remove non-temp markers first
       markersRef.current = markersRef.current.filter((m) => {
         if (!m.data.id?.includes("TEMP")) {
           map.removeLayer(m.marker);
@@ -95,10 +96,8 @@ const Emergency: React.FC = () => {
         return true;
       });
 
-      // 🔹 Show fewer markers when zoomed out
       if (zoom < ZOOM_THRESHOLD) {
         const limitedEmergencies = emergencies.slice(0, 10);
-
         limitedEmergencies.forEach((emergency) => {
           const exists = markersRef.current.some(
             (m) => m.data.id === emergency.id
@@ -119,7 +118,6 @@ const Emergency: React.FC = () => {
           }
         });
       } else {
-        // 🔹 Show all when zoomed in close enough
         emergencies.forEach((emergency) => {
           const exists = markersRef.current.some(
             (m) => m.data.id === emergency.id
@@ -142,21 +140,27 @@ const Emergency: React.FC = () => {
       }
     };
 
-    // Attach listeners
     map.on("click", handleMapClick);
     map.on("moveend", updateMarkersByZoomAndBounds);
     map.on("zoomend", updateMarkersByZoomAndBounds);
 
-    // Initial load
     updateMarkersByZoomAndBounds();
 
-    // Cleanup
     return () => {
       map.off("click", handleMapClick);
       map.off("moveend", updateMarkersByZoomAndBounds);
       map.off("zoomend", updateMarkersByZoomAndBounds);
     };
   }, [isPinpointMode, emergencies]);
+
+  // 📍 Center map when choosing location (Cebu or Davao)
+  const handleCenterMap = (location: string) => {
+    if (location === "cebu") {
+      flyToLocation(CEBU_CENTER, 12);
+    } else if (location === "davao") {
+      flyToLocation(DAVAO_ORIENTAL_CENTER, 10);
+    }
+  };
 
   // ✅ Need selection toggle
   const toggleNeed = (need: NeedType) => {
@@ -358,6 +362,7 @@ const Emergency: React.FC = () => {
         onResponderClick={() => setIsResponderModalOpen(true)}
         onDashboardClick={() => navigate("/admin")}
         onLogout={logout}
+        onCenterMap={handleCenterMap} // ✅ Hooked here
       />
       <MapHeader emergencyCount={emergencies.length} />
 
