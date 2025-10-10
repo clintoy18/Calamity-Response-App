@@ -1,9 +1,5 @@
 import React from "react";
 
-
-import { MapPin, LogIn, Users, Menu, X, Globe } from "lucide-react";
-import { CEBU_CENTER, DAVAO_ORIENTAL_CENTER } from "../constants/index";
-
 interface MapHeaderProps {
   emergencyCount: number;
 }
