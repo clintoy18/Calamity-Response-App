@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { X, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -77,21 +77,27 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const isLoading = externalIsLoading || false;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
-        {/* Header */}
-        <div className="px-8 pt-8 pb-6">
-          <div className="flex items-start justify-between mb-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+      <div className="bg-surface rounded-2xl shadow-strong w-full max-w-md overflow-hidden border border-border">
+        {/* Header with Emergency Branding */}
+        <div className="bg-gradient-to-br from-emergency/5 to-transparent px-8 pt-8 pb-6 border-b border-border">
+          <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
-              <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
-                Sign in as a respondent to verify and resolve emergency requests
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-1 h-8 bg-emergency rounded-full"></div>
+                <h2 className="text-3xl font-display font-bold text-text tracking-tight">
+                  Respondent Login
+                </h2>
+              </div>
+              <p className="text-sm font-sans text-text-muted leading-relaxed">
+                Sign in to verify and respond to emergency assistance requests
               </p>
             </div>
             <button
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg -mt-1 -mr-2"
+              className="text-text-light hover:text-text transition-colors p-2 hover:bg-map rounded-lg -mt-1 -mr-2"
               disabled={isLoading}
+              aria-label="Close modal"
             >
               <X className="w-5 h-5" />
             </button>
@@ -99,11 +105,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         </div>
 
         {/* Form Content */}
-        <div className="px-8 pb-8 space-y-5">
+        <div className="px-8 py-6 space-y-5 bg-background">
           {/* Error Message */}
           {displayError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-medium">
-              {displayError}
+            <div className="bg-emergency/5 border-l-4 border-emergency text-emergency px-4 py-3.5 rounded-lg flex items-start gap-3 shadow-soft animate-fade-in">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <span className="text-sm font-sans font-medium">{displayError}</span>
             </div>
           )}
 
@@ -111,20 +118,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <div className="space-y-2">
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-900"
+              className="block text-sm font-heading font-semibold text-text"
             >
               Email Address
             </label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className="relative group">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light group-focus-within:text-action transition-colors" />
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="you@example.com"
-                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:ring-offset-0 focus:border-gray-900 outline-none transition-all placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500"
+                placeholder="responder@example.com"
+                className="w-full pl-12 pr-4 py-3.5 font-sans bg-surface border-2 border-border rounded-xl focus:ring-2 focus:ring-action/20 focus:border-action outline-none transition-all placeholder:text-text-light disabled:bg-map disabled:text-text-muted disabled:cursor-not-allowed"
                 disabled={isLoading}
               />
             </div>
@@ -134,12 +141,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <div className="space-y-2">
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-900"
+              className="block text-sm font-heading font-semibold text-text"
             >
               Password
             </label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light group-focus-within:text-action transition-colors" />
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -147,14 +154,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Enter your password"
-                className="w-full pl-12 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:ring-offset-0 focus:border-gray-900 outline-none transition-all placeholder:text-gray-400 disabled:bg-gray-50 disabled:text-gray-500"
+                className="w-full pl-12 pr-12 py-3.5 font-sans bg-surface border-2 border-border rounded-xl focus:ring-2 focus:ring-action/20 focus:border-action outline-none transition-all placeholder:text-text-light disabled:bg-map disabled:text-text-muted disabled:cursor-not-allowed"
                 disabled={isLoading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-light hover:text-text transition-colors p-1.5 rounded-lg hover:bg-map"
                 disabled={isLoading}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -169,10 +177,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className={`w-full mt-6 px-6 py-3.5 rounded-xl font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center gap-2 ${
+            className={`w-full mt-2 px-6 py-4 rounded-xl font-alt font-bold text-base transition-all duration-200 focus:outline-none focus:ring-4 flex items-center justify-center gap-2 shadow-soft ${
               isLoading
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-900 active:scale-[0.98]"
+                ? "bg-border text-text-muted cursor-not-allowed"
+                : "bg-emergency text-white hover:bg-emergency/90 focus:ring-emergency/20 active:scale-[0.98] hover:shadow-medium"
             }`}
           >
             {isLoading ? (
@@ -196,21 +204,21 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                <span>Signing in...</span>
+                <span>Authenticating...</span>
               </>
             ) : (
-              "Sign In"
+              "Sign In to Respond"
             )}
           </button>
 
           {/* Divider */}
           <div className="relative py-4">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">
-                Don't have an account?
+              <span className="px-4 bg-background font-sans text-text-muted">
+                New to the platform?
               </span>
             </div>
           </div>
@@ -218,11 +226,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           {/* Sign Up Link */}
           <button
             type="button"
-            className="w-full border-2 border-gray-300 text-gray-700 py-3.5 rounded-xl font-semibold hover:border-gray-900 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+            className="w-full border-2 border-action text-action py-3.5 rounded-xl font-alt font-semibold hover:bg-action hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-soft hover:shadow-medium"
             disabled={isLoading}
           >
-            Apply as Respondent
+            Apply as Emergency Respondent
           </button>
+        </div>
+
+        {/* Footer Info */}
+        <div className="px-8 py-4 bg-map/30 border-t border-border">
+          <p className="text-xs font-sans text-text-muted text-center">
+            Secure authentication for verified emergency response personnel
+          </p>
         </div>
       </div>
     </div>

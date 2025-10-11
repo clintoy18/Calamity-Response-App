@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Loader } from "lucide-react";
 import L from "leaflet";
 import type { Status, Location, NeedType, EmergencyRecord } from "../types";
@@ -8,23 +8,21 @@ import { useEmergencies } from "../hooks/useEmergencies";
 import { useEmergencyMarkers } from "../hooks/useEmergencyMarkers";
 import { getPlaceName } from "../utils/geocoding";
 import { submitEmergency } from "../services/api";
-import { MapHeader } from "../components/MapHeader";
-import { ActionButtons } from "../components/ActionButtons";
-import { EmergencyModal } from "../components/EmergencyModal";
-import { ManualPinpoint } from "../components/ManualPinPoint";
-import { LocationSearch } from "../components/LocationSearch";
-import { ResponderModal } from "../components/ResponderModal";
 import { LoginModal } from "../components/Login";
-import { NavigationPanel } from "../components/NavigationPanel";
 import { useAuthActions } from "../hooks/useAuthActions";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { getUserRole } from "../utils/authUtils";
+import { TopBar } from "../components/common/TopBar";
+import logo from '../assets/logo.png';
+import { NavigationMenu } from "../components/common/NavigationMenu";
+import { EmergencyPanel } from "../components/common/EmergencyPanel";
+import { UnifiedModal } from "../components/common/modal/UnifiedFormModal";
 
-// 🗺️ Cebu and Davao Coordinates
 const CEBU_CENTER: [number, number] = [10.3157, 123.8854];
 const DAVAO_ORIENTAL_CENTER: [number, number] = [7.1136, 126.3436];
+const ZOOM_THRESHOLD = 13;
 
 const Emergency: React.FC = () => {
   const [status, setStatus] = useState<Status>("idle");
@@ -34,18 +32,15 @@ const Emergency: React.FC = () => {
   const [contactNo, setContactNo] = useState("");
   const [selectedNeeds, setSelectedNeeds] = useState<NeedType[]>([]);
   const [numberOfPeople, setNumberOfPeople] = useState(1);
-  const [urgencyLevel, setUrgencyLevel] = useState<
-    "low" | "medium" | "high" | "critical"
-  >("medium");
+  const [urgencyLevel, setUrgencyLevel] = useState<"low" | "medium" | "high" | "critical">("medium");
   const [additionalNotes, setAdditionalNotes] = useState("");
-  const { handleLogin, errors, isLoading, message } = useAuthActions();
-
-  const API_BASE = import.meta.env.VITE_API_URL;
-  const { logout, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-
-  // Responder modal state
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isResponderModalOpen, setIsResponderModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isPinpointMode, setIsPinpointMode] = useState(false);
+  const [selectedMapLocation, setSelectedMapLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -54,22 +49,64 @@ const Emergency: React.FC = () => {
   const [emergencyDocument, setEmergencyDocument] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isPinpointMode, setIsPinpointMode] = useState(false);
-  const [selectedMapLocation, setSelectedMapLocation] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { handleLogin, errors, isLoading, message } = useAuthActions();
+  const API_BASE = import.meta.env.VITE_API_URL;
+  const { logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const { mapRef, mapInstanceRef, flyToLocation } = useMapSetup();
   const { emergencies, setEmergencies, isLoadingEmergencies } = useEmergencies();
-  const { addEmergencyMarker, removeTempMarker, markersRef } =
-    useEmergencyMarkers(mapInstanceRef);
+  const { addEmergencyMarker, removeTempMarker, markersRef } = useEmergencyMarkers(mapInstanceRef);
 
-  const ZOOM_THRESHOLD = 13;
+  const handleNavigate = useCallback((itemId: string) => {
+    switch (itemId) {
+      case 'login': break;
+      case 'become_responder': break;
+      case 'cebu': break;
+      case 'davao': break;
+      case 'tracker': break;
+      case 'app_info': break;
+      default: break;
+    }
+    setIsMenuOpen(false);
+  }, []);
 
-  // 🧭 Sync markers with map zoom + bounds
+  const updateMarkersByZoomAndBounds = useCallback(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const zoom = map.getZoom();
+    const bounds = map.getBounds();
+
+    markersRef.current = markersRef.current.filter((m) => {
+      if (!m.data.id?.includes("TEMP")) {
+        map.removeLayer(m.marker);
+        map.removeLayer(m.circle);
+        return false;
+      }
+      return true;
+    });
+
+    const emergenciesToShow = zoom < ZOOM_THRESHOLD 
+      ? emergencies.slice(0, 10) 
+      : emergencies;
+
+    emergenciesToShow.forEach((emergency) => {
+      const exists = markersRef.current.some((m) => m.data.id === emergency.id);
+      const inBounds = bounds.contains([emergency.latitude, emergency.longitude]);
+
+      if (!exists && inBounds) {
+        addEmergencyMarker(
+          emergency.latitude,
+          emergency.longitude,
+          emergency.accuracy,
+          emergency.id,
+          emergency
+        );
+      }
+    });
+  }, [emergencies, addEmergencyMarker, mapInstanceRef, markersRef]);
+
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -80,63 +117,6 @@ const Emergency: React.FC = () => {
         setSelectedMapLocation({ lat, lng });
         removeTempMarker();
         addEmergencyMarker(lat, lng, 50, "EMG-TEMP-" + Date.now());
-      }
-    };
-
-    const updateMarkersByZoomAndBounds = () => {
-      const zoom = map.getZoom();
-      const bounds = map.getBounds();
-
-      markersRef.current = markersRef.current.filter((m) => {
-        if (!m.data.id?.includes("TEMP")) {
-          map.removeLayer(m.marker);
-          map.removeLayer(m.circle);
-          return false;
-        }
-        return true;
-      });
-
-      if (zoom < ZOOM_THRESHOLD) {
-        const limitedEmergencies = emergencies.slice(0, 10);
-        limitedEmergencies.forEach((emergency) => {
-          const exists = markersRef.current.some(
-            (m) => m.data.id === emergency.id
-          );
-          const inBounds = bounds.contains([
-            emergency.latitude,
-            emergency.longitude,
-          ]);
-
-          if (!exists && inBounds) {
-            addEmergencyMarker(
-              emergency.latitude,
-              emergency.longitude,
-              emergency.accuracy,
-              emergency.id,
-              emergency
-            );
-          }
-        });
-      } else {
-        emergencies.forEach((emergency) => {
-          const exists = markersRef.current.some(
-            (m) => m.data.id === emergency.id
-          );
-          const inBounds = bounds.contains([
-            emergency.latitude,
-            emergency.longitude,
-          ]);
-
-          if (!exists && inBounds) {
-            addEmergencyMarker(
-              emergency.latitude,
-              emergency.longitude,
-              emergency.accuracy,
-              emergency.id,
-              emergency
-            );
-          }
-        });
       }
     };
 
@@ -151,26 +131,23 @@ const Emergency: React.FC = () => {
       map.off("moveend", updateMarkersByZoomAndBounds);
       map.off("zoomend", updateMarkersByZoomAndBounds);
     };
-  }, [isPinpointMode, emergencies]);
+  }, [isPinpointMode, emergencies, updateMarkersByZoomAndBounds, addEmergencyMarker, removeTempMarker, mapInstanceRef]);
 
-  // 📍 Center map when choosing location (Cebu or Davao)
-  const handleCenterMap = (location: string) => {
+  const handleCenterMap = useCallback((location: string) => {
     if (location === "cebu") {
       flyToLocation(CEBU_CENTER, 12);
     } else if (location === "davao") {
       flyToLocation(DAVAO_ORIENTAL_CENTER, 10);
     }
-  };
+  }, [flyToLocation]);
 
-  // ✅ Need selection toggle
-  const toggleNeed = (need: NeedType) => {
+  const toggleNeed = useCallback((need: NeedType) => {
     setSelectedNeeds((prev) =>
       prev.includes(need) ? prev.filter((n) => n !== need) : [...prev, need]
     );
-  };
+  }, []);
 
-  // 📍 Auto-detect location and show form
-  const handleEmergency = () => {
+  const handleEmergency = useCallback(() => {
     setStatus("loading");
     setErrorMessage("");
 
@@ -210,9 +187,9 @@ const Emergency: React.FC = () => {
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  };
+  }, [addEmergencyMarker]);
 
-  const handleManualPinpointConfirm = async (lat: number, lng: number) => {
+  const handleManualPinpointConfirm = useCallback(async (lat: number, lng: number) => {
     setStatus("loading");
     const coords: Location = {
       latitude: lat,
@@ -226,9 +203,9 @@ const Emergency: React.FC = () => {
     setIsPinpointMode(false);
     setSelectedMapLocation(null);
     setStatus("form");
-  };
+  }, []);
 
-  const handleSearchSelect = async (lat: number, lng: number, name: string) => {
+  const handleSearchSelect = useCallback(async (lat: number, lng: number, name: string) => {
     removeTempMarker();
     const newId = "EMG-TEMP-" + Date.now();
     addEmergencyMarker(lat, lng, 50, newId);
@@ -242,9 +219,9 @@ const Emergency: React.FC = () => {
     setPlaceName(name);
     setIsSearchOpen(false);
     setStatus("form");
-  };
+  }, [removeTempMarker, addEmergencyMarker, mapInstanceRef]);
 
-  const handleSubmitRequest = async () => {
+  const handleSubmitRequest = useCallback(async () => {
     if (selectedNeeds.length === 0) {
       setErrorMessage("Select at least one relief item");
       return;
@@ -291,14 +268,12 @@ const Emergency: React.FC = () => {
       setStatus("success");
     } catch (e: unknown) {
       console.error(e);
-      setErrorMessage(
-        e instanceof Error ? e.message : "Failed to submit request"
-      );
+      setErrorMessage(e instanceof Error ? e.message : "Failed to submit request");
       setStatus("error");
     }
-  };
+  }, [selectedNeeds, location, placeName, contactNo, numberOfPeople, urgencyLevel, additionalNotes, emergencyDocument, removeTempMarker, addEmergencyMarker, setEmergencies]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setStatus("idle");
     setLocation(null);
     setPlaceName("");
@@ -311,9 +286,9 @@ const Emergency: React.FC = () => {
     setIsPinpointMode(false);
     setSelectedMapLocation(null);
     removeTempMarker();
-  };
+  }, [removeTempMarker]);
 
-  const handleResponderSubmit = async () => {
+  const handleResponderSubmit = useCallback(async () => {
     try {
       if (!fullName || !email || !password || !contactNumber || !document) {
         alert("Please fill out all required fields.");
@@ -343,62 +318,64 @@ const Emergency: React.FC = () => {
       setNotes("");
     } catch (err: any) {
       console.error("Registration error:", err);
-      const errorMsg =
-        err.response?.data?.message ||
-        "Failed to submit responder application.";
+      const errorMsg = err.response?.data?.message || "Failed to submit responder application.";
       setErrorMessage(errorMsg);
       alert(errorMsg);
     }
-  };
+  }, [fullName, email, password, contactNumber, document, notes, API_BASE]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      <div ref={mapRef} className="absolute inset-0 w-full h-full z-0"></div>
+      <div ref={mapRef} className="absolute inset-0 w-full h-full z-0" style={{ height: '100vh', width: '100vw' }}></div>
 
-      <NavigationPanel
+      <TopBar
+        logoSrc={logo}
+        emergencies={emergencies}
+        showMenuButton
+        onMenu={() => setIsMenuOpen(true)}
+      />
+
+      <NavigationMenu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        onNavigate={handleNavigate}
+        loggedIn={false}
         isAuthenticated={isAuthenticated}
         userRole={getUserRole()}
         onLoginClick={() => setIsLoginModalOpen(true)}
         onResponderClick={() => setIsResponderModalOpen(true)}
         onDashboardClick={() => navigate("/admin")}
         onLogout={logout}
-        onCenterMap={handleCenterMap} // ✅ Hooked here
+        onCenterMap={handleCenterMap}
       />
-      <MapHeader emergencyCount={emergencies.length} />
 
       {isLoadingEmergencies && (
         <div className="fixed top-20 left-4 bg-white/95 backdrop-blur-sm px-5 py-3 rounded-xl shadow-xl z-10 border-2 border-gray-200">
           <div className="flex items-center gap-2">
             <Loader className="w-4 h-4 animate-spin text-gray-600" />
-            <span className="text-sm text-gray-600 font-medium">
-              Loading emergencies...
-            </span>
+            <span className="text-sm text-gray-600 font-medium">Loading emergencies...</span>
           </div>
         </div>
       )}
 
-      <ActionButtons
+      <EmergencyPanel
         status={status}
         onRequestHelp={handleEmergency}
         isPinpointMode={isPinpointMode}
-      />
-
-      <ManualPinpoint
-        isActive={isPinpointMode}
         onActivate={() => setIsPinpointMode(true)}
         onDeactivate={() => setIsPinpointMode(false)}
         onConfirm={handleManualPinpointConfirm}
-        onOpenSearch={() => setIsSearchOpen(true)}
         selectedLocation={selectedMapLocation}
-      />
-
-      <LocationSearch
-        isActive={isSearchOpen}
+        isSearchOpen={isSearchOpen}
+        onOpenSearch={() => setIsSearchOpen(true)}
         onClose={() => setIsSearchOpen(false)}
         onSelectLocation={handleSearchSelect}
       />
 
-      <EmergencyModal
+      <UnifiedModal
+        type="emergency"
+        isOpen={status !== "idle"}
+        onClose={handleReset}
         status={status}
         location={location}
         placeName={placeName}
@@ -420,18 +397,10 @@ const Emergency: React.FC = () => {
         setEmergencyDocument={setEmergencyDocument}
       />
 
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onLogin={handleLogin}
-        errors={errors}
-        isLoading={isLoading}
-        successMessage={message}
-      />
-
-      <ResponderModal
+      <UnifiedModal
+        type="responder"
         isOpen={isResponderModalOpen}
-        setIsOpen={setIsResponderModalOpen}
+        onClose={() => setIsResponderModalOpen(false)}
         fullName={fullName}
         setFullName={setFullName}
         email={email}
@@ -446,7 +415,15 @@ const Emergency: React.FC = () => {
         setNotes={setNotes}
         errorMessage={errorMessage}
         onSubmit={handleResponderSubmit}
-        onClose={() => setIsResponderModalOpen(false)}
+      />
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLogin={handleLogin}
+        errors={errors}
+        isLoading={isLoading}
+        successMessage={message}
       />
     </div>
   );
