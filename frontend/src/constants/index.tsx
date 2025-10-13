@@ -26,16 +26,12 @@ export const needOptions: NeedOption[] = [
   { value: "other", label: "Other", icon: <Package className="w-5 h-5" /> },
 ];
 
-export const urgencyColors: Record<
-  "low" | "medium" | "high" | "critical",
-  UrgencyColor
-> = {
-  low: { bg: "#10b981", text: "Low", light: "#d1fae5" },
-  medium: { bg: "#f59e0b", text: "Medium", light: "#fef3c7" },
-  high: { bg: "#f97316", text: "High", light: "#ffedd5" },
-  critical: { bg: "#ef4444", text: "Critical", light: "#fee2e2" },
+export const urgencyColors: Record<"low" | "medium" | "high" | "critical", UrgencyColor> = {
+  low: { bg: "#10b981", text: "Low", light: "#d1fae5", dark: "#047857" },
+  medium: { bg: "#f59e0b", text: "Medium", light: "#fef3c7", dark: "#b45309" },
+  high: { bg: "#f97316", text: "High", light: "#ffedd5", dark: "#c2410c" },
+  critical: { bg: "#ef4444", text: "Critical", light: "#fee2e2", dark: "#b91c1c" },
 };
-
 export const affectedAreas: AffectedArea[] = [
   {
     name: "Bogo City",

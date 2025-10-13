@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { X, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 interface LoginModalProps {
@@ -39,7 +39,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     }
   }, [successMessage, isOpen, onClose]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // ✅ Memoized submit handler
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError("");
 
@@ -55,21 +56,28 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
     await onLogin(email, password);
     window.location.reload();
-  };
+  }, [email, password, onLogin]);
 
-  const handleClose = () => {
+  // ✅ Memoized close handler
+  const handleClose = useCallback(() => {
     setEmail("");
     setPassword("");
     setLocalError("");
     setShowPassword(false);
     onClose();
-  };
+  }, [onClose]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  // ✅ Memoized key press handler
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !isLoading) {
       handleSubmit(e);
     }
-  };
+  }, [handleSubmit]);
+
+  // ✅ Memoized toggle password
+  const togglePassword = useCallback(() => {
+    setShowPassword(prev => !prev);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -77,8 +85,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const isLoading = externalIsLoading || false;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="bg-surface rounded-2xl shadow-strong w-full max-w-md overflow-hidden border border-border">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-surface rounded-2xl shadow-strong w-full max-w-md overflow-hidden border border-border animate-scaleIn">
         {/* Header with Emergency Branding */}
         <div className="bg-gradient-to-br from-emergency/5 to-transparent px-8 pt-8 pb-6 border-b border-border">
           <div className="flex items-start justify-between mb-3">
@@ -95,7 +103,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </div>
             <button
               onClick={handleClose}
-              className="text-text-light hover:text-text transition-colors p-2 hover:bg-map rounded-lg -mt-1 -mr-2"
+              className="text-text-light hover:text-text transition-colors duration-150 p-2 hover:bg-map rounded-lg -mt-1 -mr-2 hover:scale-105 active:scale-95"
               disabled={isLoading}
               aria-label="Close modal"
             >
@@ -108,7 +116,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         <div className="px-8 py-6 space-y-5 bg-background">
           {/* Error Message */}
           {displayError && (
-            <div className="bg-emergency/5 border-l-4 border-emergency text-emergency px-4 py-3.5 rounded-lg flex items-start gap-3 shadow-soft animate-fade-in">
+            <div className="bg-emergency/5 border-l-4 border-emergency text-emergency px-4 py-3.5 rounded-lg flex items-start gap-3 shadow-soft animate-slideDown">
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <span className="text-sm font-sans font-medium">{displayError}</span>
             </div>
@@ -123,7 +131,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               Email Address
             </label>
             <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light group-focus-within:text-action transition-colors" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light group-focus-within:text-action transition-colors duration-150" />
               <input
                 id="email"
                 type="email"
@@ -131,8 +139,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="responder@example.com"
-                className="w-full pl-12 pr-4 py-3.5 font-sans bg-surface border-2 border-border rounded-xl focus:ring-2 focus:ring-action/20 focus:border-action outline-none transition-all placeholder:text-text-light disabled:bg-map disabled:text-text-muted disabled:cursor-not-allowed"
+                className="w-full pl-12 pr-4 py-3.5 font-sans bg-surface border-2 border-border rounded-xl focus:ring-2 focus:ring-action/20 focus:border-action outline-none transition-all duration-150 placeholder:text-text-light disabled:bg-map disabled:text-text-muted disabled:cursor-not-allowed"
                 disabled={isLoading}
+                autoComplete="email"
               />
             </div>
           </div>
@@ -146,7 +155,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               Password
             </label>
             <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light group-focus-within:text-action transition-colors" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light group-focus-within:text-action transition-colors duration-150" />
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -154,13 +163,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Enter your password"
-                className="w-full pl-12 pr-12 py-3.5 font-sans bg-surface border-2 border-border rounded-xl focus:ring-2 focus:ring-action/20 focus:border-action outline-none transition-all placeholder:text-text-light disabled:bg-map disabled:text-text-muted disabled:cursor-not-allowed"
+                className="w-full pl-12 pr-12 py-3.5 font-sans bg-surface border-2 border-border rounded-xl focus:ring-2 focus:ring-action/20 focus:border-action outline-none transition-all duration-150 placeholder:text-text-light disabled:bg-map disabled:text-text-muted disabled:cursor-not-allowed"
                 disabled={isLoading}
+                autoComplete="current-password"
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-light hover:text-text transition-colors p-1.5 rounded-lg hover:bg-map"
+                onClick={togglePassword}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-light hover:text-text transition-colors duration-150 p-1.5 rounded-lg hover:bg-map"
                 disabled={isLoading}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
@@ -180,7 +190,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             className={`w-full mt-2 px-6 py-4 rounded-xl font-alt font-bold text-base transition-all duration-200 focus:outline-none focus:ring-4 flex items-center justify-center gap-2 shadow-soft ${
               isLoading
                 ? "bg-border text-text-muted cursor-not-allowed"
-                : "bg-emergency text-white hover:bg-emergency/90 focus:ring-emergency/20 active:scale-[0.98] hover:shadow-medium"
+                : "bg-emergency text-white hover:bg-emergency/90 focus:ring-emergency/20 active:scale-98 hover:shadow-medium"
             }`}
           >
             {isLoading ? (
@@ -226,7 +236,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           {/* Sign Up Link */}
           <button
             type="button"
-            className="w-full border-2 border-action text-action py-3.5 rounded-xl font-alt font-semibold hover:bg-action hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-soft hover:shadow-medium"
+            className="w-full border-2 border-action text-action py-3.5 rounded-xl font-alt font-semibold hover:bg-action hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-98 shadow-soft hover:shadow-medium"
             disabled={isLoading}
           >
             Apply as Emergency Respondent
@@ -240,6 +250,67 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </p>
         </div>
       </div>
+
+      {/* CSS Animations */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+        .animate-scaleIn {
+          animation: scaleIn 0.3s ease-out;
+        }
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out;
+        }
+        .active\\:scale-98:active {
+          transform: scale(0.98);
+        }
+        .active\\:scale-95:active {
+          transform: scale(0.95);
+        }
+        .hover\\:scale-105:hover {
+          transform: scale(1.05);
+        }
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+      `}} />
     </div>
   );
 };

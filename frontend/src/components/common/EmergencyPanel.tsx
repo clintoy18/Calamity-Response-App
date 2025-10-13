@@ -20,7 +20,7 @@ const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
-// Modern search result card
+// Modern search result card - optimized
 const SearchResultItem = React.memo(
   ({ result, onClick }: { result: NominatimResult; onClick: (r: NominatimResult) => void }) => {
     // Parse display name into parts
@@ -29,15 +29,9 @@ const SearchResultItem = React.memo(
     const secondary = parts.slice(1, 3).join(', ');
     
     return (
-      <motion.button
-        layout
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.2 }}
+      <button
         onClick={() => onClick(result)}
         className="w-full text-left p-3 rounded-xl bg-surface hover:bg-background border border-border hover:border-action/40 transition-all duration-200 group shadow-soft hover:shadow-medium"
-        style={{ willChange: "transform, opacity" }}
       >
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-action/20 to-action/10 flex items-center justify-center flex-shrink-0 group-hover:from-action/30 group-hover:to-action/20 transition-all">
@@ -51,7 +45,7 @@ const SearchResultItem = React.memo(
           </div>
           <Navigation size={16} className="text-action mt-1.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all flex-shrink-0" />
         </div>
-      </motion.button>
+      </button>
     );
   }
 );
@@ -180,11 +174,10 @@ export const EmergencyPanel: React.FC<EmergencyPanelProps> = ({
             className={`w-full flex justify-center absolute ${
               messagePosition === "top" ? "top-4" : "bottom-36"
             } left-0 z-40 pointer-events-none px-4`}
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            style={{ willChange: "transform, opacity" }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
           >
             <div className="relative bg-surface shadow-strong backdrop-blur-lg px-5 py-3.5 rounded-2xl text-sm text-text font-sans max-w-sm mx-auto flex items-center gap-3 border border-border">
               {selectedLocation ? (
@@ -219,8 +212,7 @@ export const EmergencyPanel: React.FC<EmergencyPanelProps> = ({
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 200, damping: 25 }}
-        style={{ willChange: "transform, opacity" }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
       >
         <div className="pointer-events-auto w-full max-w-md bg-surface shadow-strong backdrop-blur-xl rounded-t-3xl border-t-2 border-x-2 border-border/50">
           <div className="p-5 space-y-3 font-sans">
@@ -285,10 +277,11 @@ export const EmergencyPanel: React.FC<EmergencyPanelProps> = ({
       <AnimatePresence mode="wait">
         {isSearchOpen && (
           <motion.div
-            className="fixed inset-0 z-30 bg-black/70 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-30 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             onClick={() => {
               setSearchResults([]);
               setSearchQuery("");
@@ -299,12 +292,11 @@ export const EmergencyPanel: React.FC<EmergencyPanelProps> = ({
           >
             <motion.div
               className="bg-surface rounded-3xl w-full max-w-md shadow-strong overflow-hidden border border-border/30"
-              initial={{ scale: 0.9, y: 20, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.9, y: 20, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               onClick={(e) => e.stopPropagation()}
-              style={{ willChange: "transform, opacity" }}
             >
               {/* Sleek Search Header */}
               <div className="p-5 border-b border-border/30 bg-gradient-to-br from-action/5 to-transparent">
@@ -374,9 +366,9 @@ export const EmergencyPanel: React.FC<EmergencyPanelProps> = ({
                         {searchResults.length} Location{searchResults.length !== 1 ? 's' : ''} Found
                       </p>
                     </div>
-                    <AnimatePresence mode="popLayout">
+                    <div className="space-y-2">
                       {searchList}
-                    </AnimatePresence>
+                    </div>
                   </div>
                 )}
 
@@ -438,4 +430,4 @@ export const EmergencyPanel: React.FC<EmergencyPanelProps> = ({
       </AnimatePresence>
     </>
   );
-};  
+};

@@ -27,15 +27,22 @@ interface EmergencyApiData {
   updatedAt?: string;
 }
 
-export const fetchEmergencies = async (): Promise<EmergencyApiData[]> => {
-  const response = await fetch(`${API_URL}/emergencies`);
+export const fetchEmergencies = async (
+  options?: { signal?: AbortSignal } // ✅ Allow passing AbortSignal
+): Promise<EmergencyApiData[]> => {
+  const response = await fetch(`${API_URL}/emergencies`, {
+    signal: options?.signal, // ✅ Use it if provided
+  });
+
   const data: ApiResponse<EmergencyApiData[]> = await response.json();
 
   if (data.success && data.data) {
     return data.data;
   }
+
   throw new Error("Failed to fetch emergencies");
 };
+
 
 export const submitEmergency = async (
   location: Location,
@@ -101,8 +108,6 @@ export const updateEmergencyStatus = async (
     },
     body: JSON.stringify({ status }),
   });
-  console.log("API URL:", `${API_URL}/emergencies/${id}`);
-
   const data: ApiResponse<EmergencyApiData> = await response.json();
 
   if (!response.ok) {

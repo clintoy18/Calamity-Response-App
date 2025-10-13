@@ -1,81 +1,189 @@
-import { useState, useEffect, useCallback } from "react";
-import type { EmergencyRecord } from "../types";
+import { useState, useEffect, useCallback, useRef } from "react";
+import type { EmergencyRecord, NeedType } from "../types";
 import { fetchEmergencies as apiFetchEmergencies } from "../services/api";
+
+interface FetchEmergenciesOptions {
+  signal?: AbortSignal;
+}
+
+interface RawEmergencyRecord {
+  id: string;
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  timestamp?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  needs?: string[];
+  numberOfPeople?: number;
+  urgencyLevel?: string;
+  additionalNotes?: string;
+  status?: string;
+  contactNo?: string;
+  contactno?: string;
+  placename?: string;
+}
+
 interface UseEmergenciesReturn {
   emergencies: EmergencyRecord[];
   setEmergencies: React.Dispatch<React.SetStateAction<EmergencyRecord[]>>;
   isLoadingEmergencies: boolean;
-  fetchEmergencies: () => Promise<EmergencyRecord[]>;
-  triggerFetch: () => void; // 🔥 external trigger
+  emergenciesError: string | null;
+  refetchEmergencies: (force?: boolean) => Promise<void>;
+  retryCount: number;
 }
+
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  retryDelay: 1000,
+  backoffMultiplier: 1.8,
+  timeout: 15000,
+  cacheTTL: 15000, // 15 seconds cache
+};
+
+let lastFetchedData: EmergencyRecord[] | null = null;
+let lastFetchedAt = 0;
 
 export const useEmergencies = (): UseEmergenciesReturn => {
   const [emergencies, setEmergencies] = useState<EmergencyRecord[]>([]);
-  const [isLoadingEmergencies, setIsLoadingEmergencies] =
-    useState<boolean>(false);
-  const [fetchTrigger, setFetchTrigger] = useState<number>(0); // 🚀 trigger flag
 
-  const fetchEmergencies = useCallback(async (): Promise<EmergencyRecord[]> => {
-    setIsLoadingEmergencies(true);
-    try {
-      const data = await apiFetchEmergencies();
+  console.log("Emergencies state:", emergencies);
+  const [isLoadingEmergencies, setIsLoadingEmergencies] = useState(false);
+  const [emergenciesError, setEmergenciesError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-      const formattedEmergencies = await Promise.all(
-        data.map(async (emergency) => {
-          const placename = emergency.placename || "Unknown Location";
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isMountedRef = useRef(true);
 
-          return {
-            id: emergency.id,
-            latitude: emergency.latitude,
-            longitude: emergency.longitude,
-            accuracy: emergency.accuracy,
-            timestamp:
-              emergency.timestamp ||
-              emergency.createdAt ||
-              new Date().toISOString(),
-            needs: emergency.needs,
-            numberOfPeople: emergency.numberOfPeople,
-            urgencyLevel: emergency.urgencyLevel.toLowerCase() as
-              | "low"
-              | "medium"
-              | "high"
-              | "critical",
-            additionalNotes: emergency.additionalNotes || "",
-            status: (emergency.status?.toLowerCase() || "pending") as
-              | "pending"
-              | "responded"
-              | "resolved",
-            createdAt: emergency.createdAt,
-            updatedAt: emergency.updatedAt,
-            contactNo: emergency.contactNo || emergency.contactno || "",
-            placename,
-          };
-        })
-      );
+  // ✅ Safe fetcher with retry logic
+  const fetchEmergenciesWithRetry = useCallback(async (): Promise<EmergencyRecord[]> => {
+    let attempt = 0;
 
-      setEmergencies(formattedEmergencies);
-      return formattedEmergencies;
-    } catch (error) {
-      console.error("Error fetching emergencies:", error);
-      return [];
-    } finally {
-      setIsLoadingEmergencies(false);
+    while (attempt <= RETRY_CONFIG.maxRetries) {
+      try {
+        abortControllerRef.current?.abort();
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Request timeout")), RETRY_CONFIG.timeout)
+        );
+
+        // Race API fetch with timeout
+        const data = (await Promise.race([
+          apiFetchEmergencies({ signal: controller.signal } as FetchEmergenciesOptions),
+          timeoutPromise,
+        ])) as RawEmergencyRecord[];
+
+        if (!Array.isArray(data)) throw new Error("Invalid emergencies response");
+
+        // ✅ Safely transform to typed EmergencyRecord[]
+       const formatted: EmergencyRecord[] = data.map((e) => ({
+          id: e.id,
+          latitude: e.latitude,
+          longitude: e.longitude,
+          accuracy: e.accuracy ?? 0,
+          timestamp: e.timestamp || e.createdAt || new Date().toISOString(),
+          // 👇 Fix: convert raw strings to NeedType[]
+          needs: (e.needs ?? []).map((n) => n.toLowerCase?.()) as NeedType[],
+          numberOfPeople: e.numberOfPeople ?? 0,
+          urgencyLevel: (e.urgencyLevel?.toLowerCase?.() || "medium") as
+            | "low"
+            | "medium"
+            | "high"
+            | "critical",
+          additionalNotes: e.additionalNotes || "",
+          status: (e.status?.toLowerCase?.() || "pending") as
+            | "pending"
+            | "responded"
+            | "resolved",
+          createdAt: e.createdAt ?? new Date().toISOString(),
+          updatedAt: e.updatedAt ?? new Date().toISOString(),
+          contactNo: e.contactNo || e.contactno || "",
+          placename: e.placename || "Unknown Location",
+        }));
+
+
+        lastFetchedAt = Date.now();
+        lastFetchedData = formatted;
+        setRetryCount(0);
+
+        return formatted;
+      } catch (err: unknown) {
+        const error = err as Error & { code?: string; response?: { status?: number } };
+
+        const isRetryable =
+          error.message === "Request timeout" ||
+          error.name === "AbortError" ||
+          error.code === "ECONNABORTED" ||
+          (error.response?.status ?? 0) >= 500 ||
+          !navigator.onLine;
+
+        if (!isRetryable || attempt === RETRY_CONFIG.maxRetries) {
+          throw error;
+        }
+
+        const delay = RETRY_CONFIG.retryDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, attempt);
+        await new Promise((res) => setTimeout(res, delay));
+        attempt++;
+        setRetryCount(attempt);
+      }
     }
+
+    return [];
   }, []);
 
-  // 👇 fetch only when "fetchTrigger" changes
-  useEffect(() => {
-    fetchEmergencies();
-  }, [fetchTrigger, fetchEmergencies]);
+  // ✅ Refetch with cache + background refresh
+  const refetchEmergencies = useCallback(
+    async (force = false) => {
+      if (!force && lastFetchedData && Date.now() - lastFetchedAt < RETRY_CONFIG.cacheTTL) {
+        setEmergencies(lastFetchedData);
+        // Background refresh
+        fetchEmergenciesWithRetry().then((fresh) => {
+          if (isMountedRef.current && fresh) setEmergencies(fresh);
+        });
+        return;
+      }
 
-  // Function to manually trigger fetch
-  const triggerFetch = () => setFetchTrigger((prev) => prev + 1);
+      try {
+        setIsLoadingEmergencies(true);
+        setEmergenciesError(null);
+        const data = await fetchEmergenciesWithRetry();
+        if (isMountedRef.current) setEmergencies(data);
+      } catch (err: unknown) {
+        const error = err as Error;
+        if (isMountedRef.current) {
+          setEmergenciesError(
+            !navigator.onLine
+              ? "No internet connection"
+              : error.message === "Request timeout"
+              ? "Request timed out"
+              : "Failed to fetch emergencies"
+          );
+        }
+      } finally {
+        if (isMountedRef.current) setIsLoadingEmergencies(false);
+      }
+    },
+    [fetchEmergenciesWithRetry]
+  );
+
+  // ✅ Initial load (cached + background)
+  useEffect(() => {
+    isMountedRef.current = true;
+    refetchEmergencies();
+    return () => {
+      isMountedRef.current = false;
+      abortControllerRef.current?.abort();
+    };
+  }, [refetchEmergencies]);
 
   return {
     emergencies,
     setEmergencies,
     isLoadingEmergencies,
-    fetchEmergencies,
-    triggerFetch,
+    emergenciesError,
+    refetchEmergencies,
+    retryCount,
   };
 };

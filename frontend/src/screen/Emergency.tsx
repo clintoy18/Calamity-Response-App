@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Loader } from "lucide-react";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import type { Status, Location, NeedType, EmergencyRecord } from "../types";
-import { useMapSetup } from "../hooks/useMapSetup";
-import { useEmergencies } from "../hooks/useEmergencies";
-import { useEmergencyMarkers } from "../hooks/useEmergencyMarkers";
 import { getPlaceName } from "../utils/geocoding";
 import { submitEmergency } from "../services/api";
 import { LoginModal } from "../components/Login";
@@ -19,12 +20,38 @@ import logo from '../assets/logo.png';
 import { NavigationMenu } from "../components/common/NavigationMenu";
 import { EmergencyPanel } from "../components/common/EmergencyPanel";
 import { UnifiedModal } from "../components/common/modal/UnifiedFormModal";
+import { useMostAffectedProvinces } from "../hooks/useMostAffectedProvinces";
+import { useEmergencies as useEmergenciesHook } from "../hooks/useEmergencies";
+import { useMapSetup } from "../hooks/useMapSetup";
+import { createPopupContent, createMarkerIcon, addAffectedAreaMarkers } from "../utils/mapUtils";
+import { urgencyColors } from "../constants";
 
 const CEBU_CENTER: [number, number] = [10.3157, 123.8854];
-const DAVAO_ORIENTAL_CENTER: [number, number] = [7.1136, 126.3436];
-const ZOOM_THRESHOLD = 13;
+
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  retryDelay: 1000,
+  backoffMultiplier: 2,
+};
 
 const Emergency: React.FC = () => {
+  const { mapRef, mapInstanceRef, flyToLocation } = useMapSetup();
+
+  const { 
+    data: provincesData, 
+    error: provincesError,
+    isLoading: provincesLoading,
+    refetch: refetchProvinces 
+  } = useMostAffectedProvinces();
+
+  const { 
+    emergencies, 
+    setEmergencies, 
+    isLoadingEmergencies,
+    emergenciesError,
+    refetchEmergencies 
+  } = useEmergenciesHook();
+
   const [status, setStatus] = useState<Status>("idle");
   const [location, setLocation] = useState<Location | null>(null);
   const [placeName, setPlaceName] = useState("");
@@ -54,59 +81,228 @@ const Emergency: React.FC = () => {
   const { logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const { mapRef, mapInstanceRef, flyToLocation } = useMapSetup();
-  const { emergencies, setEmergencies, isLoadingEmergencies } = useEmergencies();
-  const { addEmergencyMarker, removeTempMarker, markersRef } = useEmergencyMarkers(mapInstanceRef);
+  const markerClusterRef = React.useRef<L.MarkerClusterGroup | null>(null);
+  const markersMapRef = React.useRef<Map<string, L.Marker>>(new Map());
+  const tempMarkerRef = React.useRef<L.Marker | null>(null);
+  const isClusterInitializedRef = React.useRef(false);
 
-  const handleNavigate = useCallback((itemId: string) => {
-    switch (itemId) {
-      case 'login': break;
-      case 'become_responder': break;
-      case 'cebu': break;
-      case 'davao': break;
-      case 'tracker': break;
-      case 'app_info': break;
-      default: break;
-    }
-    setIsMenuOpen(false);
-  }, []);
+  const [retryCount, setRetryCount] = useState(0);
+  const [dataFetchError, setDataFetchError] = useState<string | null>(null);
 
-  const updateMarkersByZoomAndBounds = useCallback(() => {
+  // ✅ Handle successful login without reload
+  // const handleLoginSuccess = useCallback(() => {
+  //   console.log("✅ Login successful - updating UI without reload");
+    
+  //   // Close the login modal
+  //   setIsLoginModalOpen(false);
+    
+  //   // Refetch data to update UI based on new auth state
+  //   if (refetchEmergencies) {
+  //     refetchEmergencies();
+  //   }
+  //   if (refetchProvinces) {
+  //     refetchProvinces();
+  //   }
+    
+  //   // Close all open popups to force re-render with new permissions
+  //   markersMapRef.current.forEach(marker => {
+  //     if (marker.isPopupOpen()) {
+  //       marker.closePopup();
+  //     }
+  //   });
+    
+  //   // Small delay to ensure state updates, then re-render markers
+  //   setTimeout(() => {
+  //     updateEmergencyMarkers();
+  //   }, 100);
+  // }, [refetchEmergencies, refetchProvinces]);
+
+  // Add or update emergency markers with GREEN for resolved
+  const updateEmergencyMarkers = useCallback(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    const cluster = markerClusterRef.current;
+    
+    if (!map) {
+      console.warn("⚠️ Map not initialized yet");
+      return;
+    }
+    
+    if (!cluster) {
+      console.warn("⚠️ Cluster not initialized yet");
+      return;
+    }
 
-    const zoom = map.getZoom();
-    const bounds = map.getBounds();
+    console.log(`📍 Updating ${emergencies.length} emergency markers`);
 
-    markersRef.current = markersRef.current.filter((m) => {
-      if (!m.data.id?.includes("TEMP")) {
-        map.removeLayer(m.marker);
-        map.removeLayer(m.circle);
-        return false;
+    const existingIds = new Set(markersMapRef.current.keys());
+    const currentIds = new Set(emergencies.map(e => e.id));
+
+    // Remove markers that no longer exist
+    existingIds.forEach(id => {
+      if (!currentIds.has(id)) {
+        const marker = markersMapRef.current.get(id);
+        if (marker) {
+          cluster.removeLayer(marker);
+          markersMapRef.current.delete(id);
+        }
       }
-      return true;
     });
 
-    const emergenciesToShow = zoom < ZOOM_THRESHOLD 
-      ? emergencies.slice(0, 10) 
-      : emergencies;
+    // Add or update markers
+    emergencies.forEach(emergency => {
+      const existingMarker = markersMapRef.current.get(emergency.id);
 
-    emergenciesToShow.forEach((emergency) => {
-      const exists = markersRef.current.some((m) => m.data.id === emergency.id);
-      const inBounds = bounds.contains([emergency.latitude, emergency.longitude]);
+      // Determine marker color
+      const color = emergency.status === "resolved" 
+        ? "#10b981" // Green for resolved emergencies
+        : urgencyColors[emergency.urgencyLevel]?.dark || urgencyColors[emergency.urgencyLevel]?.bg || "#6b7280";
 
-      if (!exists && inBounds) {
-        addEmergencyMarker(
+      if (existingMarker) {
+        // Update popup content if marker exists - FORCE RE-RENDER
+        const popupContent = createPopupContent(
           emergency.latitude,
           emergency.longitude,
-          emergency.accuracy,
           emergency.id,
           emergency
         );
+        
+        // Close popup if open, update content, then reopen if it was open
+        const wasOpen = existingMarker.isPopupOpen();
+        if (wasOpen) {
+          existingMarker.closePopup();
+        }
+        
+        existingMarker.setPopupContent(popupContent);
+        
+        if (wasOpen) {
+          existingMarker.openPopup();
+        }
+        
+        // Update marker color based on status
+        const newIcon = createMarkerIcon(color);
+        existingMarker.setIcon(newIcon);
+        
+      } else {
+        // Create marker with correct color based on status
+        const icon = createMarkerIcon(color);
+        
+        const marker = L.marker([emergency.latitude, emergency.longitude], { icon });
+        
+        const popupContent = createPopupContent(
+          emergency.latitude,
+          emergency.longitude,
+          emergency.id,
+          emergency
+        );
+        
+        marker.bindPopup(popupContent, { 
+          maxWidth: 300,
+          className: 'emergency-popup'
+        });
+
+        cluster.addLayer(marker);
+        markersMapRef.current.set(emergency.id, marker);
       }
     });
-  }, [emergencies, addEmergencyMarker, mapInstanceRef, markersRef]);
 
+    console.log(`✅ Total markers in cluster: ${markersMapRef.current.size}`);
+  }, [emergencies, mapInstanceRef.current]);
+
+  // Register refresh function globally for map popup buttons
+  useEffect(() => {
+    window.refreshEmergencies = async () => {
+      console.log("🔄 Refreshing emergencies from global handler...");
+      
+      // Close all open popups before refetching
+      markersMapRef.current.forEach(marker => {
+        if (marker.isPopupOpen()) {
+          marker.closePopup();
+        }
+      });
+      
+      if (refetchEmergencies) {
+        await refetchEmergencies();
+      }
+    };
+
+    // Register logout handler that doesn't reload but refetches data
+    window.handleLogout = () => {
+      console.log("🔓 Logout handler called");
+      
+      // Close all open popups
+      markersMapRef.current.forEach(marker => {
+        if (marker.isPopupOpen()) {
+          marker.closePopup();
+        }
+      });
+      
+      if (logout) {
+        logout();
+        
+        // Close any open modals
+        setIsLoginModalOpen(false);
+        setIsResponderModalOpen(false);
+        
+        // Refetch emergencies after logout to update UI based on new auth state
+        if (refetchEmergencies) {
+          setTimeout(() => {
+            refetchEmergencies();
+            updateEmergencyMarkers();
+          }, 100);
+        }
+      }
+    };
+
+    return () => {
+      delete window.refreshEmergencies;
+      delete window.handleLogout;
+    };
+  }, [refetchEmergencies, logout, updateEmergencyMarkers]);
+
+  // Initialize marker cluster group
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || isClusterInitializedRef.current) return;
+
+    console.log("🗺️ Initializing marker cluster...");
+
+    const cluster = (L as any).markerClusterGroup({
+      chunkedLoading: true,
+      chunkDelay: 50,
+      chunkInterval: 200,
+      maxClusterRadius: 40,
+      spiderfyOnEveryZoom: false,
+      showCoverageOnHover: false,
+      disableClusteringAtZoom: 15,
+    });
+
+    map.addLayer(cluster);
+    markerClusterRef.current = cluster;
+    isClusterInitializedRef.current = true;
+
+    addAffectedAreaMarkers(map);
+    
+    console.log("✅ Marker cluster initialized");
+
+    return () => {
+      if (markerClusterRef.current && map) {
+        map.removeLayer(markerClusterRef.current);
+        markerClusterRef.current = null;
+        isClusterInitializedRef.current = false;
+      }
+    };
+  }, [mapInstanceRef.current]);
+
+  // Update markers when emergencies change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updateEmergencyMarkers();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [emergencies, updateEmergencyMarkers]);
+
+  // Handle map click for pinpoint mode
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -115,36 +311,83 @@ const Emergency: React.FC = () => {
       if (isPinpointMode) {
         const { lat, lng } = e.latlng;
         setSelectedMapLocation({ lat, lng });
-        removeTempMarker();
-        addEmergencyMarker(lat, lng, 50, "EMG-TEMP-" + Date.now());
+
+        if (tempMarkerRef.current) {
+          map.removeLayer(tempMarkerRef.current);
+        }
+
+        const icon = createMarkerIcon("#ef4444");
+        const marker = L.marker([lat, lng], { icon });
+        marker.addTo(map);
+        tempMarkerRef.current = marker;
       }
     };
 
     map.on("click", handleMapClick);
-    map.on("moveend", updateMarkersByZoomAndBounds);
-    map.on("zoomend", updateMarkersByZoomAndBounds);
-
-    updateMarkersByZoomAndBounds();
 
     return () => {
       map.off("click", handleMapClick);
-      map.off("moveend", updateMarkersByZoomAndBounds);
-      map.off("zoomend", updateMarkersByZoomAndBounds);
     };
-  }, [isPinpointMode, emergencies, updateMarkersByZoomAndBounds, addEmergencyMarker, removeTempMarker, mapInstanceRef]);
+  }, [isPinpointMode, mapInstanceRef.current]);
 
-  const handleCenterMap = useCallback((location: string) => {
-    if (location === "cebu") {
-      flyToLocation(CEBU_CENTER, 12);
-    } else if (location === "davao") {
-      flyToLocation(DAVAO_ORIENTAL_CENTER, 10);
+  // Handle provinces retry logic
+  useEffect(() => {
+    if (provincesData) {
+      console.log("✅ Successfully loaded provinces data");
+      setRetryCount(0);
+      setDataFetchError(null);
     }
+
+    if (provincesError) {
+      console.error("❌ Error fetching provinces:", provincesError);
+      setDataFetchError("Failed to load affected areas data");
+
+      if (retryCount < RETRY_CONFIG.maxRetries) {
+        const delay = RETRY_CONFIG.retryDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, retryCount);
+        const timeout = setTimeout(() => {
+          setRetryCount(p => p + 1);
+          if (refetchProvinces) refetchProvinces();
+        }, delay);
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [provincesData, provincesError, retryCount, refetchProvinces]);
+
+  // Handle emergencies error
+  useEffect(() => {
+    if (emergenciesError) {
+      const timeout = setTimeout(() => {
+        if (refetchEmergencies) refetchEmergencies();
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [emergenciesError, refetchEmergencies]);
+
+  const handleNavigate = useCallback((itemId: string) => {
+    switch (itemId) {
+      case 'login': setIsLoginModalOpen(true); break;
+      case 'become_responder': setIsResponderModalOpen(true); break;
+      case 'cebu': flyToLocation(CEBU_CENTER, 12); break;
+      case 'davao': flyToLocation([7.1136, 125.6436], 12); break;
+      case 'tracker': navigate('/tracker'); break;
+      case 'app_info': navigate('/info'); break;
+      default: break;
+    }
+    setIsMenuOpen(false);
+  }, [navigate, flyToLocation]);
+
+  const handleCenterMap = useCallback((locationStr: string, lat: number, lng: number) => {
+    let zoomLevel = 12;
+    const parts = locationStr.split('_');
+    if (parts.length === 1) zoomLevel = 10;
+    else if (parts.length === 2) zoomLevel = 12;
+    else if (parts.length >= 3) zoomLevel = 14;
+
+    flyToLocation([lat, lng], zoomLevel);
   }, [flyToLocation]);
 
   const toggleNeed = useCallback((need: NeedType) => {
-    setSelectedNeeds((prev) =>
-      prev.includes(need) ? prev.filter((n) => n !== need) : [...prev, need]
-    );
+    setSelectedNeeds(prev => prev.includes(need) ? prev.filter(n => n !== need) : [...prev, need]);
   }, []);
 
   const handleEmergency = useCallback(() => {
@@ -165,16 +408,26 @@ const Emergency: React.FC = () => {
           accuracy: pos.coords.accuracy,
           timestamp: new Date().toISOString(),
         };
-        const newEmergencyId = "EMG-TEMP-" + Date.now();
-        const isValid = addEmergencyMarker(
-          coords.latitude,
-          coords.longitude,
-          coords.accuracy,
-          newEmergencyId
-        );
-        if (!isValid) return;
-        const name = await getPlaceName(coords.latitude, coords.longitude);
-        setPlaceName(name);
+
+        const map = mapInstanceRef.current;
+        if (map) {
+          if (tempMarkerRef.current) {
+            map.removeLayer(tempMarkerRef.current);
+          }
+          const icon = createMarkerIcon("#ef4444");
+          const marker = L.marker([coords.latitude, coords.longitude], { icon });
+          marker.addTo(map);
+          tempMarkerRef.current = marker;
+        }
+
+        try {
+          const name = await getPlaceName(coords.latitude, coords.longitude);
+          setPlaceName(name);
+        } catch (error) {
+          console.error("Failed to get place name:", error);
+          setPlaceName("Unknown location");
+        }
+
         setLocation(coords);
         setStatus("form");
       },
@@ -187,18 +440,25 @@ const Emergency: React.FC = () => {
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [addEmergencyMarker]);
+  }, [mapInstanceRef.current]);
 
   const handleManualPinpointConfirm = useCallback(async (lat: number, lng: number) => {
     setStatus("loading");
-    const coords: Location = {
-      latitude: lat,
-      longitude: lng,
-      accuracy: 50,
-      timestamp: new Date().toISOString(),
+    const coords: Location = { 
+      latitude: lat, 
+      longitude: lng, 
+      accuracy: 50, 
+      timestamp: new Date().toISOString() 
     };
-    const name = await getPlaceName(lat, lng);
-    setPlaceName(name);
+
+    try {
+      const name = await getPlaceName(lat, lng);
+      setPlaceName(name);
+    } catch (error) {
+      console.error("Failed to get place name:", error);
+      setPlaceName("Unknown location");
+    }
+
     setLocation(coords);
     setIsPinpointMode(false);
     setSelectedMapLocation(null);
@@ -206,20 +466,28 @@ const Emergency: React.FC = () => {
   }, []);
 
   const handleSearchSelect = useCallback(async (lat: number, lng: number, name: string) => {
-    removeTempMarker();
-    const newId = "EMG-TEMP-" + Date.now();
-    addEmergencyMarker(lat, lng, 50, newId);
-    mapInstanceRef.current?.setView([lat, lng], 16, { animate: true });
-    setLocation({
-      latitude: lat,
-      longitude: lng,
-      accuracy: 50,
-      timestamp: new Date().toISOString(),
+    const map = mapInstanceRef.current;
+    if (map) {
+      if (tempMarkerRef.current) {
+        map.removeLayer(tempMarkerRef.current);
+      }
+      const icon = createMarkerIcon("#ef4444");
+      const marker = L.marker([lat, lng], { icon });
+      marker.addTo(map);
+      tempMarkerRef.current = marker;
+      flyToLocation([lat, lng], 16);
+    }
+
+    setLocation({ 
+      latitude: lat, 
+      longitude: lng, 
+      accuracy: 50, 
+      timestamp: new Date().toISOString() 
     });
     setPlaceName(name);
     setIsSearchOpen(false);
     setStatus("form");
-  }, [removeTempMarker, addEmergencyMarker, mapInstanceRef]);
+  }, [mapInstanceRef.current, flyToLocation]);
 
   const handleSubmitRequest = useCallback(async () => {
     if (selectedNeeds.length === 0) {
@@ -255,23 +523,21 @@ const Emergency: React.FC = () => {
         placename: data.data.placename || placeName,
       };
 
-      removeTempMarker();
-      addEmergencyMarker(
-        location.latitude,
-        location.longitude,
-        location.accuracy,
-        data.data.id,
-        newEmergency
-      );
+      const map = mapInstanceRef.current;
+      if (map && tempMarkerRef.current) {
+        map.removeLayer(tempMarkerRef.current);
+        tempMarkerRef.current = null;
+      }
 
-      setEmergencies((prev) => [...prev, newEmergency]);
+      setEmergencies(prev => [...prev, newEmergency]);
       setStatus("success");
     } catch (e: unknown) {
-      console.error(e);
-      setErrorMessage(e instanceof Error ? e.message : "Failed to submit request");
+      console.error("Emergency submission failed:", e);
+      const errorMsg = e instanceof Error ? e.message : "Failed to submit request";
+      setErrorMessage(`${errorMsg}. Please try again.`);
       setStatus("error");
     }
-  }, [selectedNeeds, location, placeName, contactNo, numberOfPeople, urgencyLevel, additionalNotes, emergencyDocument, removeTempMarker, addEmergencyMarker, setEmergencies]);
+  }, [selectedNeeds, location, placeName, contactNo, numberOfPeople, urgencyLevel, additionalNotes, emergencyDocument, mapInstanceRef.current, setEmergencies]);
 
   const handleReset = useCallback(() => {
     setStatus("idle");
@@ -285,8 +551,24 @@ const Emergency: React.FC = () => {
     setErrorMessage("");
     setIsPinpointMode(false);
     setSelectedMapLocation(null);
-    removeTempMarker();
-  }, [removeTempMarker]);
+    
+    const map = mapInstanceRef.current;
+    if (map && tempMarkerRef.current) {
+      map.removeLayer(tempMarkerRef.current);
+      tempMarkerRef.current = null;
+    }
+  }, [mapInstanceRef.current]);
+
+  const handleCancelPinpoint = useCallback(() => {
+    setIsPinpointMode(false);
+    setSelectedMapLocation(null);
+    
+    const map = mapInstanceRef.current;
+    if (map && tempMarkerRef.current) {
+      map.removeLayer(tempMarkerRef.current);
+      tempMarkerRef.current = null;
+    }
+  }, [mapInstanceRef.current]);
 
   const handleResponderSubmit = useCallback(async () => {
     try {
@@ -306,6 +588,7 @@ const Emergency: React.FC = () => {
 
       const response = await axios.post(`${API_BASE}/auth/register`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        timeout: 15000,
       });
 
       alert(response.data.message || "Responder application submitted!");
@@ -318,7 +601,14 @@ const Emergency: React.FC = () => {
       setNotes("");
     } catch (err: any) {
       console.error("Registration error:", err);
-      const errorMsg = err.response?.data?.message || "Failed to submit responder application.";
+      let errorMsg = "Failed to submit responder application.";
+      if (err.code === 'ECONNABORTED') {
+        errorMsg = "Request timeout. Please check your connection and try again.";
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      } else if (!navigator.onLine) {
+        errorMsg = "No internet connection. Please check your network.";
+      }
       setErrorMessage(errorMsg);
       alert(errorMsg);
     }
@@ -328,12 +618,7 @@ const Emergency: React.FC = () => {
     <div className="relative w-full h-screen overflow-hidden">
       <div ref={mapRef} className="absolute inset-0 w-full h-full z-0" style={{ height: '100vh', width: '100vw' }}></div>
 
-      <TopBar
-        logoSrc={logo}
-        emergencies={emergencies}
-        showMenuButton
-        onMenu={() => setIsMenuOpen(true)}
-      />
+      <TopBar logoSrc={logo} emergencies={emergencies} showMenuButton onMenu={() => setIsMenuOpen(true)} />
 
       <NavigationMenu
         isOpen={isMenuOpen}
@@ -347,13 +632,36 @@ const Emergency: React.FC = () => {
         onDashboardClick={() => navigate("/admin")}
         onLogout={logout}
         onCenterMap={handleCenterMap}
+        provincesData={provincesData?.byRegion}
       />
 
-      {isLoadingEmergencies && (
+      {(isLoadingEmergencies || provincesLoading) && (
         <div className="fixed top-20 left-4 bg-white/95 backdrop-blur-sm px-5 py-3 rounded-xl shadow-xl z-10 border-2 border-gray-200">
           <div className="flex items-center gap-2">
             <Loader className="w-4 h-4 animate-spin text-gray-600" />
-            <span className="text-sm text-gray-600 font-medium">Loading emergencies...</span>
+            <span className="text-sm text-gray-600 font-medium">
+              {isLoadingEmergencies && "Loading emergencies..."}
+              {provincesLoading && !isLoadingEmergencies && "Loading affected areas..."}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {(dataFetchError || emergenciesError) && (
+        <div className="fixed top-20 left-4 bg-red-50 border-2 border-red-300 px-5 py-3 rounded-xl shadow-xl z-10 max-w-sm">
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-red-700 font-medium">{dataFetchError || "Failed to load emergency data"}</span>
+            <button
+              onClick={() => {
+                setRetryCount(0);
+                setDataFetchError(null);
+                if (refetchProvinces) refetchProvinces();
+                if (refetchEmergencies) refetchEmergencies();
+              }}
+              className="text-xs text-red-700 font-semibold hover:underline text-left"
+            >
+              Try Again
+            </button>
           </div>
         </div>
       )}
@@ -363,7 +671,7 @@ const Emergency: React.FC = () => {
         onRequestHelp={handleEmergency}
         isPinpointMode={isPinpointMode}
         onActivate={() => setIsPinpointMode(true)}
-        onDeactivate={() => setIsPinpointMode(false)}
+        onDeactivate={handleCancelPinpoint}
         onConfirm={handleManualPinpointConfirm}
         selectedLocation={selectedMapLocation}
         isSearchOpen={isSearchOpen}
@@ -372,59 +680,66 @@ const Emergency: React.FC = () => {
         onSelectLocation={handleSearchSelect}
       />
 
-      <UnifiedModal
-        type="emergency"
-        isOpen={status !== "idle"}
-        onClose={handleReset}
-        status={status}
-        location={location}
-        placeName={placeName}
-        contactNo={contactNo}
-        setContactNo={setContactNo}
-        selectedNeeds={selectedNeeds}
-        toggleNeed={toggleNeed}
-        numberOfPeople={numberOfPeople}
-        setNumberOfPeople={setNumberOfPeople}
-        urgencyLevel={urgencyLevel}
-        setUrgencyLevel={setUrgencyLevel}
-        additionalNotes={additionalNotes}
-        setAdditionalNotes={setAdditionalNotes}
-        errorMessage={errorMessage}
-        onSubmit={handleSubmitRequest}
-        onReset={handleReset}
-        setStatus={setStatus}
-        emergencyDocument={emergencyDocument}
-        setEmergencyDocument={setEmergencyDocument}
-      />
+   {status !== "idle" && (
+  <UnifiedModal
+    type="emergency"
+    isOpen={true} // already gated by the condition
+    onClose={handleReset}
+    status={status}
+    location={location}
+    placeName={placeName}
+    contactNo={contactNo}
+    setContactNo={setContactNo}
+    selectedNeeds={selectedNeeds}
+    toggleNeed={toggleNeed}
+    numberOfPeople={numberOfPeople}
+    setNumberOfPeople={setNumberOfPeople}
+    urgencyLevel={urgencyLevel}
+    setUrgencyLevel={setUrgencyLevel}
+    additionalNotes={additionalNotes}
+    setAdditionalNotes={setAdditionalNotes}
+    errorMessage={errorMessage}
+    onSubmit={handleSubmitRequest}
+    onReset={handleReset}
+    setStatus={setStatus}
+    emergencyDocument={emergencyDocument}
+    setEmergencyDocument={setEmergencyDocument}
+  />
+)}
 
-      <UnifiedModal
-        type="responder"
-        isOpen={isResponderModalOpen}
-        onClose={() => setIsResponderModalOpen(false)}
-        fullName={fullName}
-        setFullName={setFullName}
-        email={email}
-        setEmail={setEmail}
-        password={password}
-        setPassword={setPassword}
-        contactNumber={contactNumber}
-        setContactNumber={setContactNumber}
-        document={document}
-        setDocument={setDocument}
-        notes={notes}
-        setNotes={setNotes}
-        errorMessage={errorMessage}
-        onSubmit={handleResponderSubmit}
-      />
+      {isResponderModalOpen && (
+        <UnifiedModal
+          type="responder"
+          isOpen={isResponderModalOpen}
+          onClose={() => setIsResponderModalOpen(false)}
+          fullName={fullName}
+          setFullName={setFullName}
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          contactNumber={contactNumber}
+          setContactNumber={setContactNumber}
+          document={document}
+          setDocument={setDocument}
+          notes={notes}
+          setNotes={setNotes}
+          errorMessage={errorMessage}
+          onSubmit={handleResponderSubmit}
+        />
+      )}
 
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onLogin={handleLogin}
-        errors={errors}
-        isLoading={isLoading}
-        successMessage={message}
-      />
+      {isLoginModalOpen && (
+        <LoginModal
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+          onLogin={handleLogin}
+          // onLoginSuccess={handleLoginSuccess}
+          errors={errors}
+          isLoading={isLoading}
+          successMessage={message}
+        />
+      )}
     </div>
   );
 };

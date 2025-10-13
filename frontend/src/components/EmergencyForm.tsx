@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { motion, type Variants } from "framer-motion";
 import { X, MapPin, AlertCircle, Users, Clock } from "lucide-react";
 import type { Location, NeedType } from "../types";
 import { needOptions } from "../constants";
@@ -25,28 +24,6 @@ interface EmergencyFormProps {
   emergencyDocument: File | null;
   setEmergencyDocument: (file: File | null) => void;
 }
-
-// Animation presets
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      duration: 0.3,
-      ease: "easeOut",
-      staggerChildren: 0.08,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
-  },
-};
 
 export const EmergencyForm: React.FC<EmergencyFormProps> = ({
   location,
@@ -91,17 +68,9 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
   };
 
   return (
-    <motion.div
-      className="p-6 space-y-6 bg-surface rounded-2xl text-text-default max-h-[90vh] overflow-y-auto scrollbar-hide shadow-xl border border-border-DEFAULT"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
+    <div className="p-6 space-y-6 bg-surface rounded-2xl text-text-default max-h-[90vh] overflow-y-auto scrollbar-hide shadow-xl border border-border-DEFAULT animate-fadeIn">
       {/* Header */}
-      <motion.div
-        variants={itemVariants}
-        className="flex justify-between items-center pb-4 border-b border-border-DEFAULT"
-      >
+      <div className="flex justify-between items-center pb-4 border-b border-border-DEFAULT">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-emergency rounded-xl">
             <AlertCircle className="w-6 h-6 text-surface" />
@@ -111,22 +80,16 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
             <p className="text-sm text-text-muted">Submit your emergency assistance needs</p>
           </div>
         </div>
-        <motion.button
+        <button
           onClick={onClose}
-          className="p-2 hover:bg-map-DEFAULT rounded-lg transition-colors text-text-muted hover:text-text-default"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ duration: 0.15 }}
+          className="p-2 hover:bg-map-DEFAULT rounded-lg transition-colors duration-150 text-text-muted hover:text-text-default hover:scale-105 active:scale-95"
         >
           <X className="w-5 h-5" />
-        </motion.button>
-      </motion.div>
+        </button>
+      </div>
 
       {/* Location Info */}
-      <motion.div
-        variants={itemVariants}
-        className="p-4 bg-map-DEFAULT border border-border-strong rounded-xl"
-      >
+      <div className="p-4 bg-map-DEFAULT border border-border-strong rounded-xl">
         <div className="flex items-start gap-3">
           <MapPin className="w-5 h-5 text-emergency mt-0.5 flex-shrink-0" />
           <div className="flex-1">
@@ -136,10 +99,10 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
             </p>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Contact Information */}
-      <motion.div variants={itemVariants} className="space-y-4">
+      <div className="space-y-4">
         <h3 className="font-heading text-lg font-medium text-text-default">Contact Information</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <TextInput
@@ -157,30 +120,25 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
             error={errors.contactNo}
           />
         </div>
-      </motion.div>
+      </div>
 
       {/* Emergency Details */}
-      <motion.div variants={itemVariants} className="space-y-4">
+      <div className="space-y-4">
         <h3 className="font-heading text-lg font-medium text-text-default">Emergency Details</h3>
         {/* Needs */}
         <div className="space-y-3">
           <label className="block text-sm font-medium">Required Assistance *</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {needOptions.map((option, index) => (
-              <motion.button
+            {needOptions.map((option) => (
+              <button
                 key={option.value}
                 type="button"
                 onClick={() => toggleNeed(option.value as NeedType)}
-                className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all duration-200 ${
+                className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all duration-200 hover:-translate-y-0.5 active:scale-98 ${
                   selectedNeeds.includes(option.value as NeedType)
                     ? "border-emergency bg-emergency text-surface shadow-sm"
                     : "border-border-DEFAULT bg-surface text-text-muted hover:border-emergency hover:bg-map-DEFAULT hover:text-text-default"
                 }`}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: "easeOut", delay: index * 0.03 }}
               >
                 <div
                   className={`mb-2 ${
@@ -192,7 +150,7 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
                   {option.icon}
                 </div>
                 <span className="text-xs font-medium">{option.label}</span>
-              </motion.button>
+              </button>
             ))}
           </div>
           {errors.selectedNeeds && (
@@ -230,18 +188,18 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
                   critical: "bg-emergency border-emergency text-surface",
                 };
                 return (
-                  <motion.button
+                  <button
                     key={level}
                     type="button"
                     onClick={() => setUrgencyLevel(level)}
-                    className={`px-3 py-2 rounded-lg border-2 font-medium text-xs transition-all ${
+                    className={`px-3 py-2 rounded-lg border-2 font-medium text-xs transition-all duration-150 ${
                       urgencyLevel === level
                         ? `${colorMap[level]} shadow-sm`
                         : "border-border-DEFAULT bg-surface text-text-muted hover:border-text-default"
                     }`}
                   >
                     {level.charAt(0).toUpperCase() + level.slice(1)}
-                  </motion.button>
+                  </button>
                 );
               })}
             </div>
@@ -250,10 +208,10 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
             )}
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Verification */}
-      <motion.div variants={itemVariants} className="space-y-4">
+      <div className="space-y-4">
         <h3 className="font-heading text-lg font-medium text-text-default">Verification</h3>
         <FileInput
           label="Verification Document *"
@@ -262,10 +220,10 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
           error={errors.emergencyDocument}
           description="Upload any document that verifies your emergency situation (PDF, JPG, PNG)"
         />
-      </motion.div>
+      </div>
 
       {/* Additional Notes */}
-      <motion.div variants={itemVariants} className="space-y-3">
+      <div className="space-y-3">
         <h3 className="font-heading text-lg font-medium text-text-default">
           Additional Information
         </h3>
@@ -275,10 +233,10 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
           placeholder="Special needs, medical conditions, accessibility requirements, etc."
           rows={4}
         />
-      </motion.div>
+      </div>
 
-      {/* ✅ Privacy Policy Agreement */}
-      <motion.div variants={itemVariants} className="flex items-start gap-2 mt-2">
+      {/* Privacy Policy Agreement */}
+      <div className="flex items-start gap-2 mt-2">
         <input
           type="checkbox"
           checked={isPrivacyAccepted}
@@ -296,7 +254,7 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
           </button>
           .
         </p>
-      </motion.div>
+      </div>
       {errors.privacyPolicy && (
         <p className="text-xs text-emergency mt-1">{errors.privacyPolicy}</p>
       )}
@@ -309,26 +267,46 @@ export const EmergencyForm: React.FC<EmergencyFormProps> = ({
       )}
 
       {/* Submit */}
-      <motion.div variants={itemVariants}>
+      <div>
         <Button
           onClick={handleSubmit}
           disabled={!isPrivacyAccepted}
-          className={`w-full py-3 text-base font-semibold font-alt rounded-lg transition ${
+          className={`w-full py-3 text-base font-semibold font-alt rounded-lg transition-all duration-200 ${
             isPrivacyAccepted
-              ? "bg-emergency text-surface hover:bg-brand-dark shadow-lg"
+              ? "bg-emergency text-surface hover:bg-brand-dark shadow-lg hover:shadow-xl active:scale-98"
               : "bg-gray-200 text-gray-500 cursor-not-allowed"
           }`}
         >
           Submit Emergency Request
         </Button>
-      </motion.div>
+      </div>
 
-      {/* ✅ Privacy Policy Modal */}
+      {/* Privacy Policy Modal */}
       <PrivacyPolicy
         isOpen={showPolicy}
         onClose={() => setShowPolicy(false)}
         onAccept={() => setIsPrivacyAccepted(true)}
       />
-    </motion.div>
+
+      {/* CSS Animation Definition */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+        .active\\:scale-98:active {
+          transform: scale(0.98);
+        }
+      `}} />
+    </div>
   );
 };

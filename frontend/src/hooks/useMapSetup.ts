@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { CEBU_CENTER } from "../constants";
-import { addAffectedAreaMarkers } from "../utils/mapUtils";
 
 interface UseMapSetupReturn {
   mapRef: React.RefObject<HTMLDivElement | null>;
@@ -32,12 +31,14 @@ export const useMapSetup = (): UseMapSetupReturn => {
     }).addTo(map);
 
     mapInstanceRef.current = map;
+
     map.flyTo(CEBU_CENTER, 12, {
       duration: 2,
       easeLinearity: 0.2,
     });
 
-    addAffectedAreaMarkers(map);
+    // Removed affected area markers
+    // addAffectedAreaMarkers(map);
 
     return () => {
       if (mapInstanceRef.current) {
