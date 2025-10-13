@@ -33,6 +33,25 @@ export interface EmergencyRecord extends Location, EmergencyRequest {
   placename?: string;
 }
 
+export interface EmergencyApiData {
+  id: string;
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  timestamp?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  needs?: string;
+  numberOfPeople?: number;
+  urgencyLevel?: string;
+  additionalNotes?: string;
+  status?: string;
+  contactNo?: string;
+  contactno?: string;
+  placename?: string;
+}
+
+
 export interface AffectedArea {
   name: string;
   coords: [number, number];
@@ -55,6 +74,8 @@ export interface UrgencyColor {
   bg: string;
   text: string;
   light: string;
+  dark?: string; // optional
+
 }
 
 

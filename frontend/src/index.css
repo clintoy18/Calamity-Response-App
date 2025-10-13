@@ -2,6 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
-.modal::-webkit-scrollbar {
-    display: none;
+/* Global Scrollbar Styling for Webkit Browsers */
+::-webkit-scrollbar {
+  width: 6px;  /* Adjust this value to reduce the width of the scrollbar */
+  height: 6px; /* For horizontal scrollbars */
 }
+
+/* Scrollbar Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Light color for the track */
+  border-radius: 10px;
+}
+
+/* Scrollbar Handle */
+::-webkit-scrollbar-thumb {
+  background: #888; /* Color of the handle */
+  border-radius: 10px;
+}
+
+/* Hover State for the Handle */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Darker color when the user hovers */
+}
+
+/* Firefox Scrollbar Styling */
+.my-container {
+  scrollbar-width: thin;   /* Makes the scrollbar thinner */
+  scrollbar-color: #888 #f1f1f1;  /* Handle color and track color */
+}
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-pane,
+.leaflet-overlay-pane {
+  will-change: auto !important;
+}
+
+.leaflet-tile {
+  will-change: opacity;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.leaflet-fade-anim .leaflet-tile {
+  transition: opacity 0.2s;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  transition: transform 0.25s cubic-bezier(0, 0, 0.25, 1);
+}
+
+.marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+  width: 18px !important;
+  height: 18px !important;
+  margin-left: -9px !important;
+  margin-top: -9px !important;
+}
+
+/* Inner cluster circle with number */
+.marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+  width: 15px !important;
+  height: 15px !important;
+  margin-left: 1.5px !important;
+  margin-top: 1.5px !important;
+  font-size: 8px !important;
+  line-height: 15px !important;
+  font-weight: 700 !important;
+  
+  /* Perfect centering */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+

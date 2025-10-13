@@ -1,5 +1,5 @@
 // App.tsx
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Loader } from "lucide-react";
 import Emergency from "./screen/Emergency";
@@ -9,6 +9,28 @@ import { AdminRoute } from "./components/auth/RolePrivateRoute";
 import TestAdmin from "./screen/admin/TestAdmin";
 
 export const App = () => {
+
+   useEffect(() => {
+    // Register service worker with error handling
+    if ("serviceWorker" in navigator) {
+      // Wait for page load to avoid blocking
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/sw.js", { scope: "/" })
+          .then((registration) => {
+            console.log("Service Worker registered:", registration.scope);
+            
+            // Check for updates periodically
+            setInterval(() => {
+              registration.update();
+            }, 60000); // Check every minute
+          })
+          .catch((err) => {
+            console.warn("Service Worker registration failed:", err);
+          });
+      });
+    }
+  }, []);
   return (
     // 🌀 Suspense wrapper shows loader while components are loading
     <Suspense

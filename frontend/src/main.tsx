@@ -7,11 +7,13 @@ import { App } from "./App.tsx";
 import { AuthProvider } from "./context/AuthProvider.tsx";
 
 // Create a QueryClient instance (can be customized with options)
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 2, // auto retry failed requests
-      refetchOnWindowFocus: false, // prevent refetching when switching tabs
+      retry: 2,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5,   // 5 minutes
+      gcTime: 1000 * 60 * 30,     // 30 minutes (formerly cacheTime)
     },
   },
 });
