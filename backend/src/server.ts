@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth.route";
 import adminRoutes from "./routes/admin.route";
 import fileRoutes from "./routes/files.route";
 import earthquakeRoutes from "./routes/earthquake.route";
+import infrasRoute from "./routes/infrastructure.route";
 import { connectDB } from "./config/db";
 
 const app = express();
@@ -32,6 +33,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes); // <-- mount admin route
 app.use("/api/files", fileRoutes);
 app.use("/api/earthquakes", earthquakeRoutes);
+app.use("/api/infrastructure", infrasRoute);
 
 
 connectDB().then(() => {
