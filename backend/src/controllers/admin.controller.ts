@@ -159,20 +159,15 @@ export const fetchEmergencies = async (req: Request, res: Response) => {
   try {
     // ✅ Parse pagination safely
     const page = Math.max(Number(req.query.page) || 1, 1);
-    const limit = Math.min(Number(req.query.limit) || 20, 100);
+    const limit = Math.min(Number(req.query.limit) || 20, 99999);
     const skip = (page - 1) * limit;
 
     // ✅ Parse optional filters
     const status = req.query.status as string | undefined;
     const urgencyLevel = req.query.urgencyLevel as string | undefined;
 
-    // ✅ Calculate 24-hour cutoff time
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
-
     // ✅ Base query: include emergencies with good data quality
     const query: Record<string, any> = {
-      createdAt: { $gte: twentyFourHoursAgo }, // ✅ only include within last 24 hours
       $or: [
         { dataQualityIssues: { $exists: false } },
         { dataQualityIssues: "OK" },
@@ -210,7 +205,6 @@ export const fetchEmergencies = async (req: Request, res: Response) => {
     });
   }
 };
-
 
 
 // get emergency by id
