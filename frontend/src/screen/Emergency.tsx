@@ -28,11 +28,11 @@ import { urgencyColors } from "../constants";
 
 const CEBU_CENTER: [number, number] = [10.3157, 123.8854];
 
-const RETRY_CONFIG = {
-  maxRetries: 3,
-  retryDelay: 1000,
-  backoffMultiplier: 2,
-};
+// const RETRY_CONFIG = {
+//   maxRetries: 3,
+//   retryDelay: 1000,
+//   backoffMultiplier: 2,
+// };
 
 const Emergency: React.FC = () => {
   const { mapRef, mapInstanceRef, flyToLocation } = useMapSetup();
@@ -86,7 +86,7 @@ const Emergency: React.FC = () => {
   const tempMarkerRef = React.useRef<L.Marker | null>(null);
   const isClusterInitializedRef = React.useRef(false);
 
-  const [retryCount, setRetryCount] = useState(0);
+  // const [retryCount, setRetryCount] = useState(0);
   const [dataFetchError, setDataFetchError] = useState<string | null>(null);
 
   // ✅ Handle successful login without reload
