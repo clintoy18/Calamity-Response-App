@@ -46,8 +46,6 @@ let lastFetchedAt = 0;
 
 export const useEmergencies = (): UseEmergenciesReturn => {
   const [emergencies, setEmergencies] = useState<EmergencyRecord[]>([]);
-
-  console.log("Emergencies state:", emergencies);
   const [isLoadingEmergencies, setIsLoadingEmergencies] = useState(false);
   const [emergenciesError, setEmergenciesError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);

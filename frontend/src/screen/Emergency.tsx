@@ -20,7 +20,7 @@ import logo from '../assets/logo.png';
 import { NavigationMenu } from "../components/common/NavigationMenu";
 import { EmergencyPanel } from "../components/common/EmergencyPanel";
 import { UnifiedModal } from "../components/common/modal/UnifiedFormModal";
-import { useMostAffectedProvinces } from "../hooks/useMostAffectedProvinces";
+// import { useMostAffectedProvinces } from "../hooks/useMostAffectedProvinces";
 import { useEmergencies as useEmergenciesHook } from "../hooks/useEmergencies";
 import { useMapSetup } from "../hooks/useMapSetup";
 import { createPopupContent, createMarkerIcon, addAffectedAreaMarkers } from "../utils/mapUtils";
@@ -37,12 +37,12 @@ const CEBU_CENTER: [number, number] = [10.3157, 123.8854];
 const Emergency: React.FC = () => {
   const { mapRef, mapInstanceRef, flyToLocation } = useMapSetup();
 
-  const { 
-    data: provincesData, 
-    // error: provincesError,
-    isLoading: provincesLoading,
-    refetch: refetchProvinces 
-  } = useMostAffectedProvinces();
+  // const { 
+  //   data: provincesData, 
+  //   // error: provincesError,
+  //   isLoading: provincesLoading,
+  //   refetch: refetchProvinces 
+  // } = useMostAffectedProvinces();
 
   const { 
     emergencies, 
@@ -132,8 +132,6 @@ const Emergency: React.FC = () => {
       return;
     }
 
-    console.log(`📍 Updating ${emergencies.length} emergency markers`);
-
     const existingIds = new Set(markersMapRef.current.keys());
     const currentIds = new Set(emergencies.map(e => e.id));
 
@@ -205,13 +203,11 @@ const Emergency: React.FC = () => {
       }
     });
 
-    console.log(`✅ Total markers in cluster: ${markersMapRef.current.size}`);
   }, [emergencies, mapInstanceRef.current]);
 
   // Register refresh function globally for map popup buttons
   useEffect(() => {
     window.refreshEmergencies = async () => {
-      console.log("🔄 Refreshing emergencies from global handler...");
       
       // Close all open popups before refetching
       markersMapRef.current.forEach(marker => {
@@ -227,8 +223,6 @@ const Emergency: React.FC = () => {
 
     // Register logout handler that doesn't reload but refetches data
     window.handleLogout = () => {
-      console.log("🔓 Logout handler called");
-      
       // Close all open popups
       markersMapRef.current.forEach(marker => {
         if (marker.isPopupOpen()) {
@@ -264,8 +258,6 @@ const Emergency: React.FC = () => {
     const map = mapInstanceRef.current;
     if (!map || isClusterInitializedRef.current) return;
 
-    console.log("🗺️ Initializing marker cluster...");
-
     const cluster = (L as any).markerClusterGroup({
       chunkedLoading: true,
       chunkDelay: 50,
@@ -282,8 +274,6 @@ const Emergency: React.FC = () => {
 
     addAffectedAreaMarkers(map);
     
-    console.log("✅ Marker cluster initialized");
-
     return () => {
       if (markerClusterRef.current && map) {
         map.removeLayer(markerClusterRef.current);
@@ -632,16 +622,15 @@ const Emergency: React.FC = () => {
         onDashboardClick={() => navigate("/admin")}
         onLogout={logout}
         onCenterMap={handleCenterMap}
-        provincesData={provincesData?.byRegion}
+        // provincesData={provincesData?.byRegion}
       />
 
-      {(isLoadingEmergencies || provincesLoading) && (
+      {(isLoadingEmergencies ) && ( // || provincesLoading
         <div className="fixed top-20 left-4 bg-white/95 backdrop-blur-sm px-5 py-3 rounded-xl shadow-xl z-10 border-2 border-gray-200">
           <div className="flex items-center gap-2">
             <Loader className="w-4 h-4 animate-spin text-gray-600" />
             <span className="text-sm text-gray-600 font-medium">
               {isLoadingEmergencies && "Loading emergencies..."}
-              {provincesLoading && !isLoadingEmergencies && "Loading affected areas..."}
             </span>
           </div>
         </div>
@@ -655,7 +644,7 @@ const Emergency: React.FC = () => {
               onClick={() => {
                 // setRetryCount(0);
                 setDataFetchError(null);
-                if (refetchProvinces) refetchProvinces();
+                // if (refetchProvinces) refetchProvinces();
                 if (refetchEmergencies) refetchEmergencies();
               }}
               className="text-xs text-red-700 font-semibold hover:underline text-left"

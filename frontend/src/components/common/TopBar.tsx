@@ -36,11 +36,10 @@ export const TopBar: React.FC<TopBarProps> = ({
       <div className="flex items-center gap-3 min-w-0">
         <div className="flex items-center gap-2 relative">
           <div className="flex items-center justify-center overflow-hidden rounded h-8">
-            <img 
+           <img 
               src={logoSrc} 
               alt={subtitle || 'App logo'} 
-              className="h-8 w-auto max-w-full object-contain" 
-              loading="lazy"
+              className="h-8 w-auto max-w-full object-contain"
               decoding="async"
             />
           </div>

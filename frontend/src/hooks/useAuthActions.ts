@@ -65,7 +65,6 @@ export function useAuthActions() {
 
       setToken(res.data.token);
       setMessage("Login successful!");
-      console.log("Login successful!");
 
       // Redirect based on user role
       const userRole = getUserRole();

@@ -18,7 +18,6 @@ export const App = () => {
         navigator.serviceWorker
           .register("/sw.js", { scope: "/" })
           .then((registration) => {
-            console.log("Service Worker registered:", registration.scope);
             
             // Check for updates periodically
             setInterval(() => {
