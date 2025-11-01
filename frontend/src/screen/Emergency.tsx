@@ -28,18 +28,18 @@ import { urgencyColors } from "../constants";
 
 const CEBU_CENTER: [number, number] = [10.3157, 123.8854];
 
-const RETRY_CONFIG = {
-  maxRetries: 3,
-  retryDelay: 1000,
-  backoffMultiplier: 2,
-};
+// const RETRY_CONFIG = {
+//   maxRetries: 3,
+//   retryDelay: 1000,
+//   backoffMultiplier: 2,
+// };
 
 const Emergency: React.FC = () => {
   const { mapRef, mapInstanceRef, flyToLocation } = useMapSetup();
 
   const { 
     data: provincesData, 
-    error: provincesError,
+    // error: provincesError,
     isLoading: provincesLoading,
     refetch: refetchProvinces 
   } = useMostAffectedProvinces();
@@ -86,7 +86,7 @@ const Emergency: React.FC = () => {
   const tempMarkerRef = React.useRef<L.Marker | null>(null);
   const isClusterInitializedRef = React.useRef(false);
 
-  const [retryCount, setRetryCount] = useState(0);
+  // const [retryCount, setRetryCount] = useState(0);
   const [dataFetchError, setDataFetchError] = useState<string | null>(null);
 
   // ✅ Handle successful login without reload
@@ -653,7 +653,7 @@ const Emergency: React.FC = () => {
             <span className="text-sm text-red-700 font-medium">{dataFetchError || "Failed to load emergency data"}</span>
             <button
               onClick={() => {
-                setRetryCount(0);
+                // setRetryCount(0);
                 setDataFetchError(null);
                 if (refetchProvinces) refetchProvinces();
                 if (refetchEmergencies) refetchEmergencies();
