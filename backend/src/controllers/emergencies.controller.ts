@@ -12,8 +12,8 @@ const generateUUID = (): string => {
 // GET all emergencies (last 24h, filtered)
 export const getEmergencies = async (req: Request, res: Response) => {
   try {
-    // const twentyFourHoursAgo = new Date();
-    // twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
     const emergencies = await Emergency.find({
       $and: [
