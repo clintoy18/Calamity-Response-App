@@ -159,7 +159,7 @@ export const fetchEmergencies = async (req: Request, res: Response) => {
   try {
     // ✅ Parse pagination safely
     const page = Math.max(Number(req.query.page) || 1, 1);
-    const limit = Math.min(Number(req.query.limit) || 20, 99999);
+    const limit = Math.min(Number(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
 
     // ✅ Parse optional filters
