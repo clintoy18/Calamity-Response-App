@@ -128,12 +128,12 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
         icon: User,
         items: accountItems,
       },
-      {
-        id: "map_locations",
-        label: "Map Locations",
-        icon: Map,
-        items: mapLocationItems,
-      },
+      // {
+      //   id: "map_locations",
+      //   label: "Map Locations",
+      //   icon: Map,
+      //   items: mapLocationItems,
+      // },
     ];
   }, [isAuthenticated, userRole, provincesData]);
 

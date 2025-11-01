@@ -155,24 +155,24 @@ export const rejectResponders = async (
 };
 
 // Emergencies CRUD
-export const fetchEmergencies = async (req: Request, res: Response) => {
+
+export const fetchEmergencies = async (req: Request, res: Response): Promise<void> => {
   try {
-    // ✅ Parse pagination safely
-    const page = Math.max(Number(req.query.page) || 1, 1);
-    const limit = Math.min(Number(req.query.limit) || 20, 100);
+    // 🧩 Safe pagination parsing
+    const page = Number.isFinite(Number(req.query.page)) ? Math.max(Number(req.query.page), 1) : 1;
+    const limit = Number.isFinite(Number(req.query.limit)) ? Math.min(Number(req.query.limit), 100) : 20;
     const skip = (page - 1) * limit;
 
-    // ✅ Parse optional filters
-    const status = req.query.status as string | undefined;
-    const urgencyLevel = req.query.urgencyLevel as string | undefined;
+    // 🧩 Optional filters
+    const status = typeof req.query.status === "string" ? req.query.status.trim() : undefined;
+    const urgencyLevel = typeof req.query.urgencyLevel === "string" ? req.query.urgencyLevel.trim() : undefined;
 
-    // ✅ Calculate 24-hour cutoff time
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    // 🕓 Calculate 24-hour cutoff safely
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    // ✅ Base query: include emergencies with good data quality
+    // 🧩 Build query safely
     const query: Record<string, any> = {
-      createdAt: { $gte: twentyFourHoursAgo }, // ✅ only include within last 24 hours
+      createdAt: { $gte: twentyFourHoursAgo },
       $or: [
         { dataQualityIssues: { $exists: false } },
         { dataQualityIssues: "OK" },
@@ -182,18 +182,24 @@ export const fetchEmergencies = async (req: Request, res: Response) => {
     if (status) query.status = status;
     if (urgencyLevel) query.urgencyLevel = urgencyLevel;
 
-    // ✅ Sort newest first, optionally grouping by verification
+    // 🧩 Use an index-friendly sort
     const sortCriteria: Record<string, 1 | -1> = {
+      isVerified: 1, // unverified first
       createdAt: -1, // newest first
-      isVerified: 1, // unverified first if same timestamp
     };
 
-    // ✅ Execute queries in parallel
+    // 🧩 Fetch in parallel (safe for memory)
     const [emergencies, total] = await Promise.all([
-      Emergency.find(query).sort(sortCriteria).skip(skip).limit(limit).lean(),
+      Emergency.find(query)
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(limit)
+        .select("-__v") // exclude unnecessary fields
+        .lean(), // return plain JS objects for memory efficiency
       Emergency.countDocuments(query),
     ]);
 
+    // ✅ Respond cleanly
     res.status(200).json({
       success: true,
       page,
@@ -202,11 +208,13 @@ export const fetchEmergencies = async (req: Request, res: Response) => {
       count: emergencies.length,
       data: emergencies,
     });
-  } catch (error: any) {
-    console.error("❌ Error fetching emergencies:", error.message);
+  } catch (error) {
+    console.error("❌ Error fetching emergencies:", error);
+
+    // Prevents memory crash by avoiding heavy stack trace
     res.status(500).json({
       success: false,
-      message: "An error occurred while fetching emergencies.",
+      message: "An unexpected error occurred while fetching emergencies.",
     });
   }
 };

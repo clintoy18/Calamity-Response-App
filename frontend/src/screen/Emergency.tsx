@@ -331,27 +331,27 @@ const Emergency: React.FC = () => {
   }, [isPinpointMode, mapInstanceRef.current]);
 
   // Handle provinces retry logic
-  useEffect(() => {
-    if (provincesData) {
-      console.log("✅ Successfully loaded provinces data");
-      setRetryCount(0);
-      setDataFetchError(null);
-    }
+  // useEffect(() => {
+  //   if (provincesData) {
+  //     console.log("✅ Successfully loaded provinces data");
+  //     setRetryCount(0);
+  //     setDataFetchError(null);
+  //   }
 
-    if (provincesError) {
-      console.error("❌ Error fetching provinces:", provincesError);
-      setDataFetchError("Failed to load affected areas data");
+  //   if (provincesError) {
+  //     console.error("❌ Error fetching provinces:", provincesError);
+  //     setDataFetchError("Failed to load affected areas data");
 
-      if (retryCount < RETRY_CONFIG.maxRetries) {
-        const delay = RETRY_CONFIG.retryDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, retryCount);
-        const timeout = setTimeout(() => {
-          setRetryCount(p => p + 1);
-          if (refetchProvinces) refetchProvinces();
-        }, delay);
-        return () => clearTimeout(timeout);
-      }
-    }
-  }, [provincesData, provincesError, retryCount, refetchProvinces]);
+  //     if (retryCount < RETRY_CONFIG.maxRetries) {
+  //       const delay = RETRY_CONFIG.retryDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, retryCount);
+  //       const timeout = setTimeout(() => {
+  //         setRetryCount(p => p + 1);
+  //         if (refetchProvinces) refetchProvinces();
+  //       }, delay);
+  //       return () => clearTimeout(timeout);
+  //     }
+  //   }
+  // }, [provincesData, provincesError, retryCount, refetchProvinces]);
 
   // Handle emergencies error
   useEffect(() => {
