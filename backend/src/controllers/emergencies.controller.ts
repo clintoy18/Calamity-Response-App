@@ -16,7 +16,8 @@ export const getEmergencies = async (req: Request, res: Response) => {
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
     const emergencies = await Emergency.find({
-      $and: [
+        createdAt: { $gte: twentyFourHoursAgo }, 
+        $and: [
         {
           $or: [{ isVerified: { $exists: false } }, { isVerified: true }],
         },
