@@ -31,7 +31,7 @@ app.use("/api/emergencies", emergenciesRoutes); // <-- mount emergencies route
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes); // <-- mount admin route
 app.use("/api/files", fileRoutes);
-app.use("/api/earthquakes", earthquakeRoutes);
+// app.use("/api/earthquakes", earthquakeRoutes);
 
 
 connectDB().then(() => {
