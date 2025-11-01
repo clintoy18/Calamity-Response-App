@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   User,
   Shield,
-  Map,
+  // Map,
   Activity,
   X,
   ChevronDown,
