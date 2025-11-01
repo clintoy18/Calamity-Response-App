@@ -20,7 +20,7 @@ import logo from '../assets/logo.png';
 import { NavigationMenu } from "../components/common/NavigationMenu";
 import { EmergencyPanel } from "../components/common/EmergencyPanel";
 import { UnifiedModal } from "../components/common/modal/UnifiedFormModal";
-import { useMostAffectedProvinces } from "../hooks/useMostAffectedProvinces";
+// import { useMostAffectedProvinces } from "../hooks/useMostAffectedProvinces";
 import { useEmergencies as useEmergenciesHook } from "../hooks/useEmergencies";
 import { useMapSetup } from "../hooks/useMapSetup";
 import { createPopupContent, createMarkerIcon, addAffectedAreaMarkers } from "../utils/mapUtils";
@@ -37,12 +37,12 @@ const RETRY_CONFIG = {
 const Emergency: React.FC = () => {
   const { mapRef, mapInstanceRef, flyToLocation } = useMapSetup();
 
-  const { 
-    data: provincesData, 
-    error: provincesError,
-    isLoading: provincesLoading,
-    refetch: refetchProvinces 
-  } = useMostAffectedProvinces();
+  // const { 
+  //   data: provincesData, 
+  //   error: provincesError,
+  //   isLoading: provincesLoading,
+  //   refetch: refetchProvinces 
+  // } = useMostAffectedProvinces();
 
   const { 
     emergencies, 
@@ -331,27 +331,27 @@ const Emergency: React.FC = () => {
   }, [isPinpointMode, mapInstanceRef.current]);
 
   // Handle provinces retry logic
-  useEffect(() => {
-    if (provincesData) {
-      console.log("✅ Successfully loaded provinces data");
-      setRetryCount(0);
-      setDataFetchError(null);
-    }
+  // useEffect(() => {
+  //   if (provincesData) {
+  //     console.log("✅ Successfully loaded provinces data");
+  //     setRetryCount(0);
+  //     setDataFetchError(null);
+  //   }
 
-    if (provincesError) {
-      console.error("❌ Error fetching provinces:", provincesError);
-      setDataFetchError("Failed to load affected areas data");
+  //   if (provincesError) {
+  //     console.error("❌ Error fetching provinces:", provincesError);
+  //     setDataFetchError("Failed to load affected areas data");
 
-      if (retryCount < RETRY_CONFIG.maxRetries) {
-        const delay = RETRY_CONFIG.retryDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, retryCount);
-        const timeout = setTimeout(() => {
-          setRetryCount(p => p + 1);
-          if (refetchProvinces) refetchProvinces();
-        }, delay);
-        return () => clearTimeout(timeout);
-      }
-    }
-  }, [provincesData, provincesError, retryCount, refetchProvinces]);
+  //     if (retryCount < RETRY_CONFIG.maxRetries) {
+  //       const delay = RETRY_CONFIG.retryDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, retryCount);
+  //       const timeout = setTimeout(() => {
+  //         setRetryCount(p => p + 1);
+  //         if (refetchProvinces) refetchProvinces();
+  //       }, delay);
+  //       return () => clearTimeout(timeout);
+  //     }
+  //   }
+  // }, [provincesData, provincesError, retryCount, refetchProvinces]);
 
   // Handle emergencies error
   useEffect(() => {
@@ -632,16 +632,16 @@ const Emergency: React.FC = () => {
         onDashboardClick={() => navigate("/admin")}
         onLogout={logout}
         onCenterMap={handleCenterMap}
-        provincesData={provincesData?.byRegion}
+        // provincesData={provincesData?.byRegion}
       />
 
-      {(isLoadingEmergencies || provincesLoading) && (
+      {(isLoadingEmergencies ) && (
         <div className="fixed top-20 left-4 bg-white/95 backdrop-blur-sm px-5 py-3 rounded-xl shadow-xl z-10 border-2 border-gray-200">
           <div className="flex items-center gap-2">
             <Loader className="w-4 h-4 animate-spin text-gray-600" />
             <span className="text-sm text-gray-600 font-medium">
               {isLoadingEmergencies && "Loading emergencies..."}
-              {provincesLoading && !isLoadingEmergencies && "Loading affected areas..."}
+              { !isLoadingEmergencies && "Loading affected areas..."}
             </span>
           </div>
         </div>
@@ -655,7 +655,7 @@ const Emergency: React.FC = () => {
               onClick={() => {
                 setRetryCount(0);
                 setDataFetchError(null);
-                if (refetchProvinces) refetchProvinces();
+                // if (refetchProvinces) refetchProvinces();
                 if (refetchEmergencies) refetchEmergencies();
               }}
               className="text-xs text-red-700 font-semibold hover:underline text-left"
