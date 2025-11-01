@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   User,
   Shield,
-  Map,
+  // Map,
   Activity,
   X,
   ChevronDown,
@@ -100,26 +100,26 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
     }
 
     // ✅ Build map locations dynamically from provinces data WITH MUNICIPALITY COORDINATES
-    const mapLocationItems = provincesData.map((region) => ({
-      id: region.region.toLowerCase().replace(/\s+/g, "_"),
-      label: `${region.region} (${region.totalEarthquakes})`,
-      icon: MapPin,
-      latitude: region.latitude,
-      longitude: region.longitude,
-      provinces: region.provinces.map((province) => ({
-        id: `${region.region}_${province.province}`.toLowerCase().replace(/\s+/g, "_"),
-        label: `${province.province} (${province.count})`,
-        icon: Map,
-        latitude: province.latitude,
-        longitude: province.longitude,
-        municipalities: province.municipalities.map((municipality) => ({
-          id: `${region.region}_${province.province}_${municipality.name}`.toLowerCase().replace(/\s+/g, "_"),
-          name: municipality.name,
-          latitude: municipality.latitude,
-          longitude: municipality.longitude,
-        })),
-      })),
-    }));
+    // const mapLocationItems = provincesData.map((region) => ({
+    //   id: region.region.toLowerCase().replace(/\s+/g, "_"),
+    //   label: `${region.region} (${region.totalEarthquakes})`,
+    //   icon: MapPin,
+    //   latitude: region.latitude,
+    //   longitude: region.longitude,
+    //   provinces: region.provinces.map((province) => ({
+    //     id: `${region.region}_${province.province}`.toLowerCase().replace(/\s+/g, "_"),
+    //     label: `${province.province} (${province.count})`,
+    //     icon: Map,
+    //     latitude: province.latitude,
+    //     longitude: province.longitude,
+    //     municipalities: province.municipalities.map((municipality) => ({
+    //       id: `${region.region}_${province.province}_${municipality.name}`.toLowerCase().replace(/\s+/g, "_"),
+    //       name: municipality.name,
+    //       latitude: municipality.latitude,
+    //       longitude: municipality.longitude,
+    //     })),
+    //   })),
+    // }));
 
     return [
       {
@@ -128,12 +128,12 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
         icon: User,
         items: accountItems,
       },
-      {
-        id: "map_locations",
-        label: "Map Locations",
-        icon: Map,
-        items: mapLocationItems,
-      },
+      // {
+      //   id: "map_locations",
+      //   label: "Map Locations",
+      //   icon: Map,
+      //   items: mapLocationItems,
+      // },
     ];
   }, [isAuthenticated, userRole, provincesData]);
 
