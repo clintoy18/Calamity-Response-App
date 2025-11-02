@@ -93,8 +93,8 @@ export const useEmergencies = (): UseEmergenciesReturn => {
           additionalNotes: e.additionalNotes || "",
           status: (e.status?.toLowerCase?.() || "pending") as
             | "pending"
-            | "responded"
-            | "resolved",
+            | "in-progress"
+            | "responded",
           createdAt: e.createdAt ?? new Date().toISOString(),
           updatedAt: e.updatedAt ?? new Date().toISOString(),
           contactNo: e.contactNo || e.contactno || "",

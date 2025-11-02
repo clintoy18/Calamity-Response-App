@@ -27,6 +27,7 @@ const LUCIDE_ICONS = {
 declare global {
   interface Window {
     handleResolveEmergency: (id: string) => Promise<void>;
+    handleOnTheWayEmergency: (id: string) => Promise<void>;
     handleDeleteEmergency: (id: string) => Promise<void>;
     refreshEmergencies?: () => Promise<void>;
     handleLogout?: () => void;
@@ -37,19 +38,37 @@ declare global {
 if (typeof window !== 'undefined') {
   window.handleResolveEmergency = async (id: string) => {
     const confirmAction = confirm(
-      "Are you sure you want to mark this emergency as resolved?"
+      "Are you sure you want to mark this emergency as responded?"
     );
     if (!confirmAction) return;
 
     try {
-      await updateEmergencyStatus(id, "resolved");
-      alert("Emergency marked as resolved ✅");
+      await updateEmergencyStatus(id, "responded");
+      alert("Emergency marked as responded ✅");
       
       if (window.refreshEmergencies) {
         await window.refreshEmergencies();
       }
     } catch (error) {
       console.error("Failed to resolve emergency:", error);
+      alert("❌ Failed to update status");
+    }
+  };
+    window.handleOnTheWayEmergency = async (id: string) => {
+    const confirmAction = confirm(
+      "Are you sure you want to mark this emergency as on the way?"
+    );
+    if (!confirmAction) return;
+
+    try {
+      await updateEmergencyStatus(id, "in-progress");
+      alert("Emergency marked as on the way ✅");
+      
+      if (window.refreshEmergencies) {
+        await window.refreshEmergencies();
+      }
+    } catch (error) {
+      console.error("Failed to mark emergency:", error);
       alert("❌ Failed to update status");
     }
   };
@@ -177,8 +196,8 @@ export const createPopupContent = (
 
     // Status
     if (emergencyData.status) {
-      const statusColor = emergencyData.status === 'resolved' ? '#10b981' : emergencyData.status === 'pending' ? '#f59e0b' : '#6b7280';
-      const statusIcon = emergencyData.status === 'resolved' ? LUCIDE_ICONS.checkCircle : LUCIDE_ICONS.clock;
+      const statusColor = emergencyData.status === 'responded' ? '#10b981' : emergencyData.status === 'pending' ? '#f59e0b' : '#6b7280';
+      const statusIcon = emergencyData.status === 'responded' ? LUCIDE_ICONS.checkCircle : LUCIDE_ICONS.clock;
       
       popupContent += `
         <div style="display: grid; grid-template-columns: 16px 1fr; gap: 6px; align-items: start;">
@@ -235,13 +254,25 @@ export const createPopupContent = (
     `;
 
     // Action Buttons for Responders
+
+        // Action Buttons for Responders
     if (isResponder && emergencyData.status === "pending" && emergencyData.id) {
+      popupContent += `
+        <button 
+          onclick="handleOnTheWayEmergency('${emergencyData.id}')"
+          style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-bottom: 8px; transition: background 0.2s;">
+          ${LUCIDE_ICONS.navigation}
+          <span>Mark as on the Way</span>
+        </button>
+      `;
+    }
+        if (isResponder && emergencyData.status === "in-progress" && emergencyData.id) {
       popupContent += `
         <button 
           onclick="handleResolveEmergency('${emergencyData.id}')"
           style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-bottom: 8px; transition: background 0.2s;">
           ${LUCIDE_ICONS.checkCircle}
-          <span>Mark as Resolved</span>
+          <span>Mark as Responded</span>
         </button>
       `;
     }
@@ -252,14 +283,14 @@ export const createPopupContent = (
         <button 
           onclick="handleDeleteEmergency('${emergencyData.id}')"
           style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-bottom: 8px; transition: background 0.2s;">
-          ${LUCIDE_ICONS.trash}
+          ${LUCIDE_ICONS.navigation}
           <span>Delete Emergency</span>
         </button>
       `;
     }
 
     // View Donation Details
-    if (emergencyData.status === "resolved" && emergencyData.id) {
+    if (emergencyData.status === "responded" && emergencyData.id) {
       popupContent += `
         <a href="#" target="_blank" 
            style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; background: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 600; transition: background 0.2s;">
