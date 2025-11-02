@@ -117,7 +117,7 @@ const Emergency: React.FC = () => {
   //   }, 100);
   // }, [refetchEmergencies, refetchProvinces]);
 
-  // Add or update emergency markers with GREEN for resolved
+  // Add or update emergency markers with GREEN for responded
   const updateEmergencyMarkers = useCallback(() => {
     const map = mapInstanceRef.current;
     const cluster = markerClusterRef.current;
@@ -153,7 +153,7 @@ const Emergency: React.FC = () => {
       const existingMarker = markersMapRef.current.get(emergency.id);
 
       // Determine marker color
-      const color = emergency.status === "resolved" 
+      const color = emergency.status === "responded" 
         ? "#10b981" // Green for resolved emergencies
         : urgencyColors[emergency.urgencyLevel]?.dark || urgencyColors[emergency.urgencyLevel]?.bg || "#6b7280";
 

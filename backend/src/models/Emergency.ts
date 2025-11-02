@@ -13,7 +13,7 @@ export interface IEmergency extends Document {
   numberOfPeople: number;
   urgencyLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   additionalNotes?: string;
-  status: "pending" | "in-progress" | "resolved";
+  status: "pending" | "in-progress" | "responded";
   createdAt: Date;
   updatedAt: Date;
   isVerified: boolean;
@@ -40,7 +40,7 @@ const emergencySchema = new Schema<IEmergency>(
     additionalNotes: { type: String, default: "" },
     status: {
       type: String,
-      enum: ["pending", "in-progress", "resolved"],
+      enum: ["pending", "in-progress", "responded"],
       default: "pending",
     },
     isVerified: { type: Boolean, default: false },
