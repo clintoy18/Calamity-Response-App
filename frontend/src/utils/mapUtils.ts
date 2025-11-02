@@ -43,8 +43,8 @@ if (typeof window !== 'undefined') {
     if (!confirmAction) return;
 
     try {
-      await updateEmergencyStatus(id, "resolved");
-      alert("Emergency marked as resolved ✅");
+      await updateEmergencyStatus(id, "responded");
+      alert("Emergency marked as responded ✅");
       
       if (window.refreshEmergencies) {
         await window.refreshEmergencies();
@@ -196,8 +196,8 @@ export const createPopupContent = (
 
     // Status
     if (emergencyData.status) {
-      const statusColor = emergencyData.status === 'resolved' ? '#10b981' : emergencyData.status === 'pending' ? '#f59e0b' : '#6b7280';
-      const statusIcon = emergencyData.status === 'resolved' ? LUCIDE_ICONS.checkCircle : LUCIDE_ICONS.clock;
+      const statusColor = emergencyData.status === 'responded' ? '#10b981' : emergencyData.status === 'pending' ? '#f59e0b' : '#6b7280';
+      const statusIcon = emergencyData.status === 'responded' ? LUCIDE_ICONS.checkCircle : LUCIDE_ICONS.clock;
       
       popupContent += `
         <div style="display: grid; grid-template-columns: 16px 1fr; gap: 6px; align-items: start;">
@@ -290,7 +290,7 @@ export const createPopupContent = (
     }
 
     // View Donation Details
-    if (emergencyData.status === "resolved" && emergencyData.id) {
+    if (emergencyData.status === "responded" && emergencyData.id) {
       popupContent += `
         <a href="#" target="_blank" 
            style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; background: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 600; transition: background 0.2s;">

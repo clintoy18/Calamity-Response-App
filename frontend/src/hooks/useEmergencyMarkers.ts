@@ -32,7 +32,7 @@ export const useEmergencyMarkers = (
   const getMarkerColor = (emergency: EmergencyRecord | undefined) => {
     if (!emergency) return "#6366f1"; // default blue for temp markers
 
-    if (emergency.status === "resolved") return "#10b981"; // green
+    if (emergency.status === "responded") return "#10b981"; // green
 
     switch (emergency.urgencyLevel) {
       case "low":
@@ -102,21 +102,21 @@ export const useEmergencyMarkers = (
         marker.openPopup();
 
         marker.once("popupopen", () => {
-          if (currentData?.status !== "resolved" && currentData?.id) {
+          if (currentData?.status !== "responded" && currentData?.id) {
             const btn = document.getElementById(
               `resolve-btn-${currentData.id}`
             );
             if (btn) {
               btn.addEventListener("click", async () => {
                 const confirmed = confirm(
-                  "Are you sure you want to mark this emergency as resolved?"
+                  "Are you sure you want to mark this emergency as responded?"
                 );
                 if (!confirmed) return;
 
                 try {
                   const updatedData = await updateEmergencyStatus(
                     currentData.id,
-                    "resolved"
+                    "responded"
                   );
                   console.log(updatedData);
 
@@ -126,11 +126,11 @@ export const useEmergencyMarkers = (
                   if (markerData) {
                     updateMarkerColor(markerData, {
                       ...markerData.data,
-                      status: "resolved",
+                      status: "responded",
                     });
                   }
 
-                  alert("Marked as resolved");
+                  alert("Marked as responded");
                   marker.closePopup();
                 } catch (err) {
                   console.error(err);

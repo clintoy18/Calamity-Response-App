@@ -134,10 +134,10 @@ export const updateEmergency = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!["pending", "in-progress", "resolved"].includes(status)) {
+    if (!["pending", "in-progress", "responded"].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid status. Must be: pending, in-progress, or resolved",
+        message: "Invalid status. Must be: pending, in-progress, or responded",
       });
     }
 
