@@ -97,7 +97,7 @@ export const submitEmergency = async (
 // ✅ Update emergency status (e.g., mark as resolved)
 export const updateEmergencyStatus = async (
   id: string,
-  status: "pending" | "resolved" | "in-progress"
+  status: "pending" | "responded" | "in-progress"
 ): Promise<ApiResponse<EmergencyApiData>> => {
   const token = localStorage.getItem("token"); // include auth token if needed
   const response = await fetch(`${API_URL}/emergencies/${id}`, {
