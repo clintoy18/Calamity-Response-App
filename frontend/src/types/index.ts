@@ -27,7 +27,7 @@ export interface EmergencyRequest {
 
 export interface EmergencyRecord extends Location, EmergencyRequest {
   id: string;
-  status?: "pending" | "responded" | "resolved";
+  status?: "pending" | "in-progress" | "resolved";
   createdAt?: string;
   updatedAt?: string;
   placename?: string;
