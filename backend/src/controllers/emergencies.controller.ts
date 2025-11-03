@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { EmergencyRequestBody } from "../types/emergency.types";
 import Emergency from "../models/Emergency";
 import { randomBytes } from "crypto";
+import { botNotificationService } from "../services/bot-notification.service";
 
 // Custom UUID generator
 const generateUUID = (): string => {
@@ -142,7 +143,7 @@ export const updateEmergency = async (req: Request, res: Response) => {
     }
 
     const emergency = await Emergency.findOneAndUpdate(
-      { id }, // query by UUID
+      { id },
       { status, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
@@ -152,6 +153,20 @@ export const updateEmergency = async (req: Request, res: Response) => {
         success: false,
         message: "Emergency request not found",
       });
+    }
+
+    // Send notification based on status change (only if user has messengerUserId)
+    if (emergency.messengerUserId) {
+      try {
+        if (status === "in-progress" && emergency.lastNotifiedStatus !== "in-progress") {
+          await botNotificationService.notifyInProgress(emergency.id);
+        } else if (status === "responded" && emergency.lastNotifiedStatus !== "responded") {
+          await botNotificationService.notifyResponded(emergency.id);
+        }
+      } catch (notificationError) {
+        console.error("⚠️ Failed to send status notification:", notificationError);
+        // Don't fail the update if notification fails
+      }
     }
 
     res.json({

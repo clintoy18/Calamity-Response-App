@@ -79,27 +79,21 @@ export const verifyEmergencyRequest = async (req: Request, res: Response) => {
 };
 
 // fetch Responders -uverified first, then verified
-export const fetchResponders = async (req: Request, res: Response) => {
+export const fetchResponders = async (req: Request, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Number(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
 
-    // Total count of responders
-    const total = await User.countDocuments({ role: "respondent" });
+    const query = { role: "respondent" };
+    const total = await User.countDocuments(query);
 
-    // Fetch responders, sorted: unverified first, then verified, newest first within each group
-    const responders = await User.find({ role: "respondent" })
+    const responders = await User.find(query)
       .select("-password")
-      .sort({ isVerified: 1, createdAt: -1 }) // ⬅️ unverified first
+      .sort({ isVerified: 1, createdAt: -1 }) // unverified first
       .skip(skip)
       .limit(limit)
       .lean();
-
-    if (!responders || responders.length === 0) {
-      res.status(404).json({ message: "No responders found" });
-      return;
-    }
 
     res.status(200).json({
       success: true,
@@ -107,11 +101,15 @@ export const fetchResponders = async (req: Request, res: Response) => {
       limit,
       total,
       totalPages: Math.ceil(total / limit),
-      data: responders,
+      data: responders || [],
     });
   } catch (error) {
-    console.error("Error fetching responders:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("❌ Error fetching responders:", error);
+    res.status(500).json({
+      success: false,
+      message: "An unexpected error occurred while fetching responders.",
+      data: [],
+    });
   }
 };
 
@@ -158,19 +156,17 @@ export const rejectResponders = async (
 
 export const fetchEmergencies = async (req: Request, res: Response): Promise<void> => {
   try {
-    // 🧩 Safe pagination parsing
-    const page = Number.isFinite(Number(req.query.page)) ? Math.max(Number(req.query.page), 1) : 1;
-    const limit = Number.isFinite(Number(req.query.limit)) ? Math.min(Number(req.query.limit), 100) : 20;
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Number(req.query.limit) || 20, 100);
     const skip = (page - 1) * limit;
 
-    // 🧩 Optional filters
+    // Optional filters
     const status = typeof req.query.status === "string" ? req.query.status.trim() : undefined;
     const urgencyLevel = typeof req.query.urgencyLevel === "string" ? req.query.urgencyLevel.trim() : undefined;
 
-    // 🕓 Calculate 24-hour cutoff safely
+    // Optional: last 24 hours filter
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    // 🧩 Build query safely
     const query: Record<string, any> = {
       createdAt: { $gte: twentyFourHoursAgo },
       $or: [
@@ -182,44 +178,38 @@ export const fetchEmergencies = async (req: Request, res: Response): Promise<voi
     if (status) query.status = status;
     if (urgencyLevel) query.urgencyLevel = urgencyLevel;
 
-    // 🧩 Use an index-friendly sort
-    const sortCriteria: Record<string, 1 | -1> = {
-      isVerified: 1, // unverified first
-      createdAt: -1, // newest first
-    };
-
-    // 🧩 Fetch in parallel (safe for memory)
+    const sortCriteria = {
+      isVerified: "asc",
+      createdAt: "desc",
+    } as const;
+    
     const [emergencies, total] = await Promise.all([
       Emergency.find(query)
         .sort(sortCriteria)
         .skip(skip)
         .limit(limit)
-        .select("-__v") // exclude unnecessary fields
-        .lean(), // return plain JS objects for memory efficiency
+        .select("-__v")
+        .lean(),
       Emergency.countDocuments(query),
     ]);
 
-    // ✅ Respond cleanly
     res.status(200).json({
       success: true,
       page,
-      totalPages: Math.ceil(total / limit),
+      limit,
       total,
-      count: emergencies.length,
-      data: emergencies,
+      totalPages: Math.ceil(total / limit),
+      data: emergencies || [],
     });
   } catch (error) {
     console.error("❌ Error fetching emergencies:", error);
-
-    // Prevents memory crash by avoiding heavy stack trace
     res.status(500).json({
       success: false,
       message: "An unexpected error occurred while fetching emergencies.",
+      data: [],
     });
   }
 };
-
-
 
 // get emergency by id
 export const getEmergencyById = async (req: Request, res: Response) => {
