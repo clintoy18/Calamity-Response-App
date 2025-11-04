@@ -3,16 +3,16 @@ import { useEffect } from "react";
 
 type Action = "overlay" | "redirect";
 interface Options {
-  action?: Action;             // "overlay" (default) or "redirect"
-  redirectUrl?: string;        // used when action === "redirect"
-  overlayMessage?: string;     // message shown in overlay
+  action?: Action;
+  redirectUrl?: string;
+  overlayMessage?: string;
   detectionIntervalMs?: number;
-  dimensionThreshold?: number; // px difference to consider devtools open
+  dimensionThreshold?: number;
 }
 
 const defaultOptions: Options = {
   action: "overlay",
-  overlayMessage: "Access disabled. Close developer tools to continue.",
+  overlayMessage: "Developer tools detected. Close it to continue.",
   detectionIntervalMs: 800,
   dimensionThreshold: 160,
 };
@@ -21,20 +21,23 @@ export default function useBlockInspect(opts?: Options) {
   const options = { ...defaultOptions, ...opts };
 
   useEffect(() => {
-    // --- Prevent context menu and common shortcuts ---
-    const onContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-    };
+    if (typeof window === "undefined") return;
 
+    // ✅ Detect mobile devices
+    const isMobile = () =>
+      /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
+        navigator.userAgent
+      );
+
+    // ✅ Block context menu & shortcuts
+    const onContextMenu = (e: MouseEvent) => e.preventDefault();
     const onKeyDown = (e: KeyboardEvent) => {
-      // Block common devtools / view-source / save shortcuts
       const key = e.key.toLowerCase();
       if (
         (e.ctrlKey && e.shiftKey && key === "i") || // Ctrl+Shift+I
         e.key === "F12" ||                          // F12
         (e.ctrlKey && key === "u") ||               // Ctrl+U
-        (e.ctrlKey && key === "s") ||               // Ctrl+S
-        (e.ctrlKey && key === "i")                  // Ctrl+I
+        (e.ctrlKey && key === "s")                  // Ctrl+S
       ) {
         e.preventDefault();
         e.stopPropagation();
@@ -44,30 +47,27 @@ export default function useBlockInspect(opts?: Options) {
     document.addEventListener("contextmenu", onContextMenu);
     document.addEventListener("keydown", onKeyDown);
 
-    // --- Overlay creation helper (appends to body) ---
     const overlayId = "__devtools_block_overlay__";
+
     const createOverlay = (text: string) => {
       if (document.getElementById(overlayId)) return;
-      const div = document.createElement("div");
-      div.id = overlayId;
-      Object.assign(div.style, {
+      const el = document.createElement("div");
+      el.id = overlayId;
+      Object.assign(el.style, {
         position: "fixed",
         inset: "0",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "white",
-        color: "#111",
-        zIndex: "2147483647", // very high
+        background: "#fff",
+        color: "#000",
         fontSize: "18px",
-        fontFamily: "Arial, sans-serif",
         padding: "20px",
+        zIndex: "999999999",
         textAlign: "center",
       });
-      div.innerText = text;
-      // prevent interaction with underlying page
-      div.addEventListener("contextmenu", (e) => e.preventDefault());
-      document.body.appendChild(div);
+      el.textContent = text;
+      document.body.appendChild(el);
     };
 
     const removeOverlay = () => {
@@ -75,78 +75,61 @@ export default function useBlockInspect(opts?: Options) {
       if (el) el.remove();
     };
 
-    // --- Detection logic ---
-    let lastOpen = false;
+    let lastState = false;
     const threshold = options.dimensionThreshold ?? 160;
 
     function detectDevTools(): boolean {
-      // 1) Check window dimension differences (common approach)
+      // ✅ Disable DEVTOOLS detection on mobile (only block shortcuts & menu)
+      if (isMobile()) return false;
+
+      // ✅ Check if console devtools is open
+      let opened = false;
+      const sentinel = {
+        toString() {
+          opened = true;
+          return "";
+        },
+      };
+      console.log("%c", sentinel);
+
+      // ✅ Check dimension difference only if not resizing window
       const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
       const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
-      if (widthDiff > threshold || heightDiff > threshold) {
-        return true;
-      }
 
-      // 2) Console inspection trick: log an object whose toString/ getter runs when console tries to format it.
-      // This is somewhat browser-dependent but often works:
-      let opened = false;
-      try {
-        const sentinel = {
-          toString() {
-            opened = true;
-            return "";
-          },
-        };
-        // This forces the runtime to call toString if console is inspected in some consoles
-        // We place it inside console.log so devtools may try to format it.
-        // Note: If console is closed, this usually doesn't set `opened`.
-        // Using %o ensures object formatting in some browsers.
-        // eslint-disable-next-line no-console
-        console.log("%c", sentinel);
-      } catch (err) {
-        // ignore
-      }
+      const dimOpen =
+        widthDiff > threshold || heightDiff > threshold;
 
-      if (opened) return true;
-
-      // optional: check for enormous console width (older technique)
-      // Not added to avoid false positives.
-
-      return false;
+      return opened || dimOpen;
     }
 
-    const interval = window.setInterval(() => {
+    const interval = setInterval(() => {
       const isOpen = detectDevTools();
 
-      if (isOpen && !lastOpen) {
-        // just opened
-        lastOpen = true;
+      if (isOpen && !lastState) {
+        lastState = true;
+
         if (options.action === "overlay") {
-          createOverlay(options.overlayMessage ?? defaultOptions.overlayMessage!);
-        } else if (options.action === "redirect") {
-          const url = options.redirectUrl ?? "about:blank";
-          // Slight delay ensures detection isn't from a transient state
-          setTimeout(() => {
-            window.location.replace(url);
-          }, 50);
+          createOverlay(options.overlayMessage!);
         }
-      } else if (!isOpen && lastOpen) {
-        // just closed
-        lastOpen = false;
+
+        if (options.action === "redirect") {
+          setTimeout(() => {
+            window.location.replace(options.redirectUrl ?? "about:blank");
+          }, 100);
+        }
+      }
+
+      if (!isOpen && lastState) {
+        lastState = false;
         removeOverlay();
       }
-      // if isOpen and already open, do nothing (overlay already present)
     }, options.detectionIntervalMs);
 
-    // Cleanup
     return () => {
       document.removeEventListener("contextmenu", onContextMenu);
       document.removeEventListener("keydown", onKeyDown);
       clearInterval(interval);
       removeOverlay();
     };
-  }, [
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    JSON.stringify(opts ?? {}),
-  ]);
+  }, [JSON.stringify(opts ?? {})]);
 }
