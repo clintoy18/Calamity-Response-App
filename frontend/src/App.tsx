@@ -7,8 +7,11 @@ import Dashboard from "./screen/admin/Dashboard";
 import Unauthorized from "./screen/Unauthorized";
 import { AdminRoute } from "./components/auth/RolePrivateRoute";
 import TestAdmin from "./screen/admin/TestAdmin";
+import useBlockInspect from "./hooks/useBlockInspect";
 
 export const App = () => {
+  useBlockInspect({ action: "overlay", overlayMessage: "Please close DevTools to continue." });
+
 
    useEffect(() => {
     // Register service worker with error handling

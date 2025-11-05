@@ -19,7 +19,9 @@ export interface IUser {
   isVerified?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  status: "Pending" | "In Progress" | "Resolved";
 }
+
 
 export interface IEmergency {
   _id: string;
@@ -77,19 +79,24 @@ export const useFetchResponders = (
 // -------------------
 // Emergencies Hooks (Polling Enabled)
 // -------------------
-export const useFetchEmergencies = (
-  page = 1,
-  limit = 20
-): UseQueryResult<PaginatedResponse<IEmergency>, Error> =>
+export const useFetchEmergencies = (page = 1, limit = 20) =>
   useQuery<PaginatedResponse<IEmergency>, Error>({
     queryKey: ["emergencies", page, limit],
-    queryFn: async (): Promise<PaginatedResponse<IEmergency>> => {
+    queryFn: async () => {
       const { data } = await api.get<PaginatedResponse<IEmergency>>(
         `/admin/emergencies?page=${page}&limit=${limit}`
       );
-      return data;
+
+      return {
+        success: data.success,
+        page: data.page,
+        limit: data.limit,
+        total: data.total,
+        totalPages: data.totalPages,
+        data: data.data || [],
+      };
     },
-    refetchInterval: 5000, // poll every 5 seconds
+    refetchInterval: 5000,
     refetchOnWindowFocus: true,
   });
 
@@ -105,7 +112,7 @@ export const useFetchEmergencyById = (
       return data.data;
     },
     enabled: !!id,
-    refetchInterval: 5000, // poll every 5 seconds
+    refetchInterval: 5000,
   });
 
 // -------------------
@@ -121,9 +128,9 @@ export const useFetchEmergencyCountsByCity = (
       const { data } = await api.get<PaginatedResponse<CityCount>>(
         `/admin/emergencies/lgu?page=${page}&limit=${limit}`
       );
-      return data;
+      return { ...data, data: data.data || [] };
     },
-    refetchInterval: 5000, // poll every 5 seconds
+    refetchInterval: 5000,
   });
 
 // -------------------
@@ -133,19 +140,21 @@ export const verifyEmergency = async (id: string): Promise<void> => {
   await api.put(`/admin/emergencies/${id}/verify`);
 };
 
-export const useVerifyEmergency = () => {
+export const useVerifyEmergency = (currentPage = 1, currentLimit = 20) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => verifyEmergency(id),
     onSuccess: () => {
-      // Refresh related data when verification succeeds
+      // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ["emergencies"] });
       queryClient.invalidateQueries({ queryKey: ["emergency"] });
+      queryClient.invalidateQueries({ queryKey: ["responders"] });
+      // If using pagination
+      queryClient.invalidateQueries({ queryKey: ["emergencies", currentPage, currentLimit] });
     },
     onError: (error: unknown) => {
       console.error("Error verifying emergency:", error);
     },
   });
 };
-
