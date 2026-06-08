@@ -4,12 +4,18 @@ import type { AffectedArea, NeedOption, UrgencyColor } from "../types";
 export const API_URL: string =
   import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
+export const GENERAL_SANTOS_CENTER: [number, number] = [6.1164, 125.1716];
+export const GENERAL_SANTOS_BOUNDS: [[number, number], [number, number]] = [
+  [5.5, 124.5],
+  [7.0, 126.0],
+];
+
+// Legacy Cebu references (kept for backward compatibility)
 export const CEBU_CENTER: [number, number] = [11.0462, 124.0029];
 export const CEBU_BOUNDS: [[number, number], [number, number]] = [
   [8.5, 122.5],
   [12.5, 125.5],
 ];
-
 
 export const DAVAO_ORIENTAL_CENTER: [number, number] = [6.9175, 126.2227];
 export const DAVAO_ORIENTAL_BOUNDS: [[number, number], [number, number]] = [

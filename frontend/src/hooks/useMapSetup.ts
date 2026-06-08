@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { CEBU_CENTER } from "../constants";
+import { GENERAL_SANTOS_CENTER } from "../constants";
 
 interface UseMapSetupReturn {
   mapRef: React.RefObject<HTMLDivElement | null>;
@@ -32,7 +32,7 @@ export const useMapSetup = (): UseMapSetupReturn => {
 
     mapInstanceRef.current = map;
 
-    map.flyTo(CEBU_CENTER, 12, {
+    map.flyTo(GENERAL_SANTOS_CENTER, 12, {
       duration: 2,
       easeLinearity: 0.2,
     });

@@ -24,9 +24,7 @@ import { UnifiedModal } from "../components/common/modal/UnifiedFormModal";
 import { useEmergencies as useEmergenciesHook } from "../hooks/useEmergencies";
 import { useMapSetup } from "../hooks/useMapSetup";
 import { createPopupContent, createMarkerIcon, addAffectedAreaMarkers } from "../utils/mapUtils";
-import { urgencyColors } from "../constants";
-
-const CEBU_CENTER: [number, number] = [10.3157, 123.8854];
+import { urgencyColors, GENERAL_SANTOS_CENTER } from "../constants";
 
 // const RETRY_CONFIG = {
 //   maxRetries: 3,
@@ -357,7 +355,8 @@ const Emergency: React.FC = () => {
     switch (itemId) {
       case 'login': setIsLoginModalOpen(true); break;
       case 'become_responder': setIsResponderModalOpen(true); break;
-      case 'cebu': flyToLocation(CEBU_CENTER, 12); break;
+      case 'cebu': 
+      case 'gensan': flyToLocation(GENERAL_SANTOS_CENTER, 12); break;
       case 'davao': flyToLocation([7.1136, 125.6436], 12); break;
       case 'tracker': navigate('/tracker'); break;
       case 'app_info': navigate('/info'); break;

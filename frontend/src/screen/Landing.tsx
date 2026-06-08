@@ -8,7 +8,7 @@ export default function Landing() {
         Aidvocate
       </h1>
       <p className="text-gray-600 mb-6 text-lg">
-        Cebu Calamity Response & Community Alert System
+        General Santos Calamity Response & Community Alert System
       </p>
 
       <div className="flex gap-4">
@@ -28,7 +28,7 @@ export default function Landing() {
       </div>
 
       <footer className="mt-10 text-sm text-gray-400">
-        <MapPin className="inline mr-1" size={14} /> Cebu, Philippines
+        <MapPin className="inline mr-1" size={14} /> General Santos, Philippines
       </footer>
     </div>
   );
