@@ -6,6 +6,7 @@ import {
   CloudFog,
   RefreshCw,
   ShieldCheck,
+  X,
 } from "lucide-react";
 import type { VolcanoAdvisory } from "../../types";
 
@@ -35,9 +36,27 @@ export const AshfallAwarenessPanel: React.FC<AshfallAwarenessPanelProps> = ({
   onReportAshfall,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
   const publishedAt = advisory?.publishedAt
     ? new Date(advisory.publishedAt).toLocaleString()
     : "";
+
+  if (!isPanelOpen) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsPanelOpen(true)}
+        className="fixed right-3 top-20 z-20 inline-flex max-w-[calc(100vw-1.5rem)] items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-950 shadow-strong transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 sm:right-4"
+        aria-label="Open Kanlaon ashfall watch"
+      >
+        <CloudFog className="h-5 w-5 text-gray-800" />
+        <span>Open Ashfall Watch</span>
+        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
+          {verifiedCount}/{reportCount}
+        </span>
+      </button>
+    );
+  }
 
   return (
     <section className="fixed right-3 top-20 z-20 w-[calc(100vw-1.5rem)] max-w-sm rounded-2xl border border-gray-200 bg-white shadow-strong sm:right-4">
@@ -55,6 +74,14 @@ export const AshfallAwarenessPanel: React.FC<AshfallAwarenessPanelProps> = ({
               {verifiedCount} verified / {reportCount} recent community reports
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => setIsPanelOpen(false)}
+            className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
+            aria-label="Close Kanlaon ashfall watch"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3">
