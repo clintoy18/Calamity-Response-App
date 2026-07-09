@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { AlertCircle, MapPin, Search, X, CheckCircle, Loader2, Navigation, Sparkles } from "lucide-react";
+import { AlertCircle, CloudFog, MapPin, Search, X, CheckCircle, Loader2, Navigation, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./Button";
 
@@ -60,6 +60,7 @@ interface EmergencyPanelProps {
   selectedLocation: { lat: number; lng: number } | null;
   isSearchOpen: boolean;
   onOpenSearch: () => void;
+  onReportAshfall: () => void;
   onClose: () => void;
   onSelectLocation: (lat: number, lng: number, name: string) => void;
 }
@@ -73,6 +74,7 @@ export const EmergencyPanel: React.FC<EmergencyPanelProps> = ({
   selectedLocation,
   isSearchOpen,
   onOpenSearch,
+  onReportAshfall,
   onClose,
   onSelectLocation,
 }) => {
@@ -267,6 +269,13 @@ export const EmergencyPanel: React.FC<EmergencyPanelProps> = ({
                     />
                   </div>
                 </div>
+                <Button
+                  label="Report Ashfall"
+                  icon={<CloudFog size={16} />}
+                  variant="secondary"
+                  fullWidth
+                  onClick={onReportAshfall}
+                />
               </>
             )}
           </div>

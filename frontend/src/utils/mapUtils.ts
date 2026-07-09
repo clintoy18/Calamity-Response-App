@@ -1,12 +1,27 @@
 // frontend/src/utils/mapUtils.ts
 import L from "leaflet";
 import { urgencyColors, affectedAreas } from "../constants";
-import type { EmergencyRecord } from "../types";
+import type { AshfallLevel, AshfallReport, EmergencyRecord } from "../types";
 import { hasRole } from "./authUtils";
 import { unverifyEmergencyById, updateEmergencyStatus } from "../services/api";
+import ashfallMarkerIconUrl from "../assets/ashfall-marker.png";
 import "leaflet.markercluster";
 
 const API_BASE = import.meta.env.VITE_API_URL;
+
+const escapeHtml = (value: unknown): string =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+const ashfallColors: Record<AshfallLevel, { bg: string; light: string; text: string }> = {
+  LIGHT: { bg: "#6b7280", light: "#f3f4f6", text: "Light ashfall" },
+  MODERATE: { bg: "#f59e0b", light: "#fef3c7", text: "Moderate ashfall" },
+  HEAVY: { bg: "#dc2626", light: "#fee2e2", text: "Heavy ashfall" },
+};
 
 // Add Lucide icons CDN
 const LUCIDE_ICONS = {
@@ -328,6 +343,106 @@ export const createMarkerIcon = (color: string): L.DivIcon => {
     popupAnchor: [0, -14],
     className: "",
   });
+};
+
+export const createAshfallMarkerIcon = (
+  ashLevel: AshfallLevel,
+  isVerified: boolean
+): L.DivIcon => {
+  const level = ashfallColors[ashLevel] || ashfallColors.LIGHT;
+  const opacity = isVerified ? "1" : "0.82";
+
+  return L.divIcon({
+    html: `
+      <div style="
+        position:relative;
+        width:46px;
+        height:46px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      ">
+        <span style="
+          position:absolute;
+          inset:8px;
+          border-radius:999px;
+          background:${level.bg};
+          opacity:${isVerified ? "0.2" : "0.12"};
+          filter:blur(4px);
+        "></span>
+        <img
+          src="${ashfallMarkerIconUrl}"
+          alt=""
+          style="
+            position:relative;
+            width:46px;
+            height:46px;
+            object-fit:contain;
+            opacity:${opacity};
+            filter:drop-shadow(0 3px 5px rgba(17,24,39,0.35));
+          "
+        />
+      </div>
+    `,
+    iconSize: [46, 46],
+    iconAnchor: [23, 46],
+    popupAnchor: [0, -42],
+    className: "",
+  });
+};
+
+export const createAshfallPopupContent = (report: AshfallReport): string => {
+  const level = ashfallColors[report.ashLevel] || ashfallColors.LIGHT;
+  const verificationLabel = report.isVerified ? "Verified by admin" : "Community report";
+  const verificationColor = report.isVerified ? "#065f46" : "#92400e";
+  const created = report.createdAt ? new Date(report.createdAt).toLocaleString() : "";
+  const needs = report.needs.length ? report.needs.join(", ") : "No supply need listed";
+
+  return `
+    <div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1f2937;min-width:220px;">
+      <div style="background:${level.bg};padding:10px;margin:-12px -12px 10px -12px;border-radius:8px 8px 0 0;color:white;">
+        <div style="font-weight:800;font-size:13px;line-height:1.2;">${level.text}</div>
+        <div style="font-size:10px;opacity:0.92;margin-top:2px;">${escapeHtml(verificationLabel)}</div>
+      </div>
+
+      <div style="display:grid;gap:8px;font-size:11px;">
+        <div style="background:#f9fafb;border:1px solid #e5e7eb;padding:8px;border-radius:6px;">
+          <div style="font-weight:700;color:#374151;margin-bottom:2px;">${escapeHtml(report.placename || "Unknown location")}</div>
+          <div style="color:#6b7280;">${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <div style="font-weight:700;color:#374151;">Visibility</div>
+            <div style="color:#6b7280;">${escapeHtml(report.visibility.toLowerCase())}</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:#374151;">Sulfur smell</div>
+            <div style="color:#6b7280;">${report.sulfurSmell ? "Reported" : "Not reported"}</div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-weight:700;color:#374151;">Needs</div>
+          <div style="color:#6b7280;">${escapeHtml(needs)}</div>
+        </div>
+
+        ${
+          report.additionalNotes
+            ? `<div>
+                <div style="font-weight:700;color:#374151;">Notes</div>
+                <div style="color:#6b7280;line-height:1.35;">${escapeHtml(report.additionalNotes)}</div>
+              </div>`
+            : ""
+        }
+
+        <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid #e5e7eb;padding-top:8px;">
+          <span style="color:${verificationColor};font-weight:700;">${escapeHtml(verificationLabel)}</span>
+          <span style="color:#9ca3af;">${escapeHtml(created)}</span>
+        </div>
+      </div>
+    </div>
+  `;
 };
 
 export const addAffectedAreaMarkers = (map: L.Map): void => {

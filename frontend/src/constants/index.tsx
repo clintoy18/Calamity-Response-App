@@ -10,8 +10,7 @@ export const GENERAL_SANTOS_BOUNDS: [[number, number], [number, number]] = [
   [7.0, 126.0],
 ];
 
-// Legacy Cebu references (kept for backward compatibility)
-export const CEBU_CENTER: [number, number] = [11.0462, 124.0029];
+export const CEBU_CENTER: [number, number] = [10.3157, 123.8854];
 export const CEBU_BOUNDS: [[number, number], [number, number]] = [
   [8.5, 122.5],
   [12.5, 125.5],

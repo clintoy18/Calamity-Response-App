@@ -6,9 +6,22 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-import type { Status, Location, NeedType, EmergencyRecord } from "../types";
+import type {
+  AshfallReport,
+  AshfallReportPayload,
+  Status,
+  Location,
+  NeedType,
+  EmergencyRecord,
+  VolcanoAdvisory,
+} from "../types";
 import { getPlaceName } from "../utils/geocoding";
-import { submitEmergency } from "../services/api";
+import {
+  fetchActiveVolcanoAdvisory,
+  fetchAshfallReports,
+  submitAshfallReport,
+  submitEmergency,
+} from "../services/api";
 import { LoginModal } from "../components/Login";
 import { useAuthActions } from "../hooks/useAuthActions";
 import { useAuth } from "../hooks/useAuth";
@@ -20,11 +33,19 @@ import logo from '../assets/logo.png';
 import { NavigationMenu } from "../components/common/NavigationMenu";
 import { EmergencyPanel } from "../components/common/EmergencyPanel";
 import { UnifiedModal } from "../components/common/modal/UnifiedFormModal";
+import { AshfallAwarenessPanel } from "../components/ashfall/AshfallAwarenessPanel";
+import { AshfallReportModal } from "../components/ashfall/AshfallReportModal";
 // import { useMostAffectedProvinces } from "../hooks/useMostAffectedProvinces";
 import { useEmergencies as useEmergenciesHook } from "../hooks/useEmergencies";
 import { useMapSetup } from "../hooks/useMapSetup";
-import { createPopupContent, createMarkerIcon, addAffectedAreaMarkers } from "../utils/mapUtils";
-import { urgencyColors, GENERAL_SANTOS_CENTER } from "../constants";
+import {
+  createAshfallMarkerIcon,
+  createAshfallPopupContent,
+  createPopupContent,
+  createMarkerIcon,
+  addAffectedAreaMarkers,
+} from "../utils/mapUtils";
+import { urgencyColors, CEBU_CENTER, GENERAL_SANTOS_CENTER } from "../constants";
 
 // const RETRY_CONFIG = {
 //   maxRetries: 3,
@@ -65,6 +86,15 @@ const Emergency: React.FC = () => {
   const [isPinpointMode, setIsPinpointMode] = useState(false);
   const [selectedMapLocation, setSelectedMapLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [ashfallReports, setAshfallReports] = useState<AshfallReport[]>([]);
+  const [activeAdvisory, setActiveAdvisory] = useState<VolcanoAdvisory | null>(null);
+  const [isLoadingAshfall, setIsLoadingAshfall] = useState(false);
+  const [ashfallError, setAshfallError] = useState<string | null>(null);
+  const [isAshfallModalOpen, setIsAshfallModalOpen] = useState(false);
+  const [ashfallLocation, setAshfallLocation] = useState<Location | null>(null);
+  const [ashfallPlaceName, setAshfallPlaceName] = useState("");
+  const [isSubmittingAshfall, setIsSubmittingAshfall] = useState(false);
+  const [ashfallSubmitError, setAshfallSubmitError] = useState("");
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -81,11 +111,52 @@ const Emergency: React.FC = () => {
 
   const markerClusterRef = React.useRef<L.MarkerClusterGroup | null>(null);
   const markersMapRef = React.useRef<Map<string, L.Marker>>(new Map());
+  const ashfallClusterRef = React.useRef<L.MarkerClusterGroup | null>(null);
+  const ashfallMarkersMapRef = React.useRef<Map<string, L.Marker>>(new Map());
   const tempMarkerRef = React.useRef<L.Marker | null>(null);
   const isClusterInitializedRef = React.useRef(false);
+  const isAshfallClusterInitializedRef = React.useRef(false);
 
   // const [retryCount, setRetryCount] = useState(0);
   const [dataFetchError, setDataFetchError] = useState<string | null>(null);
+
+  const loadAshfallAwareness = useCallback(async (signal?: AbortSignal) => {
+    setIsLoadingAshfall(true);
+    setAshfallError(null);
+
+    try {
+      const [reports, advisory] = await Promise.all([
+        fetchAshfallReports({ signal, hours: 72 }),
+        fetchActiveVolcanoAdvisory({ signal }),
+      ]);
+
+      if (signal?.aborted) return;
+
+      setAshfallReports(reports);
+      setActiveAdvisory(advisory);
+    } catch (error) {
+      if (signal?.aborted) return;
+      console.error("Failed to load ashfall awareness data:", error);
+      setAshfallError("Failed to load ashfall reports");
+    } finally {
+      if (!signal?.aborted) {
+        setIsLoadingAshfall(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadAshfallAwareness(controller.signal);
+    const interval = window.setInterval(() => {
+      void loadAshfallAwareness();
+    }, 30000);
+
+    return () => {
+      controller.abort();
+      window.clearInterval(interval);
+    };
+  }, [loadAshfallAwareness]);
 
   // ✅ Handle successful login without reload
   // const handleLoginSuccess = useCallback(() => {
@@ -203,6 +274,48 @@ const Emergency: React.FC = () => {
 
   }, [emergencies, mapInstanceRef.current]);
 
+  const updateAshfallMarkers = useCallback(() => {
+    const map = mapInstanceRef.current;
+    const cluster = ashfallClusterRef.current;
+
+    if (!map || !cluster) return;
+
+    const existingIds = new Set(ashfallMarkersMapRef.current.keys());
+    const currentIds = new Set(ashfallReports.map((report) => report.id));
+
+    existingIds.forEach((id) => {
+      if (!currentIds.has(id)) {
+        const marker = ashfallMarkersMapRef.current.get(id);
+        if (marker) {
+          cluster.removeLayer(marker);
+          ashfallMarkersMapRef.current.delete(id);
+        }
+      }
+    });
+
+    ashfallReports.forEach((report) => {
+      const existingMarker = ashfallMarkersMapRef.current.get(report.id);
+      const popupContent = createAshfallPopupContent(report);
+      const icon = createAshfallMarkerIcon(report.ashLevel, report.isVerified);
+
+      if (existingMarker) {
+        const wasOpen = existingMarker.isPopupOpen();
+        if (wasOpen) existingMarker.closePopup();
+        existingMarker.setPopupContent(popupContent);
+        existingMarker.setIcon(icon);
+        if (wasOpen) existingMarker.openPopup();
+      } else {
+        const marker = L.marker([report.latitude, report.longitude], { icon });
+        marker.bindPopup(popupContent, {
+          maxWidth: 320,
+          className: "ashfall-popup",
+        });
+        cluster.addLayer(marker);
+        ashfallMarkersMapRef.current.set(report.id, marker);
+      }
+    });
+  }, [ashfallReports, mapInstanceRef.current]);
+
   // Register refresh function globally for map popup buttons
   useEffect(() => {
     window.refreshEmergencies = async () => {
@@ -281,6 +394,34 @@ const Emergency: React.FC = () => {
     };
   }, [mapInstanceRef.current]);
 
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || isAshfallClusterInitializedRef.current) return;
+
+    const cluster = (L as any).markerClusterGroup({
+      chunkedLoading: true,
+      chunkDelay: 50,
+      chunkInterval: 200,
+      maxClusterRadius: 44,
+      spiderfyOnEveryZoom: false,
+      showCoverageOnHover: false,
+      disableClusteringAtZoom: 15,
+    });
+
+    map.addLayer(cluster);
+    ashfallClusterRef.current = cluster;
+    isAshfallClusterInitializedRef.current = true;
+
+    return () => {
+      if (ashfallClusterRef.current && map) {
+        map.removeLayer(ashfallClusterRef.current);
+        ashfallClusterRef.current = null;
+        ashfallMarkersMapRef.current.clear();
+        isAshfallClusterInitializedRef.current = false;
+      }
+    };
+  }, [mapInstanceRef.current]);
+
   // Update markers when emergencies change
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -289,6 +430,14 @@ const Emergency: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, [emergencies, updateEmergencyMarkers]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updateAshfallMarkers();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [ashfallReports, updateAshfallMarkers]);
 
   // Handle map click for pinpoint mode
   useEffect(() => {
@@ -355,7 +504,7 @@ const Emergency: React.FC = () => {
     switch (itemId) {
       case 'login': setIsLoginModalOpen(true); break;
       case 'become_responder': setIsResponderModalOpen(true); break;
-      case 'cebu': 
+      case 'cebu': flyToLocation(CEBU_CENTER, 12); break;
       case 'gensan': flyToLocation(GENERAL_SANTOS_CENTER, 12); break;
       case 'davao': flyToLocation([7.1136, 125.6436], 12); break;
       case 'tracker': navigate('/tracker'); break;
@@ -477,6 +626,82 @@ const Emergency: React.FC = () => {
     setIsSearchOpen(false);
     setStatus("form");
   }, [mapInstanceRef.current, flyToLocation]);
+
+  const handleStartAshfallReport = useCallback(() => {
+    setAshfallSubmitError("");
+
+    if (!navigator.geolocation) {
+      setAshfallSubmitError("GPS is not supported by your browser.");
+      setAshfallLocation(null);
+      setAshfallPlaceName("");
+      setIsAshfallModalOpen(true);
+      return;
+    }
+
+    setIsLoadingAshfall(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const coords: Location = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          timestamp: new Date().toISOString(),
+        };
+
+        try {
+          const name = await getPlaceName(coords.latitude, coords.longitude);
+          setAshfallPlaceName(name);
+        } catch (error) {
+          console.error("Failed to get ashfall place name:", error);
+          setAshfallPlaceName("Unknown location");
+        }
+
+        setAshfallLocation(coords);
+        flyToLocation([coords.latitude, coords.longitude], 14);
+        setIsAshfallModalOpen(true);
+        setIsLoadingAshfall(false);
+      },
+      (err) => {
+        setIsLoadingAshfall(false);
+        setAshfallLocation(null);
+        setAshfallPlaceName("");
+        if (err.code === 1) {
+          setAshfallSubmitError("Location permission denied. Enable location access to submit an ashfall report.");
+        } else if (err.code === 2) {
+          setAshfallSubmitError("Position unavailable. Please try again.");
+        } else if (err.code === 3) {
+          setAshfallSubmitError("Location request timed out. Please try again.");
+        } else {
+          setAshfallSubmitError("Unable to detect your location.");
+        }
+        setIsAshfallModalOpen(true);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }, [flyToLocation]);
+
+  const handleSubmitAshfallReport = useCallback(async (payload: AshfallReportPayload) => {
+    setIsSubmittingAshfall(true);
+    setAshfallSubmitError("");
+
+    try {
+      const response = await submitAshfallReport(payload);
+      setAshfallReports((current) => [
+        response.data,
+        ...current.filter((report) => report.id !== response.data.id),
+      ]);
+      setIsAshfallModalOpen(false);
+      setAshfallLocation(null);
+      setAshfallPlaceName("");
+    } catch (error) {
+      console.error("Ashfall report submission failed:", error);
+      const message = error instanceof Error ? error.message : "Failed to submit ashfall report";
+      setAshfallSubmitError(message);
+    } finally {
+      setIsSubmittingAshfall(false);
+    }
+  }, []);
 
   const handleSubmitRequest = useCallback(async () => {
     if (selectedNeeds.length === 0) {
@@ -635,16 +860,18 @@ const Emergency: React.FC = () => {
         </div>
       )}
 
-      {(dataFetchError || emergenciesError) && (
+      {(dataFetchError || emergenciesError || ashfallError) && (
         <div className="fixed top-20 left-4 bg-red-50 border-2 border-red-300 px-5 py-3 rounded-xl shadow-xl z-10 max-w-sm">
           <div className="flex flex-col gap-2">
-            <span className="text-sm text-red-700 font-medium">{dataFetchError || "Failed to load emergency data"}</span>
+            <span className="text-sm text-red-700 font-medium">{dataFetchError || ashfallError || "Failed to load emergency data"}</span>
             <button
               onClick={() => {
                 // setRetryCount(0);
                 setDataFetchError(null);
+                setAshfallError(null);
                 // if (refetchProvinces) refetchProvinces();
                 if (refetchEmergencies) refetchEmergencies();
+                void loadAshfallAwareness();
               }}
               className="text-xs text-red-700 font-semibold hover:underline text-left"
             >
@@ -664,8 +891,28 @@ const Emergency: React.FC = () => {
         selectedLocation={selectedMapLocation}
         isSearchOpen={isSearchOpen}
         onOpenSearch={() => setIsSearchOpen(true)}
+        onReportAshfall={handleStartAshfallReport}
         onClose={() => setIsSearchOpen(false)}
         onSelectLocation={handleSearchSelect}
+      />
+
+      <AshfallAwarenessPanel
+        advisory={activeAdvisory}
+        reportCount={ashfallReports.length}
+        verifiedCount={ashfallReports.filter((report) => report.isVerified).length}
+        isLoading={isLoadingAshfall}
+        onRefresh={() => void loadAshfallAwareness()}
+        onReportAshfall={handleStartAshfallReport}
+      />
+
+      <AshfallReportModal
+        isOpen={isAshfallModalOpen}
+        location={ashfallLocation}
+        placeName={ashfallPlaceName}
+        isSubmitting={isSubmittingAshfall}
+        errorMessage={ashfallSubmitError}
+        onClose={() => setIsAshfallModalOpen(false)}
+        onSubmit={handleSubmitAshfallReport}
       />
 
    {status !== "idle" && (

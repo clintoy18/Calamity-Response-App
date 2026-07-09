@@ -11,6 +11,12 @@ import {
   unverifyEmergency,
   // rejectResponders, // uncomment if implemented
 } from "../controllers/admin.controller";
+import {
+  createVolcanoAdvisory,
+  expireVolcanoAdvisory,
+  fetchAshfallReportsForAdmin,
+  updateAshfallReportStatus,
+} from "../controllers/ashfall.controller";
 import { authenticate, checkRole } from "../middleware/auth.middleware";
 
 const router = express.Router();
@@ -89,6 +95,37 @@ router.put(
    authenticate,
   checkRole("admin"),
  unverifyEmergency);
+
+// ----------------------
+// ASHFALL ROUTES
+// ----------------------
+router.get(
+  "/ashfall-reports",
+  authenticate,
+  checkRole("admin"),
+  fetchAshfallReportsForAdmin
+);
+
+router.put(
+  "/ashfall-reports/:id/status",
+  authenticate,
+  checkRole("admin"),
+  updateAshfallReportStatus
+);
+
+router.post(
+  "/volcano-advisories",
+  authenticate,
+  checkRole("admin"),
+  createVolcanoAdvisory
+);
+
+router.put(
+  "/volcano-advisories/:id/expire",
+  authenticate,
+  checkRole("admin"),
+  expireVolcanoAdvisory
+);
 
 
 
