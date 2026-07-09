@@ -350,7 +350,7 @@ export const createAshfallMarkerIcon = (
   isVerified: boolean
 ): L.DivIcon => {
   const level = ashfallColors[ashLevel] || ashfallColors.LIGHT;
-  const opacity = isVerified ? "1" : "0.82";
+  const opacity = isVerified ? "1" : "0.95";
 
   return L.divIcon({
     html: `
@@ -379,7 +379,14 @@ export const createAshfallMarkerIcon = (
             height:46px;
             object-fit:contain;
             opacity:${opacity};
-            filter:drop-shadow(0 3px 5px rgba(17,24,39,0.35));
+            filter:
+              drop-shadow(1px 0 0 #ffffff)
+              drop-shadow(-1px 0 0 #ffffff)
+              drop-shadow(0 1px 0 #ffffff)
+              drop-shadow(0 -1px 0 #ffffff)
+              drop-shadow(0 0 3px #ef4444)
+              drop-shadow(0 0 6px rgba(239,68,68,0.85))
+              drop-shadow(0 3px 5px rgba(17,24,39,0.35));
           "
         />
       </div>
