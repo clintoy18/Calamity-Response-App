@@ -5,20 +5,26 @@ import { TabLists, type TabType } from "../../components/admin/TabLists";
 import { DataTable } from "../../components/admin/Table";
 import { getRespondentColumns } from "./columns/RespondentColumns";
 import { getEmergencyColumns } from "./columns/EmergencyColumns";
+import { getAshfallColumns } from "./columns/AshfallColumns";
+import { VolcanoAdvisoryForm } from "../../components/admin/VolcanoAdvisoryForm";
 import type { IUser, IEmergency } from "../../hooks/queries/useAdmin";
 import { useAuth } from "../../hooks/useAuth";
 import {
+  useFetchAshfallReports,
   useFetchEmergencies,
   useFetchResponders,
+  useUpdateAshfallReportStatus,
 } from "../../hooks/queries/useAdmin";
 import { Card, CardContent } from "../../components/ui/card";
-import { Users, AlertTriangle, RefreshCw, Shield } from "lucide-react";
+import { CloudFog, Users, AlertTriangle, RefreshCw, Shield } from "lucide-react";
+import type { AshfallReport, AshfallStatus } from "../../types";
 
 export const Dashboard: React.FC = () => {
   const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("emergencies");
   const [modalResponder, setModalResponder] = useState<IUser | null>(null);
   const [modalEmergency, setModalEmergency] = useState<IEmergency | null>(null);
+  const updateAshfallStatus = useUpdateAshfallReportStatus();
 
   // Fetch ALL data without pagination - using a very large limit
   const {
@@ -35,6 +41,13 @@ export const Dashboard: React.FC = () => {
     refetch: refetchEmergencies,
   } = useFetchEmergencies(1, 99999);
 
+  const {
+    data: ashfallData,
+    isLoading: isLoadingAshfall,
+    isError: isErrorAshfall,
+    refetch: refetchAshfallReports,
+  } = useFetchAshfallReports(1, 99999);
+
   // Verification handlers
   const handleToggleResponderVerify = (row: IUser) => {
     console.log("Toggle responder verification:", row);
@@ -46,11 +59,24 @@ export const Dashboard: React.FC = () => {
     refetchEmergencies();
   };
 
+  const handleAshfallStatusChange = async (
+    row: AshfallReport,
+    status: AshfallStatus
+  ) => {
+    try {
+      await updateAshfallStatus.mutateAsync({ id: row.id, status });
+      refetchAshfallReports();
+    } catch (error) {
+      console.error("Failed to update ashfall report:", error);
+    }
+  };
+
   // Calculate stats
   const totalResponders = responderData?.data?.length || 0;
   const verifiedResponders = responderData?.data?.filter(r => r.isVerified)?.length || 0;
   const totalEmergencies = emergencyData?.data?.length || 0;
   const pendingEmergencies = emergencyData?.data?.filter(e => !e.isVerified)?.length || 0;
+  const totalAshfallReports = ashfallData?.data?.length || 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
@@ -114,6 +140,20 @@ export const Dashboard: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm border-l-4 border-l-gray-500 hover:shadow-md transition-all duration-300">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Ashfall Reports</p>
+                  <p className="text-2xl font-bold text-foreground mt-1">{totalAshfallReports}</p>
+                </div>
+                <div className="p-3 rounded-full bg-gray-100/70">
+                  <CloudFog className="w-6 h-6 text-gray-700" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Main Content */}
@@ -157,6 +197,53 @@ export const Dashboard: React.FC = () => {
                       ],
                     }}
                   />
+                )
+              ) : activeTab === "ashfall" ? (
+                isLoadingAshfall ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <RefreshCw className="w-8 h-8 animate-spin mb-3" />
+                    <p className="text-lg font-medium">Loading ashfall reports...</p>
+                    <p className="text-sm mt-1">Please wait while we fetch the data</p>
+                  </div>
+                ) : isErrorAshfall ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-destructive">
+                    <AlertTriangle className="w-8 h-8 mb-3" />
+                    <p className="text-lg font-medium">Failed to load ashfall reports</p>
+                    <p className="text-sm mt-1 text-muted-foreground">
+                      Please check your connection and try again
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <VolcanoAdvisoryForm />
+                    <DataTable<AshfallReport>
+                      title="Ashfall Report Verification"
+                      description="Verify community ashfall reports before they are treated as confirmed map signals"
+                      columns={getAshfallColumns({
+                        handleStatusChange: handleAshfallStatusChange,
+                      })}
+                      data={ashfallData?.data || []}
+                      searchPlaceholder="Search by location, ash level, needs, or status..."
+                      filterKeys={["status", "ashLevel", "isVerified"]}
+                      filterOptions={{
+                        status: [
+                          { label: "All", value: "all" },
+                          { label: "Unverified", value: "unverified" },
+                          { label: "Verified", value: "verified" },
+                          { label: "Archived", value: "archived" },
+                        ],
+                        ashLevel: [
+                          { label: "Light", value: "LIGHT" },
+                          { label: "Moderate", value: "MODERATE" },
+                          { label: "Heavy", value: "HEAVY" },
+                        ],
+                        isVerified: [
+                          { label: "Unverified", value: "unverified" },
+                          { label: "Verified", value: "verified" },
+                        ],
+                      }}
+                    />
+                  </>
                 )
               ) : isLoadingEmergencies ? (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">

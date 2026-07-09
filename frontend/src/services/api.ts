@@ -1,5 +1,11 @@
 import { API_URL } from "../constants";
-import type { Location, NeedType } from "../types";
+import type {
+  AshfallReport,
+  AshfallReportPayload,
+  Location,
+  NeedType,
+  VolcanoAdvisory,
+} from "../types";
 import axios from "axios";
 import api from "./authService";
 
@@ -142,4 +148,57 @@ export const unverifyEmergencyById = async (
     }
     throw new Error(message);
   }
+};
+
+export const fetchAshfallReports = async (
+  options?: { signal?: AbortSignal; hours?: number }
+): Promise<AshfallReport[]> => {
+  const params = new URLSearchParams();
+  if (options?.hours) params.set("hours", String(options.hours));
+
+  const response = await fetch(`${API_URL}/ashfall/reports?${params.toString()}`, {
+    signal: options?.signal,
+  });
+
+  const data: ApiResponse<AshfallReport[]> = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || "Failed to fetch ashfall reports");
+  }
+
+  return data.data || [];
+};
+
+export const submitAshfallReport = async (
+  payload: AshfallReportPayload
+): Promise<ApiResponse<AshfallReport>> => {
+  const response = await fetch(`${API_URL}/ashfall/reports`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const data: ApiResponse<AshfallReport> = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || "Failed to submit ashfall report");
+  }
+
+  return data;
+};
+
+export const fetchActiveVolcanoAdvisory = async (
+  options?: { signal?: AbortSignal }
+): Promise<VolcanoAdvisory | null> => {
+  const response = await fetch(`${API_URL}/ashfall/advisory/active`, {
+    signal: options?.signal,
+  });
+
+  const data: ApiResponse<VolcanoAdvisory | null> = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || "Failed to fetch volcano advisory");
+  }
+
+  return data.data || null;
 };

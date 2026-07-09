@@ -78,6 +78,73 @@ export interface UrgencyColor {
 
 }
 
+export type AshfallLevel = "LIGHT" | "MODERATE" | "HEAVY";
+export type AshfallVisibility = "CLEAR" | "HAZY" | "LOW" | "DANGEROUS";
+export type AshfallStatus = "unverified" | "verified" | "archived";
+
+export interface AshfallReport {
+  _id?: string;
+  id: string;
+  latitude: number;
+  longitude: number;
+  placename: string;
+  accuracy: number;
+  timestamp?: string;
+  ashLevel: AshfallLevel;
+  visibility: AshfallVisibility;
+  sulfurSmell: boolean;
+  needs: string[];
+  contactno?: string;
+  reporterName?: string;
+  additionalNotes?: string;
+  status: AshfallStatus;
+  isVerified: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AshfallReportPayload {
+  latitude: number;
+  longitude: number;
+  placename: string;
+  accuracy: number;
+  ashLevel: AshfallLevel;
+  visibility: AshfallVisibility;
+  sulfurSmell: boolean;
+  needs: string[];
+  contactno?: string;
+  reporterName?: string;
+  additionalNotes?: string;
+}
+
+export interface VolcanoAdvisory {
+  _id?: string;
+  id: string;
+  volcanoName: string;
+  title: string;
+  alertLevel?: string;
+  sourceName: string;
+  sourceUrl?: string;
+  affectedAreas: string[];
+  summary: string;
+  instructions: string[];
+  status: "active" | "expired";
+  publishedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface VolcanoAdvisoryPayload {
+  volcanoName?: string;
+  title: string;
+  alertLevel?: string;
+  sourceName: string;
+  sourceUrl?: string;
+  affectedAreas: string[];
+  summary: string;
+  instructions: string[];
+}
+
 
 export interface Respondent {
   id: string;

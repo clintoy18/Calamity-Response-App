@@ -10,6 +10,7 @@ import adminRoutes from "./routes/admin.route";
 import fileRoutes from "./routes/files.route";
 import earthquakeRoutes from "./routes/earthquake.route";
 import botRoutes from "./routes/bot.route"; // <-- import bot routes
+import ashfallRoutes from "./routes/ashfall.route";
 import { connectDB } from "./config/db";
 import { validateBotConfig } from "./config/bot.config"; // <-- import bot config validation
 import { botController } from "./controllers/bot.controller"; // <-- import bot controller
@@ -35,6 +36,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/bot", botRoutes); // <-- mount bot routes
+app.use("/api/ashfall", ashfallRoutes);
 // app.use("/api/earthquakes", earthquakeRoutes);
 
 

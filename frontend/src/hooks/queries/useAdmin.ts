@@ -3,6 +3,12 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../services/authService";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type {
+  AshfallReport,
+  AshfallStatus,
+  VolcanoAdvisory,
+  VolcanoAdvisoryPayload,
+} from "../../types";
 
 
 // -------------------
@@ -56,6 +62,8 @@ export interface CityCount {
   city: string;
   count: number;
 }
+
+export type IAshfallReport = AshfallReport;
 
 // -------------------
 // Responders Hooks (Polling Enabled)
@@ -155,6 +163,75 @@ export const useVerifyEmergency = (currentPage = 1, currentLimit = 20) => {
     },
     onError: (error: unknown) => {
       console.error("Error verifying emergency:", error);
+    },
+  });
+};
+
+// -------------------
+// Ashfall Reports
+// -------------------
+export const useFetchAshfallReports = (page = 1, limit = 20) =>
+  useQuery<PaginatedResponse<IAshfallReport>, Error>({
+    queryKey: ["ashfall-reports", page, limit],
+    queryFn: async () => {
+      const { data } = await api.get<PaginatedResponse<IAshfallReport>>(
+        `/admin/ashfall-reports?page=${page}&limit=${limit}`
+      );
+
+      return {
+        success: data.success,
+        page: data.page,
+        limit: data.limit,
+        total: data.total,
+        totalPages: data.totalPages,
+        data: data.data || [],
+      };
+    },
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
+  });
+
+export const updateAshfallReportStatus = async ({
+  id,
+  status,
+}: {
+  id: string;
+  status: AshfallStatus;
+}): Promise<void> => {
+  await api.put(`/admin/ashfall-reports/${id}/status`, { status });
+};
+
+export const useUpdateAshfallReportStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateAshfallReportStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ashfall-reports"] });
+    },
+  });
+};
+
+// -------------------
+// Volcano Advisories
+// -------------------
+export const createVolcanoAdvisory = async (
+  payload: VolcanoAdvisoryPayload
+): Promise<VolcanoAdvisory> => {
+  const { data } = await api.post<{ success: boolean; data: VolcanoAdvisory }>(
+    "/admin/volcano-advisories",
+    payload
+  );
+  return data.data;
+};
+
+export const useCreateVolcanoAdvisory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createVolcanoAdvisory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ashfall-reports"] });
     },
   });
 };

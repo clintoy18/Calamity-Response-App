@@ -2,7 +2,7 @@
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "../../components/ui/tabs";
 
-export type TabType = "emergencies" | "respondents";
+export type TabType = "emergencies" | "ashfall" | "respondents";
 
 interface TabListsProps {
   activeTab: TabType;
@@ -24,12 +24,19 @@ export const TabLists: React.FC<TabListsProps> = ({
         onValueChange={handleTabChange}
         className="w-full"
       >
-        <TabsList className="bg-white border border-gray-200 rounded-lg p-4 gap-4 w-full max-w-lg">
+        <TabsList className="bg-white border border-gray-200 rounded-lg p-4 gap-4 w-full max-w-3xl">
           <TabsTrigger 
             value="emergencies"
             className="flex-1 px-7 py-2 text-sm font-medium transition-all duration-200 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 rounded-md"
           >
             Emergency Requests for Verification
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="ashfall"
+            className="flex-1 px-7 py-2 text-sm font-medium transition-all duration-200 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 rounded-md"
+          >
+            Ashfall Reports
           </TabsTrigger>
           
           <TabsTrigger 
