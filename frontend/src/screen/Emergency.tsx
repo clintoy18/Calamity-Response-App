@@ -25,7 +25,7 @@ import {
 import { LoginModal } from "../components/Login";
 import { useAuthActions } from "../hooks/useAuthActions";
 import { useAuth } from "../hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { getUserRole } from "../utils/authUtils";
 import { TopBar } from "../components/common/TopBar";
@@ -108,6 +108,8 @@ const Emergency: React.FC = () => {
   const API_BASE = import.meta.env.VITE_API_URL;
   const { logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const handledActionRef = React.useRef(false);
 
   const markerClusterRef = React.useRef<L.MarkerClusterGroup | null>(null);
   const markersMapRef = React.useRef<Map<string, L.Marker>>(new Map());
@@ -681,6 +683,18 @@ const Emergency: React.FC = () => {
     );
   }, [flyToLocation]);
 
+  // Actions handed off from the Home screen, e.g. /map?action=help
+  useEffect(() => {
+    const action = searchParams.get("action");
+    if (!action || handledActionRef.current) return;
+    handledActionRef.current = true;
+    setSearchParams({}, { replace: true });
+
+    if (action === "help") handleEmergency();
+    else if (action === "ashfall") handleStartAshfallReport();
+    else if (action === "responder") setIsResponderModalOpen(true);
+  }, [searchParams, setSearchParams, handleEmergency, handleStartAshfallReport]);
+
   const handleSubmitAshfallReport = useCallback(async (payload: AshfallReportPayload) => {
     setIsSubmittingAshfall(true);
     setAshfallSubmitError("");
@@ -832,7 +846,7 @@ const Emergency: React.FC = () => {
     <div className="relative w-full h-screen overflow-hidden">
       <div ref={mapRef} className="absolute inset-0 w-full h-full z-0" style={{ height: '100vh', width: '100vw' }}></div>
 
-      <TopBar logoSrc={logo} emergencies={emergencies} showMenuButton onMenu={() => setIsMenuOpen(true)} />
+      <TopBar logoSrc={logo} emergencies={emergencies} showMenuButton onMenu={() => setIsMenuOpen(true)} onBack={() => navigate("/")} />
 
       <NavigationMenu
         isOpen={isMenuOpen}

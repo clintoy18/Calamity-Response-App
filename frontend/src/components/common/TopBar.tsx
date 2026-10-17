@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, MapPin } from 'lucide-react';
+import { Menu, MapPin, ChevronLeft } from 'lucide-react';
 import type { EmergencyRecord } from '../../types';
 
 interface TopBarProps {
@@ -10,6 +10,7 @@ interface TopBarProps {
   onMenu?: () => void;
   active?: boolean;
   onToggleUpdates?: () => void;
+  onBack?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -20,6 +21,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onMenu,
   active = false,
   onToggleUpdates,
+  onBack,
 }) => {
   const activeRespondents = emergencies.length;
 
@@ -34,6 +36,16 @@ export const TopBar: React.FC<TopBarProps> = ({
     >
       {/* Left: Logo + subtitle/status */}
       <div className="flex items-center gap-3 min-w-0">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="-ml-1 w-7 h-7 flex items-center justify-center hover:bg-background/60 rounded transition-colors duration-150"
+            title="Home"
+            aria-label="Back to home"
+          >
+            <ChevronLeft className="w-4 h-4 text-text" />
+          </button>
+        )}
         <div className="flex items-center gap-2 relative">
           <div className="flex items-center justify-center overflow-hidden rounded h-8">
            <img 

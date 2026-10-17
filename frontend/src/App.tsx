@@ -2,6 +2,7 @@
 import { Suspense, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Loader } from "lucide-react";
+import Home from "./screen/Home";
 import Emergency from "./screen/Emergency";
 import Dashboard from "./screen/admin/Dashboard";
 import Unauthorized from "./screen/Unauthorized";
@@ -42,7 +43,8 @@ export const App = () => {
     >
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<Emergency />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/map" element={<Emergency />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Admin-only routes */}
